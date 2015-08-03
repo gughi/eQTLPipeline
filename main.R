@@ -18,9 +18,9 @@
 ## 2. Filtering
   ## 2.1 Filtering for the genic data
     ## genes that have less than 20 reads in less than 80% of the samples are filtered
-    expr <- t(expr)
+    exprGenic <- t(exprGenic)
     ## convert the genes that have NAs
-    expr[is.na(expr)]=0
+    exprGenic[is.na(exprGenic)]=0
     ## remove genes
     exprGenic <- exprGenic[rowSums(exprGenic>=20)>(ncol(exprGenic)-((ncol(exprGenic)*20)/100)),]
   ## 2.2 Filtering intergenic data
