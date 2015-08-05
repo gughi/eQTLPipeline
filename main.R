@@ -2,10 +2,12 @@
 ## email: m.guelfi@ucl.ac.uk
 ## This is the main script for the eQTL analysis 
 
-## Combined raw counts from genic and intergenic to generate the PEER axes Steps 1 to 
-  
 
+## Combined raw counts from genic and intergenic to generate the PEER axes Steps 1 to   
 
+## prerequisites: load the generic function created for the eQTL pipeline
+sys.source("genFun.R",
+           attach(NULL, name="myenv"))
 
 ## 1. load the data 
   ## 1.1 load the genic data
@@ -38,38 +40,66 @@
     exprIntergenic <- exprIntergenic[which(exprIntergenic$width >= 100),]
     # We don't do filtering since it doesn't make any since for DERFINDER; 
     # regions are detected based on the expression
+    # creation of identifiers for the regions
+    IDs <- paste0("DER",c(1:nrow(exprIntergenic)))
+    rownames(exprIntergenic) <- IDs
+    rm(IDs)
     
+    
+    # load the GC content genic and gene length
 
-    # load the GC content genic
-    GCcontent <- read.delim("data/general/GCcontentExoInt",row.names=1)
-    colnames(GCcontent) <- "GCcontent"
-    GCcontent$GCcontent <- (GCcontent$GCcontent/100)
-    GCcontentTmp <- GCcontent[as.character(rownames(exprGenic)),]
-    GCcontentTmp <- as.data.frame(GCcontentTmp)
-    rownames(GCcontentTmp) <- rownames(exprGenic)
-    colnames(GCcontentTmp) <- "GCcontent"
-    rm(GCcontent)
+    geneLength <- read.delim("data/general/ensemblGenes.txt",row.names=1)
+    geneLength <- geneLength[as.character(rownames(exprGenic)),c(3,1:2)]
+    GCcontent <- GCcalculation(geneLength,genRef="/home/seb/reference/genome37.72.fa")
+    length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
+    names(length) <- rownames(geneLength)
+    GCcontentGenic <- cbind(GCcontent,length[as.character(rownames(GCcontent))])    
+    colnames(GCcontentGenic)[2] <- "length"
+    rm(length,GCcontent)    
+
+    # load the GC content intergenic and region length
+    GCcontent <- GCcalculation(exprIntergenic[,1:4],"/home/seb/reference/genome37.72.fa")
+    GCcontent <- as.data.frame(cbind(GCcontent[as.character(rownames(exprIntergenic)),],
+                      exprIntergenic$width))    
+    rownames(GCcontent) <- rownames(exprIntergenic)
+    colnames(GCcontent) <- c("GCcontent","length")
     
-    # load the GC content intergenic that has been calculated with BED tools
-    GCcontent <- read.delim(pipe("cut -f4,6 data/general/intergenicGCcontent"))
-    colnames(GCcontent) <- c("ID","GCcontent")
-    rownames(GCcontent) <- GCcontent$ID
-    GCcontent$ID <- NULL
-    head(GCcontent)
-    
-    
+    ## combined the GCcontent for both quantifications
+
+    GCcontent <- rbind(GCcontentGenic,GCcontent)
+    rm(GCcontentGenic)
+
     ## load the library size
     librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
     
-    ## load the gene length for genic counts
-    geneLength <- read.delim("data/general/ensemblGenes.txt",row.names=1)
-    length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
-    geneLength <- cbind(geneLength,length)
-    rm(length)
-    length <- geneLength[as.character(rownames(GCcontentTmp)),4]    
+    # combine expression
+    expr <- rbind(exprGenic[,as.character(sampleInfo$A.CEL_file)],
+                  exprIntergenic[,as.character(sampleInfo$A.CEL_file)])
+
+    # apply cqn
+    library(cqn)
+    library(scales)
+
+    my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent, sizeFactors = librarySize[colnames(expr),1] , verbose = TRUE)
     
-    GCcontentTmp <- rbind(GCcontentTmp,GCcontent)    
-    rm(GCcontent)
+  
+    par(mfrow=c(1,2))
+    cqnplot(my.cqn, n = 1, xlab = "GC content", lty = 1, ylim = c(1,7))
+    cqnplot(my.cqn, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
+    RPKM.cqn <- my.cqn$y + my.cqn$offset
+
+    # filter based on the RPKM expression
+    # threshold 0.1 that is log2(0.1) because the RPKM are transform in log2
+    # we filter genes that have less than 0.1 in 80% of the samples
+
     
+    RPKM.cqn=RPKM.cqn[rowSums(RPKM.cqn>=log2(0.1))>(ncol(RPKM.cqn)-((ncol(RPKM.cqn)*20)/100)),]
     
-    
+    # length(grep("ENS",rownames(RPKM.cqn)))
+    # 24873 genic regions kept
+    # length(grep("DER",rownames(RPKM.cqn)))
+    # 28237 intergenic regiond kept
+
+    save(RPKM.cqn,file="data/expr/normalisedCounts/genicIntergenic.rda",compress="bzip2")
+
+        
