@@ -99,7 +99,75 @@ sys.source("genFun.R",
     # 24873 genic regions kept
     # length(grep("DER",rownames(RPKM.cqn)))
     # 28237 intergenic regiond kept
-
+    
+    # save results
     save(RPKM.cqn,file="data/expr/normalisedCounts/genicIntergenic.rda",compress="bzip2")
+
+    
+    # PCA PC1 vs PC2 
+    PCAres<- prcomp(t(RPKM.cqn))
+    par(mfrow=c(1,1))
+    PUTM <- sampleInfo[sampleInfo[, 6] == "PUTM",]
+    SNIG <- sampleInfo[sampleInfo[, 6] == "SNIG",]
+    
+    plot(PCAres, main="PCA axis simple quantification (PUTM + SNIG)")
+    plot(PCAres$x[,1],PCAres$x[,2],main = "PC1 vs PC2 by tissue",xlab="PC1",ylab="PC2" )
+    points(PCAres$x[PUTM$A.CEL_file,1],PCAres$x[PUTM$A.CEL_file,2],col="red")
+    points(PCAres$x[SNIG$A.CEL_file,1],PCAres$x[SNIG$A.CEL_file,2],col="blue")
+    legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
+    
+    rm(PUTM,SNIG,PCAres)
+        
+    # heatmap to check correlation between PCs adn known factor (e.g. sex, age, etc...)
+    
+    # This is the code used to produced the covs
+     covs <- sampleInfo
+     rownames(covs) <- covs$A.CEL_file
+     convert the female and male info in numeric
+     covs[covs=="M"]=0
+     covs[covs=="F"]=1
+     covs[covs=="PUTM"]=1
+     covs[covs=="SNIG"]=2
+     covs <- as.data.frame(apply(covs[,c(2:6,8:10)], 2, as.factor))
+     covs[,c(1:5,8)] <- as.data.frame(apply(covs[,c(1:5,8)], 2, as.numeric))
+     covs[,6] <- as.numeric(covs[,6])
+     covs[,7] <- as.numeric(covs[,7])
+     lanes <- read.csv("/home/seb/expressionData/QCmetrics.csv",row.names=8)
+     rownames(lanes) <- gsub("CEL","",rownames(lanes))
+     covs <- cbind(covs,librarySize[as.character(rownames(covs)),1])
+     covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
+     colnames(covs) <- c("Age","PMI","RIN","Gender","Region","CODE","OVation_Batch",
+                        "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
+  
+
+    doSwamp(RPKM.cqn=RPKM.cqn,covs)
+
+
+    save(RPKM.cqn,covs,file="data/general/RPKMCQNcovs.rda")    
+
+    
+    # PEER look at the script for the optimisation    
+    ##doPEER(RPKM.cqn=t(RPKM.cqn),nFactors=13,
+    ##       covs=covs[ as.character(colnames(RPKM.cqn)),c("Age","Gender","Region")]
+    ##       ,outputFile="testPEER/PEERtmp")
+    
+
+    
+    ##PEER <- read.csv("data/general/PEERAxes.csv", row.names=1)
+    
+
+    ## we check correlation between PEER in known factor
+    ##correPlot(PEER,covs[rownames(PEER),],"PEER vs Known factors")
+
+    
+    ## Now I separated the analysis for each quantification
+  
+    
+
+
+
+
+
+
 
         
