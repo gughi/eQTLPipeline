@@ -75,60 +75,29 @@ print(" PEER Executed ")
 ##}
 
 
-## this is actually the library I executed 
- library(doParallel)
- library(foreach)
-  cl <- makeCluster(20)
-  registerDoParallel(cl)
-  foreach(i=1:20, .verbose=T)%dopar%system(paste0("R --vanilla --file=/home/seb/projectsR/eQTLPipeline/optimisationPEER.R --args ",i," > /home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".log"))
-  stopCluster(cl)
-  rm(cl)
+# # this is actually the library I executed 
+#  library(doParallel)
+#  library(foreach)
+#   cl <- makeCluster(20)
+#   registerDoParallel(cl)
+#   foreach(i=1:20, .verbose=T)%dopar%system(paste0("R --vanilla --file=/home/seb/projectsR/eQTLPipeline/optimisationPEER.R --args ",i," > /home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".log"))
+#   stopCluster(cl)
+#   rm(cl)
 ## test
 ## foreach(i=1:20, .verbose=T)%dopar%system(paste0("echo ",i," > /home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".log"))
-
-
-# correPlot <- function (mat1,mat2,xlab)
-# {
-#  library(gplots)
-#   linp<-matrix(ncol=ncol(mat1),nrow=ncol(mat2))  
-#   rownames(linp)<-colnames(mat2)
-#   colnames(linp)<-colnames(mat1)
-#   rsquared<-matrix(ncol=ncol(mat1),nrow=ncol(mat2))
-#   rownames(rsquared)<-colnames(mat2)
-#   colnames(rsquared)<-colnames(mat1)
-#   for (i in 1:ncol(mat2)){
-#     for (j in 1:ncol(mat1)){
-#       fit<-lm(mat1[,j]~mat2[,i])
-#       s<-summary(fit)
-#       linp[i,j]<-pf(s$fstatistic[1],s$fstatistic[2],s$fstatistic[3],lower.tail=FALSE)
-#       rsquared[i,j]<-s$r.squared[1]
-#     }}
-#   
-#   
-#   smallest=-20
-#   linp10<-log10(linp)
-#   linp10<-replace(linp10,linp10<=smallest,smallest)
-#   print(linp10)
-#   
-#   rsquaredTMP <- rsquared
-#   rsquaredTMP[which(linp10>-5)] = NA 
-#   heatmap.2(linp10,Colv=F,Rowv=F,dendrogram="none",trace="none",symbreaks=F,symkey=F,breaks=seq(-20,0,length.out=100),key=T,col=heat.colors(99),
-#             cexRow=1,cexCol=1,colsep=NULL,rowsep=NULL,sepcolor=sepcolor,sepwidth=sepwidth,
-#             main="",labCol=paste(1:ncol(linp10),sep=""),margins=c(5,7),labRow=,xlab=xlab,
-#             cellnote=rsquaredTMP,notecol="black",notecex=1) 
-#   
-# }
 # 
 # 
-# load("data/general/RPKMCQNcovs.rda")
 # 
-# corPEER <- data.frame(matrix(NA, nrow=15, ncol=20))
-# for (i in 1:20) 
-#   {
-#           PEER <- read.csv(paste0("/home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i), row.names=1)
-#           # do plot
-#            jpeg(paste0("/home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".jpeg"))
-#            correPlot(PEER,covs[rownames(PEER),],paste("PEER random",i,"vs Known factors"))
+# 
+#  load("data/general/RPKMCQNcovs.rda")
+#  
+#  corPEER <- data.frame(matrix(NA, nrow=15, ncol=20))
+#  for (i in 1:20) 
+#    {
+#            PEER <- read.csv(paste0("/home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i), row.names=1)
+#            # do plot
+#             jpeg(paste0("/home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".jpeg"))
+#             correPlot(PEER,covs[rownames(PEER),],paste("PEER random",i,"vs Known factors"))
 #            dev.off()
 #           # calculate correaltion
 #           corPEER[,i] <- as.data.frame(apply(PEER[,c(1:2,4:16)],2,function(x) cor(PEER[,3],x)))      
@@ -143,3 +112,18 @@ print(" PEER Executed ")
 # rm(cortmp)
 # rm(covs)
 # 
+
+# How I select the best PEER I basically calculate the rsquared for all the PEER test,
+# from each test calculate the maximum and then I select the PEER test that has minimum rsquared beetween all the tests  
+# load("testPEER/correlation.rda")
+# print(paste("Test with minimun correlation",match(min(apply((corPEER^2),2,max)),apply((corPEER^2),2,max))))
+# 
+# load("data/general/RPKMCQNcovs.rda")
+# PEERRNDPEER20 <- read.csv("testPEER/RNDMPEER20",row.names=1)
+# correPlot(PEERRNDPEER20,covs[rownames(PEERRNDPEER20),],"Correlation 'best' PEER and known factors")
+# 
+# 
+# cor(covs$Region,covs$uniqueMappedRead)
+#
+#
+

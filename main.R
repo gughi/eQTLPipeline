@@ -26,7 +26,7 @@ sys.source("genFun.R",
     ## convert the genes that have NAs
     exprGenic[is.na(exprGenic)]=0
     ## remove genes that not expressed in any gene
-    exprGenic <- exprGenic[rowSums(exprGenic>0)>0,]
+    exprGenic <- exprGenic[rowSums(exprGenic>0)>0,as.character(sampleInfo$A.CEL_file)]
     ## exprGenic <- exprGenic[rowSums(exprGenic>=20)>(ncol(exprGenic)-((ncol(exprGenic)*20)/100)),]
   ## 2.2 Filtering intergenic data
     ## create matrix we need with the 4 firsts columns that indicate the position of the region
@@ -44,20 +44,63 @@ sys.source("genFun.R",
     IDs <- paste0("DER",c(1:nrow(exprIntergenic)))
     rownames(exprIntergenic) <- IDs
     rm(IDs)
-    
-    
+
+    # load the library size
+    librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+    librarySize <- librarySize[as.character(sampleInfo$A.CEL_file),]
+    names(librarySize) <- as.character(sampleInfo$A.CEL_file)
+
+    # convert in RPKM
+    library(easyRNASeq)
+
     # load the GC content genic and gene length
 
     geneLength <- read.delim("data/general/ensemblGenes.txt",row.names=1)
     geneLength <- geneLength[as.character(rownames(exprGenic)),c(3,1:2)]
+    length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
+    names(length) <-  as.character(rownames(exprGenic))
+    stopifnot(identical(colnames(exprGenic),names(librarySize)))
+    stopifnot(identical(rownames(exprGenic),names(length)))              
+    RPKM.std <- RPKM(exprGenic, NULL, 
+                 lib.size=librarySize, 
+                 feature.size=length)
+
+    ## filtering
+    RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+    genesList <- rownames(RPKM.std) 
+    rm(RPKM.std,length)
+
+    geneLength <- geneLength[as.character(genesList),]
     GCcontent <- GCcalculation(geneLength,genRef="/home/seb/reference/genome37.72.fa")
     length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
     names(length) <- rownames(geneLength)
     GCcontentGenic <- cbind(GCcontent,length[as.character(rownames(GCcontent))])    
     colnames(GCcontentGenic)[2] <- "length"
-    rm(length,GCcontent)    
+    exprGenic <- exprGenic[genesList,]
+    rm(length,GCcontent,genesList,geneLength)
+
+    
+    
 
     # load the GC content intergenic and region length
+        
+    length <- exprIntergenic$width    
+    names(length) <- rownames(exprIntergenic)
+    stopifnot(identical(colnames(as.matrix(exprIntergenic[,as.character(sampleInfo$A.CEL_file)]))
+                        ,names(librarySize)))
+    stopifnot(identical(rownames(exprIntergenic),names(length)))              
+                                  
+    #convert in RPKM
+    RPKM.std <- RPKM(as.matrix(exprIntergenic[,as.character(sampleInfo$A.CEL_file)])
+                     , NULL, 
+                     lib.size=librarySize, 
+                     feature.size=length)
+
+    RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+    genesList <- rownames(RPKM.std) 
+    rm(RPKM.std,length)
+    exprIntergenic <- exprIntergenic[as.character(genesList),]
+  
     GCcontent <- GCcalculation(exprIntergenic[,1:4],"/home/seb/reference/genome37.72.fa")
     GCcontent <- as.data.frame(cbind(GCcontent[as.character(rownames(exprIntergenic)),],
                       exprIntergenic$width))    
@@ -69,9 +112,6 @@ sys.source("genFun.R",
     GCcontent <- rbind(GCcontentGenic,GCcontent)
     rm(GCcontentGenic)
 
-    ## load the library size
-    librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
-    
     # combine expression
     expr <- rbind(exprGenic[,as.character(sampleInfo$A.CEL_file)],
                   exprIntergenic[,as.character(sampleInfo$A.CEL_file)])
@@ -80,7 +120,10 @@ sys.source("genFun.R",
     library(cqn)
     library(scales)
 
-    my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent, sizeFactors = librarySize[colnames(expr),1] , verbose = TRUE)
+    stopifnot(identical(colnames(expr),names(librarySize)))
+    stopifnot(identical(rownames(expr),rownames(GCcontent)))              
+
+    my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent, sizeFactors = librarySize , verbose = TRUE)
     
   
     par(mfrow=c(1,2))
@@ -92,13 +135,11 @@ sys.source("genFun.R",
     # threshold 0.1 that is log2(0.1) because the RPKM are transform in log2
     # we filter genes that have less than 0.1 in 80% of the samples
 
-    
-    RPKM.cqn=RPKM.cqn[rowSums(RPKM.cqn>=log2(0.1))>(ncol(RPKM.cqn)-((ncol(RPKM.cqn)*20)/100)),]
-    
+
     # length(grep("ENS",rownames(RPKM.cqn)))
-    # 24873 genic regions kept
+    # 25985 genic regions kept
     # length(grep("DER",rownames(RPKM.cqn)))
-    # 28237 intergenic regiond kept
+    # 42577 intergenic regiond kept
     
     # save results
     save(RPKM.cqn,file="data/expr/normalisedCounts/genicIntergenic.rda",compress="bzip2")
@@ -114,7 +155,7 @@ sys.source("genFun.R",
     plot(PCAres$x[,1],PCAres$x[,2],main = "PC1 vs PC2 by tissue",xlab="PC1",ylab="PC2" )
     points(PCAres$x[PUTM$A.CEL_file,1],PCAres$x[PUTM$A.CEL_file,2],col="red")
     points(PCAres$x[SNIG$A.CEL_file,1],PCAres$x[SNIG$A.CEL_file,2],col="blue")
-    legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
+    legend("bottomright", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
     
     rm(PUTM,SNIG,PCAres)
         
@@ -123,7 +164,7 @@ sys.source("genFun.R",
     # This is the code used to produced the covs
      covs <- sampleInfo
      rownames(covs) <- covs$A.CEL_file
-     convert the female and male info in numeric
+     #convert the female and male info in numeric
      covs[covs=="M"]=0
      covs[covs=="F"]=1
      covs[covs=="PUTM"]=1
@@ -134,7 +175,7 @@ sys.source("genFun.R",
      covs[,7] <- as.numeric(covs[,7])
      lanes <- read.csv("/home/seb/expressionData/QCmetrics.csv",row.names=8)
      rownames(lanes) <- gsub("CEL","",rownames(lanes))
-     covs <- cbind(covs,librarySize[as.character(rownames(covs)),1])
+     covs <- cbind(covs,librarySize[as.character(rownames(covs))])
      covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
      colnames(covs) <- c("Age","PMI","RIN","Gender","Region","CODE","OVation_Batch",
                         "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
@@ -160,14 +201,97 @@ sys.source("genFun.R",
     ##correPlot(PEER,covs[rownames(PEER),],"PEER vs Known factors")
 
     
+    # delete all the objects
+    rm(list=ls())
     ## Now I separated the analysis for each quantification
+    
+    ## Now we correct for PEER using simple quantification Exons+Introns
+    exprGenic <- read.csv("data/expr/rawCounts/genic/exprExonIntr.csv", row.names=1)
+    # load the sample info to get the IDs for each tissue
+    load("data/general/sampleInfo.rda")
   
+    # transpose the expression matrix this to have the format of: In the rows the observations(genes) and in the columns the samples
+    exprGenic <- t(exprGenic)
+    ## convert the genes that have NAs
+    exprGenic[is.na(exprGenic)]=0
+    ## remove genes that not expressed in any gene
+    exprGenic <- exprGenic[rowSums(exprGenic>0)>0,]
+
+    PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
+    
+    # now we select the expression for the PUTM only samples
+    expr <- exprGenic[,as.character(PUTM$A.CEL_file)]
+    rm(exprGenic)
+
+    
+    # load the library size
+    librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+    librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
+    names(librarySize) <- as.character(PUTM$A.CEL_file)
+    
+    # convert in RPKM
+    library(easyRNASeq)
+    
+    # load the GC content genic and gene length
+    
+    geneLength <- read.delim("data/general/ensemblGenes.txt",row.names=1)
+    geneLength <- geneLength[as.character(rownames(expr)),c(3,1:2)]
+    length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
+    names(length) <-  as.character(rownames(expr))
+    stopifnot(identical(colnames(expr),names(librarySize)))
+    stopifnot(identical(rownames(expr),names(length)))              
+    RPKM.std <- RPKM(expr, NULL, 
+                     lib.size=librarySize, 
+                     feature.size=length)
+    
+    ## filtering
+    RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+    genesList <- rownames(RPKM.std) 
+    rm(RPKM.std,length)
+
+
+    # now we calculate the GC content 
+    geneLength <- geneLength[as.character(genesList),]
+    GCcontent <- GCcalculation(geneLength
+                               ,genRef="/home/seb/reference/genome37.72.fa")
+    length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
+    names(length) <- rownames(geneLength)
+    GCcontent <- cbind(GCcontent,length[as.character(rownames(GCcontent))])    
+    colnames(GCcontent)[2] <- "length"
+    # we update gene expression with the filtered genes
+    expr <- expr[genesList,]
+    rm(length,geneLength,genesList)
+
+    ## load the library size
+    
+    library(cqn)
+    library(scales)
+    
+    ## CQN
+    stopifnot(identical(colnames(expr),names(librarySize)))
+    stopifnot(identical(rownames(expr),rownames(GCcontent)))              
+
+    my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent,sizeFactors=librarySize, verbose = TRUE)
+
+    par(mfrow=c(1,2))
+    cqnplot(my.cqn, n = 1, xlab = "GC content", lty = 1, ylim = c(1,7))
+    cqnplot(my.cqn, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
+    RPKM.cqn <- my.cqn$y + my.cqn$offset
+    
+    # filter based on the RPKM expression
+    # threshold 0.1 that is log2(0.1) because the RPKM are transform in log2
+    # we filter genes that have less than 0.1 in 80% of the samples
+    
+    RPKM.cqn=RPKM.cqn[rowSums(RPKM.cqn>=log2(0.1))>(ncol(RPKM.cqn)-((ncol(RPKM.cqn)*20)/100)),]
+    
+    
+    doResidualCorrection()    
+    
     
 
+    head(expr["ENSG00000002745",])
+    head(RPKM.cqn["ENSG00000002745",])
 
 
-
-
-
-
-        
+    head(expr,0)
+    table(RPKM.cqn["ENSG00000002745",]>=log2(0.1))

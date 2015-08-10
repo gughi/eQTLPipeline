@@ -105,7 +105,6 @@ doPEER <- function(RPKM.cqn,nFactors,covs,outputFile)
 }
 
 
-
 correPlot <- function (mat1,mat2,xlab)
 {
   library(gplots)
@@ -129,15 +128,46 @@ correPlot <- function (mat1,mat2,xlab)
   linp10<-replace(linp10,linp10<=smallest,smallest)
   print(linp10)
   
+  rsquaredTMP <- rsquared
+  rsquaredTMP[which(linp10>-5)] = NA
+  rsquaredTMP <-round(rsquaredTMP,digits=2)
   heatmap.2(linp10,Colv=F,Rowv=F,dendrogram="none",trace="none",symbreaks=F,symkey=F,breaks=seq(-20,0,length.out=100),key=T,col=heat.colors(99),
             cexRow=1,cexCol=1,colsep=NULL,rowsep=NULL,sepcolor=sepcolor,sepwidth=sepwidth,
             main="",labCol=paste(1:ncol(linp10),sep=""),margins=c(5,7),labRow=,xlab=xlab,
-            cellnote=matrix(ncol=ncol(linp),nrow=nrow(linp)),notecol="black",notecex=1) 
+            cellnote=rsquaredTMP,notecol="black",notecex=1) 
+#   heatmap.2(linp10,Colv=F,Rowv=F,dendrogram="none",trace="none",symbreaks=F,symkey=F,breaks=seq(-20,0,length.out=100),key=T,col=heat.colors(99),
+#             cexRow=1,cexCol=1,colsep=NULL,rowsep=NULL,sepcolor=sepcolor,sepwidth=sepwidth,
+#             main="",labCol=paste(1:ncol(linp10),sep=""),margins=c(5,7),labRow=,xlab=xlab,
+#             cellnote=matrix(ncol=ncol(linp),nrow=nrow(linp)),notecol="black",notecex=1) 
+#   
+  
   
 }
 
 
-
-
-
+#' Function that does that returns the residuals 
+#' @param exprThe expression matrix
+#' @param covariates to use for the correction
+#' @param covs the covariates to exclude from PEER analysis
+#' @param outputFile where the results are going to be saved
+#' 
+doResidualCorrection <- function(expr,covs,outputFile)
+{
+  ## outputFolder <- "/home/seb/expressionData/exonExpr/"
+  ## covs is the PEER
+  ## load expression data un filtered
+  ## expr is matrix nxm where n are the samples and m the genes
+  print("Loading the expression")
+  
+  ## load the knowing factors (age and sex ) and unknown factors (PEER axes)
+  ## Residual correction with linear model, step 3
+  print("Performing the residual correction")
+  resids <- apply(exprAll, 2, function(y){
+    lm( y ~ . , data=covs)$residuals 
+  })
+  
+  print("Saving the residuals")
+  save(resids,paste0(outputFolder,"/resCorExpr13.csv"))
+  resids
+}
 
