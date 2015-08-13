@@ -1,0 +1,86 @@
+\name{defExonicRegions}
+\alias{defExonicRegions}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{
+%%  ~~function to do ... ~~
+}
+\description{
+%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+}
+\usage{
+defExonicRegions(regionsGene)
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{regionsGene}{
+%%     ~~Describe \code{regionsGene} here~~
+}
+}
+\details{
+%%  ~~ If necessary, more details than the description above ~~
+}
+\value{
+%%  ~Describe the value returned
+%%  If it is a LIST, use
+%%  \item{comp1 }{Description of 'comp1'}
+%%  \item{comp2 }{Description of 'comp2'}
+%% ...
+}
+\references{
+%% ~put references to the literature/web site here ~
+}
+\author{
+%%  ~~who you are~~
+}
+\note{
+%%  ~~further notes~~
+}
+
+%% ~Make other sections like Warning with \section{Warning }{....} ~
+
+\seealso{
+%% ~~objects to See Also as \code{\link{help}}, ~~~
+}
+\examples{
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (regionsGene) 
+{
+    if (is.unsorted(regionsGene$Exon.Chr.Start..bp., )) {
+        regionsGene <- regionsGene[order(regionsGene$Exon.Chr.Start..bp.), 
+            ]
+    }
+    if (length(which(regionsGene[, 1] == regionsGene[, 2])) > 
+        0) {
+        regionsGene <- regionsGene[-which(regionsGene[, 1] == 
+            regionsGene[, 2]), ]
+    }
+    j <- 2
+    for (i in 2:nrow(regionsGene)) {
+        if (j > nrow(regionsGene)) {
+            break
+        }
+        if ((regionsGene[j, 1] - regionsGene[j - 1, 2]) < 1) {
+            if (regionsGene[j, 2] - regionsGene[j - 1, 2] > 0) {
+                regionsGene[j - 1, 2] <- regionsGene[j, 2]
+                regionsGene <- regionsGene[-j, ]
+            }
+            else {
+                regionsGene <- regionsGene[-j, ]
+            }
+        }
+        else {
+            j <- j + 1
+        }
+    }
+    rm(j, i)
+    return(regionsGene)
+  }
+}
+% Add one or more standard keywords, see file 'KEYWORDS' in the
+% R documentation directory.
+\keyword{ ~kwd1 }
+\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

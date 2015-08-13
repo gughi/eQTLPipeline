@@ -628,7 +628,18 @@ ratioGCcontent <- function(geneID,GCcontentTab)
   return(c(as.character(geneID), (sum(GC)/length(GC))))
 }
 
-
+# package.skeleton("UKBECeQTL",list=c("GCcalculation",
+#                                     "LDsentinalisation",
+#                                     "correPlot",
+#                                     "defExonicRegions",
+#                                     "doPEER",
+#                                     "doResidualCorrection",
+#                                     "doSwamp",
+#                                     "getRegionsBED",
+#                                     "getRegionsWidth",
+#                                     "ratioGCcontent",
+#                                     "runCisEQTL",
+#                                     "splitExprByGene"))
 
 
 

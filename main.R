@@ -80,10 +80,7 @@ sys.source("genFun.R",
     rm(length,GCcontent,genesList,geneLength)
 
     
-    
-
-    # load the GC content intergenic and region length
-        
+    # load the GC content intergenic and region length        
     length <- exprIntergenic$width    
     names(length) <- rownames(exprIntergenic)
     stopifnot(identical(colnames(as.matrix(exprIntergenic[,as.character(sampleInfo$A.CEL_file)]))
@@ -199,15 +196,20 @@ sys.source("genFun.R",
     correPlot(PEERRNDPEER18,covs[rownames(PEERRNDPEER18),],"Correlation 'best' PEER and known factors")
 
 
-    # delete all the objects
+# delete all the objects
     rm(list=ls())
-    ## Now I separated the analysis for each quantification
+# Now I separated the analysis for each quantification
+
+##############
+###  PUTM  ###
+##############
+
     
     ## Now we correct for PEER using simple quantification Exons+Introns
     exprGenic <- read.csv("data/expr/rawCounts/genic/exprExonIntr.csv", row.names=1)
     # load the sample info to get the IDs for each tissue
     load("data/general/sampleInfo.rda")
-  
+
     # transpose the expression matrix this to have the format of: In the rows the observations(genes) and in the columns the samples
     exprGenic <- t(exprGenic)
     ## convert the genes that have NAs
@@ -308,12 +310,239 @@ sys.source("genFun.R",
     PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
 
     resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
-                         "/home/seb/projectsR/eQTLPipeline/data/expr/normalisedCounts/genic/Exon+Introns/resids.PUTM.rda")
+                         "/home/seb/projectsR/eQTLPipeline/data/expr/normalisedCounts/genic/Exon+Introns/resids.PUTMtest.rda")
     
     doSwamp(resids,covs)
 
-    
 
+##############
+###  SNIG  ###
+##############
+
+    # delete all the objects
+    rm(list=ls())
+
+    ## Now we correct for PEER using simple quantification Exons+Introns
+    exprGenic <- read.csv("data/expr/rawCounts/genic/exprExonIntr.csv", row.names=1)
+    # load the sample info to get the IDs for each tissue
+    load("data/general/sampleInfo.rda")
+    
+    # transpose the expression matrix this to have the format of: In the rows the observations(genes) and in the columns the samples
+    exprGenic <- t(exprGenic)
+    ## convert the genes that have NAs
+    exprGenic[is.na(exprGenic)]=0
+    ## remove genes that not expressed in any gene
+    exprGenic <- exprGenic[rowSums(exprGenic>0)>0,]
+    
+    SNIG <- sampleInfo[which(sampleInfo$U.Region_simplified=="SNIG"),]
+    
+    # now we select the expression for the SNIG only samples
+    expr <- exprGenic[,as.character(SNIG$A.CEL_file)]
+    rm(exprGenic)
+    
+    
+    # load the library size
+    librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+    librarySize <- librarySize[as.character(SNIG$A.CEL_file),]
+    names(librarySize) <- as.character(SNIG$A.CEL_file)
+    
+    # convert in RPKM
+    library(easyRNASeq)
+    
+    # load the GC content genic and gene length
+    
+    geneLength <- read.delim("data/general/ensemblGenes.txt",row.names=1)
+    geneLength <- geneLength[as.character(rownames(expr)),c(3,1:2)]
+    length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
+    names(length) <-  as.character(rownames(expr))
+    stopifnot(identical(colnames(expr),names(librarySize)))
+    stopifnot(identical(rownames(expr),names(length)))              
+    
+    RPKM.std <- RPKM(expr, NULL, 
+                     lib.size=librarySize, 
+                     feature.size=length)
+    
+    ## filtering
+    RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+    genesList <- rownames(RPKM.std) 
+    rm(RPKM.std,length)
+    
+    
+    # now we calculate the GC content 
+    geneLength <- geneLength[as.character(genesList),]
+    GCcontent <- GCcalculation(geneLength
+                               ,genRef="/home/seb/reference/genome37.72.fa")
+    length <- (geneLength$Gene.End..bp.-geneLength$Gene.Start..bp.)
+    names(length) <- rownames(geneLength)
+    GCcontent <- cbind(GCcontent,length[as.character(rownames(GCcontent))])    
+    colnames(GCcontent)[2] <- "length"
+    # we update gene expression with the filtered genes
+    expr <- expr[genesList,]
+    rm(length,geneLength,genesList)
+    
+    ## load the library size
+    
+    library(cqn)
+    library(scales)
+    
+    ## CQN
+    stopifnot(identical(colnames(expr),names(librarySize)))
+    stopifnot(identical(rownames(expr),rownames(GCcontent)))              
+    
+    my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent,sizeFactors=librarySize, verbose = TRUE)
+    
+    par(mfrow=c(1,2))
+    cqnplot(my.cqn, n = 1, xlab = "GC content", lty = 1, ylim = c(1,7))
+    cqnplot(my.cqn, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
+    RPKM.cqn <- my.cqn$y + my.cqn$offset
+    
+    SNIG$U.Region_simplified <- NULL
+    covs <- SNIG 
+    rownames(covs) <- covs$A.CEL_file
+    #convert the female and male info in numeric
+    covs[covs=="M"]=0
+    covs[covs=="F"]=1
+    covs <- as.data.frame(apply(covs[,c(2:5,7:9)], 2, as.factor))
+    covs[,c(1:4,7)] <- as.data.frame(apply(covs[,c(1:4,7)], 2, as.numeric))
+    covs[,5] <- as.numeric(covs[,5])
+    covs[,6] <- as.numeric(covs[,6])
+    lanes <- read.csv("/home/seb/expressionData/QCmetrics.csv",row.names=8)
+    rownames(lanes) <- gsub("CEL","",rownames(lanes))
+    covs <- cbind(covs,librarySize[as.character(rownames(covs))])
+    covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
+    colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
+                        "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
+    
+    save(RPKM.cqn,SNIG,covs,file="data/expr/normalisedCounts/genic/Exon+Introns/RPKM.cqn.SNIG")
+    
+    ### Residual correction ###
+    
+    rm(list=ls())
+    
+    load("data/expr/normalisedCounts/genic/Exon+Introns/RPKM.cqn.SNIG")
+    
+    doSwamp(RPKM.cqn,covs)
+    
+    PEERRNDPEER18 <- read.csv("testPEER/RNDMPEER18",row.names=1)
+    PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
+    
+    resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
+                                   "/home/seb/projectsR/eQTLPipeline/data/expr/normalisedCounts/genic/Exon+Introns/resids.SNIG.rda")
+    
+    doSwamp(resids,covs)
+
+
+#########################################################################
+### We split the expression by gene using the parallelisation of the jobs
+#########################################################################
+
+    # delete all the objects
+    rm(list=ls())
+
+    library(doParallel)
+    library(foreach)
+    
+    detectCores()
+    ## [1] 24
+    
+    sys.source("/home/adai/scripts/common_functions.R",
+               attach(NULL, name="myenv"))
+  
+    
+    
+    cl <- makeCluster(20)
+    registerDoParallel(cl)
+    getDoParWorkers()
+    ## [1] 16
+    ## we load the expression data this to save the loading time
+    ensemblGenes <- read.delim(file="data/general/ensemblGenes.txt", as.is=T,header=T)
+    ensemblRef <- read.delim(file="data/general/ensemblRef.txt", as.is=T,header=T)
+    pathResExpr <- "/home/seb/projectsR/eQTLPipeline/data/results/genic/Exon+Introns/"
+    ## load the data from PUTM
+    load("data/expr/normalisedCounts/genic/Exon+Introns/resids.PUTM.rda")
+    exprPUTM <- resids
+    ## load the data from SNIG
+    rm(resids)
+    load("data/expr/normalisedCounts/genic/Exon+Introns/resids.SNIG.rda")
+    exprSNIG <- resids
+    rm(resids)
+    
+    Sys.time()
+    foreach(i=1:nrow(ensemblGenes))%dopar%splitExprByGene(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG,pathResExpr)
+    Sys.time()
+    stopCluster(cl)
+    rm(cl)
+
+
+###############################
+## We run the eQTL analysis ###
+###############################
+
+    # delete all the objects
+    rm(list=ls())
+
+    cl <- makeCluster(20)
+    registerDoParallel(cl)
+    getDoParWorkers()
+    
+    
+    ensemblGenes <- read.delim(pipe("ls /home/seb/projectsR/eQTLPipeline/data/expr/normalisedCounts/genic/Exon+Introns/splitByGene/byGene_snps1Mb/"),header=F)
+    numGenes <- nrow(ensemblGenes)
+    
+    Sys.time()
+    foreach(i=1:numGenes)%dopar%runCisEQTL(i=i,ensemblGenes=ensemblGenes,
+                                           exprLocation="/home/seb/projectsR/eQTLPipeline/data/expr/normalisedCounts/genic/Exon+Introns/splitByGene/byGene_snps1Mb/",
+                                           snpLocation="/home/seb/eQTL/snps/byGene/",
+                                           outputFolder="/home/seb/projectsR/eQTLPipeline/data/results/genic/Exon+Introns/resMatrixEQTL",
+                                           genotypeFile="/home/seb/plinkOutput/eigenvec")
+    ##foreach(i=1:30)%dopar%runCisEQTL(i,ensemblGenes)
+    Sys.time()
+    stopCluster(cl)
+    rm(cl)
+
+#######################
+### Sentinalisation ###
+#######################  
+
+
+    library(doParallel)
+    library(foreach)
+    
+    detectCores()
+    ## [1] 24
+    
+    
+    sys.source("/home/adai/scripts/common_functions.R",
+               attach(NULL, name="myenv"))
+    
+    cl <- makeCluster(16)
+    registerDoParallel(cl)
+    getDoParWorkers()
+    ## path we put the results
+    pathFinalSentinalised <-"/home/seb/projectsR/eQTLPipeline/data/results/genic/Exon+Introns/resMatrixEQTL/sentinalised/FDR10/"
+    ## path where get the unsentinalised eQTLs
+    pathUnsentinalised <- "/home/seb/projectsR/eQTLPipeline/data/results/genic/Exon+Introns/resMatrixEQTL/"
+    
+    ensemblGenes <- read.delim(pipe(paste0("ls ",pathUnsentinalised,
+                                           "PUTM/ > ",pathUnsentinalised,"genes.tmp.txt; ls ",pathUnsentinalised,
+                                           "SNIG/ >> ",pathUnsentinalised,"genes.tmp.txt; sort ",pathUnsentinalised,
+                                           "genes.tmp.txt | uniq; rm ",pathUnsentinalised,
+                                           "genes.tmp.txt")),header=F)
+    
+    
+    Sys.time()
+    foreach(i=1:nrow(ensemblGenes))%dopar%LDsentinalisation(i=i,
+                                                            ensemblGenes=ensemblGenes,
+                                                            pathFinalSentinalised=pathFinalSentinalised,
+                                                            pathUnsentinalised=pathUnsentinalised,
+                                                            FDRthr=0.10,
+                                                            exprLocation="/home/seb/projectsR/eQTLPipeline/data/expr/normalisedCounts/genic/Exon+Introns/splitByGene/byGene_snps1Mb/",
+                                                            snpLocation="/home/seb/eQTL/snps/byGene/",
+                                                            genotypeFile="/home/seb/plinkOutput/eigenvec",
+                                                            tmpFolder="/home/seb/eQTL/tmp/")
+    ##foreach(i=1:20)%dopar%splitExprByGene(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG)
+    Sys.time()
+    stopCluster(cl)
 
 
         

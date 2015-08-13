@@ -1,7 +1,7 @@
 runCisEQTL <-
-function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile)
+function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,MySQL=FALSE)
 {
-  
+  library(RMySQL) 
   ## general functions ##
   sys.source("/home/adai/scripts/common_functions.R",
              attach(NULL, name="myenv"))
@@ -98,8 +98,15 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile)
     myFDR <- sapply(pval, function(pval) p.adjust(pval, method="fdr", n =  nrow(markers.info))) 
     rm(pval)
     my.eQTLstmp <- cbind(store$all$eqtls, myFDR)
-    ##print(head(my.eQTLstmp))    
-    ## Using a FDR threshold of 5%
+
+    ## we save it in the database
+    if(MySQL==TRUE)
+    {
+      con <- dbConnect(MySQL(), user="adai", password="adai123", dbname="test", host="localhost", client.flag=CLIENT_MULTI_STATEMENTS)
+      dbWriteTable(conn=con,name=as.character(tissue),value=my.eQTLstmp,row.names=F,append=T)
+      dbDisconnect(con)
+    }
+    
     my.eQTLs <- my.eQTLstmp[which(my.eQTLstmp$myFDR <= 0.10),]
     rm(my.eQTLstmp) 
     ##print(head(my.eQTLs))
