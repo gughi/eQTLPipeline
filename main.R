@@ -188,19 +188,17 @@ sys.source("genFun.R",
 
     
     # PEER look at the script for the optimisation    
-    ##doPEER(RPKM.cqn=t(RPKM.cqn),nFactors=13,
-    ##       covs=covs[ as.character(colnames(RPKM.cqn)),c("Age","Gender","Region")]
-    ##       ,outputFile="testPEER/PEERtmp")
     
+    # How I select the best PEER I basically calculate the rsquared for all the PEER test,
+    # from each test calculate the maximum and then I select the PEER test that has minimum rsquared beetween all the tests  
+    load("testPEER/correlation.rda")
+    print(paste("Test with minimun correlation",match(min(apply((corPEER^2),2,max)),apply((corPEER^2),2,max))))
+    
+    load("data/general/RPKMCQNcovs.rda")
+    PEERRNDPEER18 <- read.csv("testPEER/RNDMPEER18",row.names=1)
+    correPlot(PEERRNDPEER18,covs[rownames(PEERRNDPEER18),],"Correlation 'best' PEER and known factors")
 
-    
-    ##PEER <- read.csv("data/general/PEERAxes.csv", row.names=1)
-    
 
-    ## we check correlation between PEER in known factor
-    ##correPlot(PEER,covs[rownames(PEER),],"PEER vs Known factors")
-
-    
     # delete all the objects
     rm(list=ls())
     ## Now I separated the analysis for each quantification
@@ -240,6 +238,7 @@ sys.source("genFun.R",
     names(length) <-  as.character(rownames(expr))
     stopifnot(identical(colnames(expr),names(librarySize)))
     stopifnot(identical(rownames(expr),names(length)))              
+    
     RPKM.std <- RPKM(expr, NULL, 
                      lib.size=librarySize, 
                      feature.size=length)
@@ -278,20 +277,43 @@ sys.source("genFun.R",
     cqnplot(my.cqn, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
     RPKM.cqn <- my.cqn$y + my.cqn$offset
     
-    # filter based on the RPKM expression
-    # threshold 0.1 that is log2(0.1) because the RPKM are transform in log2
-    # we filter genes that have less than 0.1 in 80% of the samples
+    PUTM$U.Region_simplified <- NULL
+    covs <- PUTM 
+    rownames(covs) <- covs$A.CEL_file
+    #convert the female and male info in numeric
+    covs[covs=="M"]=0
+    covs[covs=="F"]=1
+    covs <- as.data.frame(apply(covs[,c(2:5,7:9)], 2, as.factor))
+    covs[,c(1:4,7)] <- as.data.frame(apply(covs[,c(1:4,7)], 2, as.numeric))
+    covs[,5] <- as.numeric(covs[,5])
+    covs[,6] <- as.numeric(covs[,6])
+    lanes <- read.csv("/home/seb/expressionData/QCmetrics.csv",row.names=8)
+    rownames(lanes) <- gsub("CEL","",rownames(lanes))
+    covs <- cbind(covs,librarySize[as.character(rownames(covs))])
+    covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
+    colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
+                    "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
+
+    save(RPKM.cqn,PUTM,covs,file="data/expr/normalisedCounts/genic/Exon+Introns/RPKM.cqn.PUTM")
     
-    RPKM.cqn=RPKM.cqn[rowSums(RPKM.cqn>=log2(0.1))>(ncol(RPKM.cqn)-((ncol(RPKM.cqn)*20)/100)),]
+    ### Residual correction ###
+
+    rm(list=ls())
+
+    load("data/expr/normalisedCounts/genic/Exon+Introns/RPKM.cqn.PUTM")
+  
+    doSwamp(RPKM.cqn,covs)
+
+    PEERRNDPEER18 <- read.csv("testPEER/RNDMPEER18",row.names=1)
+    PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
+
+    resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
+                         "/home/seb/projectsR/eQTLPipeline/data/expr/normalisedCounts/genic/Exon+Introns/resids.PUTM.rda")
     
-    
-    doResidualCorrection()    
-    
+    doSwamp(resids,covs)
+
     
 
-    head(expr["ENSG00000002745",])
-    head(RPKM.cqn["ENSG00000002745",])
 
 
-    head(expr,0)
-    table(RPKM.cqn["ENSG00000002745",]>=log2(0.1))
+        

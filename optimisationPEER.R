@@ -67,14 +67,6 @@ doPEER(RPKM.cqn=t(RPKM.cqn),nFactors=13,
 print(" PEER Executed ")
 
 
-##for (i in 1:20) 
-##{
-##  doPEER(RPKM.cqn=t(RPKM.cqn),nFactors=13,
-##         covs=covs[as.character(colnames(RPKM.cqn)),c("Age","Gender","Region")]
-##         ,outputFile=paste0("testPEER/RNDMPEERrun",i))
-##}
-
-
 # # this is actually the library I executed 
 #  library(doParallel)
 #  library(foreach)
@@ -89,7 +81,7 @@ print(" PEER Executed ")
 # 
 # 
 # 
-#  load("data/general/RPKMCQNcovs.rda")
+#  load("/home/seb/projectsR/eQTLPipeline/data/general/RPKMCQNcovs.rda")
 #  
 #  corPEER <- data.frame(matrix(NA, nrow=15, ncol=20))
 #  for (i in 1:20) 
@@ -106,7 +98,7 @@ print(" PEER Executed ")
 #   }
 #   rm(i)
 # 
-# save(corPEER,file="testPEER/correlation.rda")
+# save(corPEER,file="/home/seb/projectsR/eQTLPipeline/testPEER/correlation.rda")
 # 
 # rm(RPKM.cqn)
 # rm(cortmp)

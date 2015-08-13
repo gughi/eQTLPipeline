@@ -1,0 +1,1020 @@
+
+R version 3.1.1 (2014-07-10) -- "Sock it to Me"
+Copyright (C) 2014 The R Foundation for Statistical Computing
+Platform: x86_64-redhat-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## optimisation PEER
+> 
+> 
+> #' Function that calculates hidden factors in the experiment usin PEER 
+> #' @param RPKM.cqn = The expression normalised
+> #' @param nFactors the number of hidden factor we want to discover
+> #' @param covs the covariates to exclude from PEER analysis
+> #' @param outputFile where the results are going to be saved
+> print( i <- as.numeric( commandArgs(trailingOnly=T)[1] ) )
+[1] 3
+> 
+> doPEER <- function(RPKM.cqn,nFactors,covs,outputFile)
++ {
++   
++   library(peer,lib="/home/seb/RlibraryTest/")
++   
++   
++   ## WE DON'T INCLUDE THE GENETIC COVARIATS
++   ## geneticPCA <- read.table.rows("/home/guelfi/plinkOutput/eigenvec", keepRows=covs$U.SD_No, sep=" ",header=F)
++   ## geneticPCA <- geneticPCA[covs$U.SD_No,]
++   ## rownames(geneticPCA) <- rownames(covs)
++   
++   ## WE INCLUDE AGE,GENDER AND TISSUE
++   covs <- covs[as.vector(rownames(RPKM.cqn)),]
++   stopifnot(identical(rownames(covs),rownames(RPKM.cqn)))
++   
++   ## create the PEER model
++   model=PEER()
++   ## set to obtain only the first 15 hidden factors
++   PEER_setNk(model, nFactors)
++   ## set the covariants, step 4
++   PEER_setCovariates(model, data.matrix(covs))
++   PEER_setPhenoMean(model,as.matrix(RPKM.cqn))
++   
++   
++   ## check if the covariants have been updatef properly
++   print(paste("dimension of the expression matrix",print(dim(PEER_getPhenoMean(model)))))
++   print(paste("dimension of the covariate matrix",print(dim(PEER_getCovariates(model)))))
++   ##head(PEER_getPhenoMean(model))
++   
++   PEER_setVarTolerance(model, 0.0000000000000000000000001)
++   
++   
++   ## run PEER, step 5
++   print(paste("variance tolerance",PEER_getVarTolerance(model)))
++   PEER_update(model)
++   
++   ## get the hidden factors
++   factor <- PEER_getX(model)
++   head(factor)
++   rownames(factor) <- rownames(RPKM.cqn)
++   
++   precision <- PEER_getAlpha(model)
++   print(dim(precision))
++   ##plot(precision)
++   
++   write.csv(factor,file=outputFile)
++   
++   
++ }
+> 
+> load("/home/seb/projectsR/eQTLPipeline/data/general/RPKMCQNcovs.rda")
+> 
+> doPEER(RPKM.cqn=t(RPKM.cqn),nFactors=13,
++        covs=covs[as.character(colnames(RPKM.cqn)),c("Age","Gender","Region")]
++        ,outputFile=paste0("/home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i))
+[1]   170 68562
+[1] "dimension of the expression matrix 170"  
+[2] "dimension of the expression matrix 68562"
+[1] 170   3
+[1] "dimension of the covariate matrix 170"
+[2] "dimension of the covariate matrix 3"  
+[1] "variance tolerance 1e-25"
+Initialising Net
+Initialising Net
+
+Data dimensions: Nk:16,Nj: 170,Np: 68562, Nc: 3
+
+USING RANDN initialization
+	After initi, residual variance 14.2229
+	iteration 0/5000
+Residual variance: 1.3909, Delta bound: inf, Delta var(residuals): -inf
+
+	iteration 1/5000
+Residual variance: 0.7157, Delta bound: 5012165.7956, Delta var(residuals): 0.6752
+
+	iteration 2/5000
+Residual variance: 0.5786, Delta bound: 1017405.5621, Delta var(residuals): 0.1371
+
+	iteration 3/5000
+Residual variance: 0.5056, Delta bound: 451754.4685, Delta var(residuals): 0.0730
+
+	iteration 4/5000
+Residual variance: 0.4719, Delta bound: 162372.8057, Delta var(residuals): 0.0337
+
+	iteration 5/5000
+Residual variance: 0.4510, Delta bound: 84602.4409, Delta var(residuals): 0.0210
+
+	iteration 6/5000
+Residual variance: 0.4391, Delta bound: 40298.6185, Delta var(residuals): 0.0119
+
+	iteration 7/5000
+Residual variance: 0.4322, Delta bound: 23141.0302, Delta var(residuals): 0.0068
+
+	iteration 8/5000
+Residual variance: 0.4285, Delta bound: 12004.0415, Delta var(residuals): 0.0037
+
+	iteration 9/5000
+Residual variance: 0.4268, Delta bound: 6864.4269, Delta var(residuals): 0.0018
+
+	iteration 10/5000
+Residual variance: 0.4258, Delta bound: 5661.9482, Delta var(residuals): 0.0009
+
+	iteration 11/5000
+Residual variance: 0.4252, Delta bound: 4614.0663, Delta var(residuals): 0.0006
+
+	iteration 12/5000
+Residual variance: 0.4248, Delta bound: 4766.0656, Delta var(residuals): 0.0004
+
+	iteration 13/5000
+Residual variance: 0.4244, Delta bound: 4305.6031, Delta var(residuals): 0.0003
+
+	iteration 14/5000
+Residual variance: 0.4242, Delta bound: 3680.4588, Delta var(residuals): 0.0003
+
+	iteration 15/5000
+Residual variance: 0.4239, Delta bound: 4176.8892, Delta var(residuals): 0.0003
+
+	iteration 16/5000
+Residual variance: 0.4237, Delta bound: 4063.7612, Delta var(residuals): 0.0002
+
+	iteration 17/5000
+Residual variance: 0.4235, Delta bound: 3174.7688, Delta var(residuals): 0.0002
+
+	iteration 18/5000
+Residual variance: 0.4233, Delta bound: 3017.9474, Delta var(residuals): 0.0002
+
+	iteration 19/5000
+Residual variance: 0.4232, Delta bound: 4086.1397, Delta var(residuals): 0.0002
+
+	iteration 20/5000
+Residual variance: 0.4230, Delta bound: 3084.3199, Delta var(residuals): 0.0001
+
+	iteration 21/5000
+Residual variance: 0.4229, Delta bound: 3318.2361, Delta var(residuals): 0.0001
+
+	iteration 22/5000
+Residual variance: 0.4228, Delta bound: 3057.9509, Delta var(residuals): 0.0001
+
+	iteration 23/5000
+Residual variance: 0.4227, Delta bound: 2009.5061, Delta var(residuals): 0.0001
+
+	iteration 24/5000
+Residual variance: 0.4226, Delta bound: 2739.8160, Delta var(residuals): 0.0001
+
+	iteration 25/5000
+Residual variance: 0.4226, Delta bound: 3116.0852, Delta var(residuals): 0.0001
+
+	iteration 26/5000
+Residual variance: 0.4225, Delta bound: 2612.1035, Delta var(residuals): 0.0001
+
+	iteration 27/5000
+Residual variance: 0.4224, Delta bound: 1975.8654, Delta var(residuals): 0.0001
+
+	iteration 28/5000
+Residual variance: 0.4224, Delta bound: 2820.6075, Delta var(residuals): 0.0000
+
+	iteration 29/5000
+Residual variance: 0.4224, Delta bound: 2046.4668, Delta var(residuals): 0.0000
+
+	iteration 30/5000
+Residual variance: 0.4223, Delta bound: 1985.8320, Delta var(residuals): 0.0000
+
+	iteration 31/5000
+Residual variance: 0.4223, Delta bound: 1940.7655, Delta var(residuals): 0.0000
+
+	iteration 32/5000
+Residual variance: 0.4223, Delta bound: 2153.9985, Delta var(residuals): 0.0000
+
+	iteration 33/5000
+Residual variance: 0.4223, Delta bound: 2887.9910, Delta var(residuals): -0.0000
+
+	iteration 34/5000
+Residual variance: 0.4224, Delta bound: 1666.4993, Delta var(residuals): -0.0000
+
+	iteration 35/5000
+Residual variance: 0.4224, Delta bound: 2796.9496, Delta var(residuals): -0.0000
+
+	iteration 36/5000
+Residual variance: 0.4224, Delta bound: 1795.6818, Delta var(residuals): -0.0000
+
+	iteration 37/5000
+Residual variance: 0.4224, Delta bound: 1995.7414, Delta var(residuals): -0.0000
+
+	iteration 38/5000
+Residual variance: 0.4224, Delta bound: 1962.2247, Delta var(residuals): -0.0000
+
+	iteration 39/5000
+Residual variance: 0.4225, Delta bound: 2405.6600, Delta var(residuals): -0.0000
+
+	iteration 40/5000
+Residual variance: 0.4225, Delta bound: 2214.0144, Delta var(residuals): -0.0000
+
+	iteration 41/5000
+Residual variance: 0.4225, Delta bound: 2512.4660, Delta var(residuals): -0.0000
+
+	iteration 42/5000
+Residual variance: 0.4225, Delta bound: 2525.2042, Delta var(residuals): -0.0000
+
+	iteration 43/5000
+Residual variance: 0.4226, Delta bound: 2836.0639, Delta var(residuals): -0.0000
+
+	iteration 44/5000
+Residual variance: 0.4226, Delta bound: 2442.5183, Delta var(residuals): -0.0000
+
+	iteration 45/5000
+Residual variance: 0.4227, Delta bound: 2242.2780, Delta var(residuals): -0.0000
+
+	iteration 46/5000
+Residual variance: 0.4227, Delta bound: 2948.7477, Delta var(residuals): -0.0000
+
+	iteration 47/5000
+Residual variance: 0.4227, Delta bound: 3041.2152, Delta var(residuals): -0.0000
+
+	iteration 48/5000
+Residual variance: 0.4228, Delta bound: 2765.0722, Delta var(residuals): -0.0001
+
+	iteration 49/5000
+Residual variance: 0.4229, Delta bound: 2854.8803, Delta var(residuals): -0.0001
+
+	iteration 50/5000
+Residual variance: 0.4229, Delta bound: 2810.6297, Delta var(residuals): -0.0001
+
+	iteration 51/5000
+Residual variance: 0.4230, Delta bound: 3251.7763, Delta var(residuals): -0.0001
+
+	iteration 52/5000
+Residual variance: 0.4231, Delta bound: 2778.7756, Delta var(residuals): -0.0001
+
+	iteration 53/5000
+Residual variance: 0.4232, Delta bound: 3050.1322, Delta var(residuals): -0.0001
+
+	iteration 54/5000
+Residual variance: 0.4233, Delta bound: 2579.7901, Delta var(residuals): -0.0001
+
+	iteration 55/5000
+Residual variance: 0.4234, Delta bound: 2832.6074, Delta var(residuals): -0.0001
+
+	iteration 56/5000
+Residual variance: 0.4235, Delta bound: 2684.2905, Delta var(residuals): -0.0001
+
+	iteration 57/5000
+Residual variance: 0.4236, Delta bound: 2586.1112, Delta var(residuals): -0.0001
+
+	iteration 58/5000
+Residual variance: 0.4238, Delta bound: 1966.3214, Delta var(residuals): -0.0001
+
+	iteration 59/5000
+Residual variance: 0.4239, Delta bound: 2061.8353, Delta var(residuals): -0.0001
+
+	iteration 60/5000
+Residual variance: 0.4240, Delta bound: 1411.2417, Delta var(residuals): -0.0001
+
+	iteration 61/5000
+Residual variance: 0.4241, Delta bound: 1614.9201, Delta var(residuals): -0.0001
+
+	iteration 62/5000
+Residual variance: 0.4243, Delta bound: 1006.9725, Delta var(residuals): -0.0001
+
+	iteration 63/5000
+Residual variance: 0.4244, Delta bound: 1140.5179, Delta var(residuals): -0.0001
+
+	iteration 64/5000
+Residual variance: 0.4245, Delta bound: 615.4017, Delta var(residuals): -0.0001
+
+	iteration 65/5000
+Residual variance: 0.4246, Delta bound: 1427.5799, Delta var(residuals): -0.0001
+
+	iteration 66/5000
+Residual variance: 0.4247, Delta bound: 736.9697, Delta var(residuals): -0.0001
+
+	iteration 67/5000
+Residual variance: 0.4247, Delta bound: 1106.5444, Delta var(residuals): -0.0001
+
+	iteration 68/5000
+Residual variance: 0.4248, Delta bound: 711.9947, Delta var(residuals): -0.0001
+
+	iteration 69/5000
+Residual variance: 0.4249, Delta bound: 734.0176, Delta var(residuals): -0.0001
+
+	iteration 70/5000
+Residual variance: 0.4250, Delta bound: 518.0812, Delta var(residuals): -0.0001
+
+	iteration 71/5000
+Residual variance: 0.4250, Delta bound: 403.3118, Delta var(residuals): -0.0001
+
+	iteration 72/5000
+Residual variance: 0.4251, Delta bound: 573.3045, Delta var(residuals): -0.0001
+
+	iteration 73/5000
+Residual variance: 0.4252, Delta bound: 565.1506, Delta var(residuals): -0.0001
+
+	iteration 74/5000
+Residual variance: 0.4252, Delta bound: 380.7164, Delta var(residuals): -0.0001
+
+	iteration 75/5000
+Residual variance: 0.4253, Delta bound: 392.5273, Delta var(residuals): -0.0000
+
+	iteration 76/5000
+Residual variance: 0.4253, Delta bound: 620.9584, Delta var(residuals): -0.0000
+
+	iteration 77/5000
+Residual variance: 0.4253, Delta bound: 194.6520, Delta var(residuals): -0.0000
+
+	iteration 78/5000
+Residual variance: 0.4254, Delta bound: 203.4460, Delta var(residuals): -0.0000
+
+	iteration 79/5000
+Residual variance: 0.4254, Delta bound: 669.6731, Delta var(residuals): -0.0000
+
+	iteration 80/5000
+Residual variance: 0.4255, Delta bound: 562.6686, Delta var(residuals): -0.0000
+
+	iteration 81/5000
+Residual variance: 0.4255, Delta bound: 208.6904, Delta var(residuals): -0.0000
+
+	iteration 82/5000
+Residual variance: 0.4255, Delta bound: 408.4096, Delta var(residuals): -0.0000
+
+	iteration 83/5000
+Residual variance: 0.4255, Delta bound: 97.8914, Delta var(residuals): -0.0000
+
+	iteration 84/5000
+Residual variance: 0.4256, Delta bound: 187.4865, Delta var(residuals): -0.0000
+
+	iteration 85/5000
+Residual variance: 0.4256, Delta bound: 369.2825, Delta var(residuals): -0.0000
+
+	iteration 86/5000
+Residual variance: 0.4256, Delta bound: -10.0536, Delta var(residuals): -0.0000
+
+	iteration 87/5000
+Residual variance: 0.4256, Delta bound: -1.3574, Delta var(residuals): -0.0000
+
+	iteration 88/5000
+Residual variance: 0.4257, Delta bound: 151.1681, Delta var(residuals): -0.0000
+
+	iteration 89/5000
+Residual variance: 0.4257, Delta bound: 182.5913, Delta var(residuals): -0.0000
+
+	iteration 90/5000
+Residual variance: 0.4257, Delta bound: 180.1856, Delta var(residuals): -0.0000
+
+	iteration 91/5000
+Residual variance: 0.4257, Delta bound: 240.0437, Delta var(residuals): -0.0000
+
+	iteration 92/5000
+Residual variance: 0.4258, Delta bound: -32.8954, Delta var(residuals): -0.0000
+
+	iteration 93/5000
+Residual variance: 0.4258, Delta bound: 335.4199, Delta var(residuals): -0.0000
+
+	iteration 94/5000
+Residual variance: 0.4258, Delta bound: 32.1774, Delta var(residuals): -0.0000
+
+	iteration 95/5000
+Residual variance: 0.4258, Delta bound: 142.4595, Delta var(residuals): -0.0000
+
+	iteration 96/5000
+Residual variance: 0.4258, Delta bound: 120.4816, Delta var(residuals): -0.0000
+
+	iteration 97/5000
+Residual variance: 0.4258, Delta bound: 186.1165, Delta var(residuals): -0.0000
+
+	iteration 98/5000
+Residual variance: 0.4259, Delta bound: 320.0262, Delta var(residuals): -0.0000
+
+	iteration 99/5000
+Residual variance: 0.4259, Delta bound: 20.2728, Delta var(residuals): -0.0000
+
+	iteration 100/5000
+Residual variance: 0.4259, Delta bound: 87.6127, Delta var(residuals): -0.0000
+
+	iteration 101/5000
+Residual variance: 0.4259, Delta bound: 353.8699, Delta var(residuals): -0.0000
+
+	iteration 102/5000
+Residual variance: 0.4259, Delta bound: 298.5887, Delta var(residuals): -0.0000
+
+	iteration 103/5000
+Residual variance: 0.4259, Delta bound: 32.4078, Delta var(residuals): -0.0000
+
+	iteration 104/5000
+Residual variance: 0.4259, Delta bound: 135.1122, Delta var(residuals): -0.0000
+
+	iteration 105/5000
+Residual variance: 0.4259, Delta bound: -28.2955, Delta var(residuals): -0.0000
+
+	iteration 106/5000
+Residual variance: 0.4260, Delta bound: 24.8202, Delta var(residuals): -0.0000
+
+	iteration 107/5000
+Residual variance: 0.4260, Delta bound: 45.9729, Delta var(residuals): -0.0000
+
+	iteration 108/5000
+Residual variance: 0.4260, Delta bound: 216.4304, Delta var(residuals): -0.0000
+
+	iteration 109/5000
+Residual variance: 0.4260, Delta bound: 17.4276, Delta var(residuals): -0.0000
+
+	iteration 110/5000
+Residual variance: 0.4260, Delta bound: 189.9294, Delta var(residuals): -0.0000
+
+	iteration 111/5000
+Residual variance: 0.4260, Delta bound: 82.4324, Delta var(residuals): -0.0000
+
+	iteration 112/5000
+Residual variance: 0.4260, Delta bound: -63.9002, Delta var(residuals): -0.0000
+
+	iteration 113/5000
+Residual variance: 0.4260, Delta bound: 343.7268, Delta var(residuals): -0.0000
+
+	iteration 114/5000
+Residual variance: 0.4260, Delta bound: 67.1078, Delta var(residuals): -0.0000
+
+	iteration 115/5000
+Residual variance: 0.4260, Delta bound: -79.5713, Delta var(residuals): -0.0000
+
+	iteration 116/5000
+Residual variance: 0.4261, Delta bound: 174.1091, Delta var(residuals): -0.0000
+
+	iteration 117/5000
+Residual variance: 0.4261, Delta bound: 118.1245, Delta var(residuals): -0.0000
+
+	iteration 118/5000
+Residual variance: 0.4261, Delta bound: -111.5890, Delta var(residuals): -0.0000
+
+	iteration 119/5000
+Residual variance: 0.4261, Delta bound: 160.1782, Delta var(residuals): -0.0000
+
+	iteration 120/5000
+Residual variance: 0.4261, Delta bound: -94.2414, Delta var(residuals): -0.0000
+
+	iteration 121/5000
+Residual variance: 0.4261, Delta bound: 157.6736, Delta var(residuals): -0.0000
+
+	iteration 122/5000
+Residual variance: 0.4261, Delta bound: -35.3939, Delta var(residuals): -0.0000
+
+	iteration 123/5000
+Residual variance: 0.4261, Delta bound: 170.7070, Delta var(residuals): -0.0000
+
+	iteration 124/5000
+Residual variance: 0.4261, Delta bound: -143.1044, Delta var(residuals): -0.0000
+
+	iteration 125/5000
+Residual variance: 0.4261, Delta bound: 61.2460, Delta var(residuals): -0.0000
+
+	iteration 126/5000
+Residual variance: 0.4261, Delta bound: -123.3581, Delta var(residuals): -0.0000
+
+	iteration 127/5000
+Residual variance: 0.4261, Delta bound: 17.3202, Delta var(residuals): -0.0000
+
+	iteration 128/5000
+Residual variance: 0.4261, Delta bound: 93.5115, Delta var(residuals): -0.0000
+
+	iteration 129/5000
+Residual variance: 0.4261, Delta bound: 107.0568, Delta var(residuals): -0.0000
+
+	iteration 130/5000
+Residual variance: 0.4262, Delta bound: -76.8147, Delta var(residuals): -0.0000
+
+	iteration 131/5000
+Residual variance: 0.4262, Delta bound: 15.5026, Delta var(residuals): -0.0000
+
+	iteration 132/5000
+Residual variance: 0.4262, Delta bound: 161.1713, Delta var(residuals): -0.0000
+
+	iteration 133/5000
+Residual variance: 0.4262, Delta bound: 19.7546, Delta var(residuals): -0.0000
+
+	iteration 134/5000
+Residual variance: 0.4262, Delta bound: -33.4017, Delta var(residuals): -0.0000
+
+	iteration 135/5000
+Residual variance: 0.4262, Delta bound: -11.2770, Delta var(residuals): -0.0000
+
+	iteration 136/5000
+Residual variance: 0.4262, Delta bound: 9.6179, Delta var(residuals): -0.0000
+
+	iteration 137/5000
+Residual variance: 0.4262, Delta bound: 151.9005, Delta var(residuals): -0.0000
+
+	iteration 138/5000
+Residual variance: 0.4262, Delta bound: 40.1196, Delta var(residuals): -0.0000
+
+	iteration 139/5000
+Residual variance: 0.4262, Delta bound: -7.8536, Delta var(residuals): -0.0000
+
+	iteration 140/5000
+Residual variance: 0.4262, Delta bound: -35.2359, Delta var(residuals): -0.0000
+
+	iteration 141/5000
+Residual variance: 0.4262, Delta bound: 17.9977, Delta var(residuals): -0.0000
+
+	iteration 142/5000
+Residual variance: 0.4262, Delta bound: 29.5345, Delta var(residuals): -0.0000
+
+	iteration 143/5000
+Residual variance: 0.4262, Delta bound: 18.8438, Delta var(residuals): -0.0000
+
+	iteration 144/5000
+Residual variance: 0.4262, Delta bound: 158.3870, Delta var(residuals): -0.0000
+
+	iteration 145/5000
+Residual variance: 0.4262, Delta bound: -69.2521, Delta var(residuals): -0.0000
+
+	iteration 146/5000
+Residual variance: 0.4262, Delta bound: -32.3046, Delta var(residuals): -0.0000
+
+	iteration 147/5000
+Residual variance: 0.4262, Delta bound: 94.3147, Delta var(residuals): -0.0000
+
+	iteration 148/5000
+Residual variance: 0.4262, Delta bound: -86.7345, Delta var(residuals): -0.0000
+
+	iteration 149/5000
+Residual variance: 0.4262, Delta bound: 97.5632, Delta var(residuals): -0.0000
+
+	iteration 150/5000
+Residual variance: 0.4262, Delta bound: 81.8137, Delta var(residuals): -0.0000
+
+	iteration 151/5000
+Residual variance: 0.4262, Delta bound: -67.5925, Delta var(residuals): -0.0000
+
+	iteration 152/5000
+Residual variance: 0.4263, Delta bound: -15.7844, Delta var(residuals): -0.0000
+
+	iteration 153/5000
+Residual variance: 0.4263, Delta bound: -31.5088, Delta var(residuals): -0.0000
+
+	iteration 154/5000
+Residual variance: 0.4263, Delta bound: 32.4734, Delta var(residuals): -0.0000
+
+	iteration 155/5000
+Residual variance: 0.4263, Delta bound: 10.7464, Delta var(residuals): -0.0000
+
+	iteration 156/5000
+Residual variance: 0.4263, Delta bound: -60.4560, Delta var(residuals): -0.0000
+
+	iteration 157/5000
+Residual variance: 0.4263, Delta bound: 181.5562, Delta var(residuals): -0.0000
+
+	iteration 158/5000
+Residual variance: 0.4263, Delta bound: -89.6871, Delta var(residuals): -0.0000
+
+	iteration 159/5000
+Residual variance: 0.4263, Delta bound: 61.9756, Delta var(residuals): -0.0000
+
+	iteration 160/5000
+Residual variance: 0.4263, Delta bound: 3.8293, Delta var(residuals): -0.0000
+
+	iteration 161/5000
+Residual variance: 0.4263, Delta bound: 65.5324, Delta var(residuals): -0.0000
+
+	iteration 162/5000
+Residual variance: 0.4263, Delta bound: -32.7765, Delta var(residuals): -0.0000
+
+	iteration 163/5000
+Residual variance: 0.4263, Delta bound: 121.7332, Delta var(residuals): -0.0000
+
+	iteration 164/5000
+Residual variance: 0.4263, Delta bound: 33.4270, Delta var(residuals): -0.0000
+
+	iteration 165/5000
+Residual variance: 0.4263, Delta bound: 19.1361, Delta var(residuals): -0.0000
+
+	iteration 166/5000
+Residual variance: 0.4263, Delta bound: -32.6915, Delta var(residuals): -0.0000
+
+	iteration 167/5000
+Residual variance: 0.4263, Delta bound: 49.1302, Delta var(residuals): -0.0000
+
+	iteration 168/5000
+Residual variance: 0.4263, Delta bound: 105.9836, Delta var(residuals): -0.0000
+
+	iteration 169/5000
+Residual variance: 0.4263, Delta bound: -114.8533, Delta var(residuals): -0.0000
+
+	iteration 170/5000
+Residual variance: 0.4263, Delta bound: 98.3449, Delta var(residuals): -0.0000
+
+	iteration 171/5000
+Residual variance: 0.4263, Delta bound: 38.7082, Delta var(residuals): -0.0000
+
+	iteration 172/5000
+Residual variance: 0.4263, Delta bound: -46.1822, Delta var(residuals): -0.0000
+
+	iteration 173/5000
+Residual variance: 0.4263, Delta bound: 5.4747, Delta var(residuals): -0.0000
+
+	iteration 174/5000
+Residual variance: 0.4263, Delta bound: 94.9233, Delta var(residuals): -0.0000
+
+	iteration 175/5000
+Residual variance: 0.4263, Delta bound: 34.0369, Delta var(residuals): -0.0000
+
+	iteration 176/5000
+Residual variance: 0.4263, Delta bound: 33.5101, Delta var(residuals): -0.0000
+
+	iteration 177/5000
+Residual variance: 0.4263, Delta bound: -77.1766, Delta var(residuals): -0.0000
+
+	iteration 178/5000
+Residual variance: 0.4263, Delta bound: -35.2247, Delta var(residuals): -0.0000
+
+	iteration 179/5000
+Residual variance: 0.4263, Delta bound: 25.4595, Delta var(residuals): -0.0000
+
+	iteration 180/5000
+Residual variance: 0.4263, Delta bound: 129.3241, Delta var(residuals): -0.0000
+
+	iteration 181/5000
+Residual variance: 0.4263, Delta bound: -72.6153, Delta var(residuals): -0.0000
+
+	iteration 182/5000
+Residual variance: 0.4263, Delta bound: 147.2703, Delta var(residuals): -0.0000
+
+	iteration 183/5000
+Residual variance: 0.4263, Delta bound: -33.6854, Delta var(residuals): -0.0000
+
+	iteration 184/5000
+Residual variance: 0.4263, Delta bound: -54.0142, Delta var(residuals): -0.0000
+
+	iteration 185/5000
+Residual variance: 0.4263, Delta bound: 12.4857, Delta var(residuals): -0.0000
+
+	iteration 186/5000
+Residual variance: 0.4263, Delta bound: -74.3760, Delta var(residuals): -0.0000
+
+	iteration 187/5000
+Residual variance: 0.4263, Delta bound: 39.5405, Delta var(residuals): -0.0000
+
+	iteration 188/5000
+Residual variance: 0.4264, Delta bound: -60.0280, Delta var(residuals): -0.0000
+
+	iteration 189/5000
+Residual variance: 0.4264, Delta bound: 148.5638, Delta var(residuals): -0.0000
+
+	iteration 190/5000
+Residual variance: 0.4264, Delta bound: -81.7931, Delta var(residuals): -0.0000
+
+	iteration 191/5000
+Residual variance: 0.4264, Delta bound: 126.9021, Delta var(residuals): -0.0000
+
+	iteration 192/5000
+Residual variance: 0.4264, Delta bound: -23.0065, Delta var(residuals): -0.0000
+
+	iteration 193/5000
+Residual variance: 0.4264, Delta bound: 6.7709, Delta var(residuals): -0.0000
+
+	iteration 194/5000
+Residual variance: 0.4264, Delta bound: -41.4531, Delta var(residuals): -0.0000
+
+	iteration 195/5000
+Residual variance: 0.4264, Delta bound: 13.6616, Delta var(residuals): -0.0000
+
+	iteration 196/5000
+Residual variance: 0.4264, Delta bound: -42.4908, Delta var(residuals): -0.0000
+
+	iteration 197/5000
+Residual variance: 0.4264, Delta bound: -117.0525, Delta var(residuals): -0.0000
+
+	iteration 198/5000
+Residual variance: 0.4264, Delta bound: 70.7158, Delta var(residuals): -0.0000
+
+	iteration 199/5000
+Residual variance: 0.4264, Delta bound: 6.5831, Delta var(residuals): -0.0000
+
+	iteration 200/5000
+Residual variance: 0.4264, Delta bound: -44.2669, Delta var(residuals): -0.0000
+
+	iteration 201/5000
+Residual variance: 0.4264, Delta bound: 32.8414, Delta var(residuals): -0.0000
+
+	iteration 202/5000
+Residual variance: 0.4264, Delta bound: -55.2689, Delta var(residuals): -0.0000
+
+	iteration 203/5000
+Residual variance: 0.4264, Delta bound: 6.8085, Delta var(residuals): -0.0000
+
+	iteration 204/5000
+Residual variance: 0.4264, Delta bound: 166.3184, Delta var(residuals): -0.0000
+
+	iteration 205/5000
+Residual variance: 0.4264, Delta bound: -50.8561, Delta var(residuals): -0.0000
+
+	iteration 206/5000
+Residual variance: 0.4264, Delta bound: -177.1411, Delta var(residuals): -0.0000
+
+	iteration 207/5000
+Residual variance: 0.4264, Delta bound: 213.4197, Delta var(residuals): -0.0000
+
+	iteration 208/5000
+Residual variance: 0.4264, Delta bound: 45.2358, Delta var(residuals): -0.0000
+
+	iteration 209/5000
+Residual variance: 0.4264, Delta bound: -60.3435, Delta var(residuals): -0.0000
+
+	iteration 210/5000
+Residual variance: 0.4264, Delta bound: 51.1588, Delta var(residuals): -0.0000
+
+	iteration 211/5000
+Residual variance: 0.4264, Delta bound: 22.3996, Delta var(residuals): -0.0000
+
+	iteration 212/5000
+Residual variance: 0.4264, Delta bound: -98.9157, Delta var(residuals): -0.0000
+
+	iteration 213/5000
+Residual variance: 0.4264, Delta bound: 26.0945, Delta var(residuals): -0.0000
+
+	iteration 214/5000
+Residual variance: 0.4264, Delta bound: -55.2464, Delta var(residuals): -0.0000
+
+	iteration 215/5000
+Residual variance: 0.4264, Delta bound: 83.0231, Delta var(residuals): -0.0000
+
+	iteration 216/5000
+Residual variance: 0.4264, Delta bound: -30.0276, Delta var(residuals): -0.0000
+
+	iteration 217/5000
+Residual variance: 0.4264, Delta bound: -53.0653, Delta var(residuals): -0.0000
+
+	iteration 218/5000
+Residual variance: 0.4264, Delta bound: 81.5400, Delta var(residuals): -0.0000
+
+	iteration 219/5000
+Residual variance: 0.4264, Delta bound: 54.3180, Delta var(residuals): -0.0000
+
+	iteration 220/5000
+Residual variance: 0.4264, Delta bound: -20.7301, Delta var(residuals): -0.0000
+
+	iteration 221/5000
+Residual variance: 0.4264, Delta bound: 14.8236, Delta var(residuals): -0.0000
+
+	iteration 222/5000
+Residual variance: 0.4264, Delta bound: -19.8548, Delta var(residuals): -0.0000
+
+	iteration 223/5000
+Residual variance: 0.4264, Delta bound: -46.8481, Delta var(residuals): -0.0000
+
+	iteration 224/5000
+Residual variance: 0.4264, Delta bound: 140.1100, Delta var(residuals): -0.0000
+
+	iteration 225/5000
+Residual variance: 0.4264, Delta bound: 9.1971, Delta var(residuals): -0.0000
+
+	iteration 226/5000
+Residual variance: 0.4264, Delta bound: -117.7557, Delta var(residuals): -0.0000
+
+	iteration 227/5000
+Residual variance: 0.4264, Delta bound: 226.1712, Delta var(residuals): -0.0000
+
+	iteration 228/5000
+Residual variance: 0.4264, Delta bound: -138.0817, Delta var(residuals): -0.0000
+
+	iteration 229/5000
+Residual variance: 0.4264, Delta bound: -110.7258, Delta var(residuals): -0.0000
+
+	iteration 230/5000
+Residual variance: 0.4264, Delta bound: 48.9920, Delta var(residuals): -0.0000
+
+	iteration 231/5000
+Residual variance: 0.4264, Delta bound: 19.5161, Delta var(residuals): -0.0000
+
+	iteration 232/5000
+Residual variance: 0.4264, Delta bound: -53.3468, Delta var(residuals): -0.0000
+
+	iteration 233/5000
+Residual variance: 0.4264, Delta bound: -10.7995, Delta var(residuals): -0.0000
+
+	iteration 234/5000
+Residual variance: 0.4264, Delta bound: -31.6682, Delta var(residuals): -0.0000
+
+	iteration 235/5000
+Residual variance: 0.4264, Delta bound: 62.1523, Delta var(residuals): -0.0000
+
+	iteration 236/5000
+Residual variance: 0.4264, Delta bound: 139.8021, Delta var(residuals): -0.0000
+
+	iteration 237/5000
+Residual variance: 0.4264, Delta bound: -85.4978, Delta var(residuals): -0.0000
+
+	iteration 238/5000
+Residual variance: 0.4264, Delta bound: 90.0277, Delta var(residuals): -0.0000
+
+	iteration 239/5000
+Residual variance: 0.4264, Delta bound: 28.6502, Delta var(residuals): -0.0000
+
+	iteration 240/5000
+Residual variance: 0.4264, Delta bound: -93.2757, Delta var(residuals): -0.0000
+
+	iteration 241/5000
+Residual variance: 0.4264, Delta bound: 22.1253, Delta var(residuals): -0.0000
+
+	iteration 242/5000
+Residual variance: 0.4264, Delta bound: 126.7663, Delta var(residuals): -0.0000
+
+	iteration 243/5000
+Residual variance: 0.4264, Delta bound: -4.8968, Delta var(residuals): -0.0000
+
+	iteration 244/5000
+Residual variance: 0.4264, Delta bound: -12.4529, Delta var(residuals): -0.0000
+
+	iteration 245/5000
+Residual variance: 0.4264, Delta bound: -27.3014, Delta var(residuals): -0.0000
+
+	iteration 246/5000
+Residual variance: 0.4264, Delta bound: -19.7490, Delta var(residuals): -0.0000
+
+	iteration 247/5000
+Residual variance: 0.4264, Delta bound: 7.4962, Delta var(residuals): -0.0000
+
+	iteration 248/5000
+Residual variance: 0.4264, Delta bound: -59.2625, Delta var(residuals): -0.0000
+
+	iteration 249/5000
+Residual variance: 0.4264, Delta bound: 105.6421, Delta var(residuals): -0.0000
+
+	iteration 250/5000
+Residual variance: 0.4264, Delta bound: -161.5055, Delta var(residuals): -0.0000
+
+	iteration 251/5000
+Residual variance: 0.4264, Delta bound: 210.4530, Delta var(residuals): -0.0000
+
+	iteration 252/5000
+Residual variance: 0.4264, Delta bound: -63.4161, Delta var(residuals): -0.0000
+
+	iteration 253/5000
+Residual variance: 0.4264, Delta bound: 0.5892, Delta var(residuals): -0.0000
+
+	iteration 254/5000
+Residual variance: 0.4264, Delta bound: -15.1638, Delta var(residuals): -0.0000
+
+	iteration 255/5000
+Residual variance: 0.4264, Delta bound: -11.4629, Delta var(residuals): -0.0000
+
+	iteration 256/5000
+Residual variance: 0.4264, Delta bound: 4.1017, Delta var(residuals): -0.0000
+
+	iteration 257/5000
+Residual variance: 0.4264, Delta bound: -50.9690, Delta var(residuals): -0.0000
+
+	iteration 258/5000
+Residual variance: 0.4264, Delta bound: 141.3463, Delta var(residuals): -0.0000
+
+	iteration 259/5000
+Residual variance: 0.4264, Delta bound: -195.3729, Delta var(residuals): -0.0000
+
+	iteration 260/5000
+Residual variance: 0.4264, Delta bound: 31.5160, Delta var(residuals): -0.0000
+
+	iteration 261/5000
+Residual variance: 0.4264, Delta bound: 69.2986, Delta var(residuals): -0.0000
+
+	iteration 262/5000
+Residual variance: 0.4264, Delta bound: -97.7910, Delta var(residuals): -0.0000
+
+	iteration 263/5000
+Residual variance: 0.4264, Delta bound: 71.0380, Delta var(residuals): -0.0000
+
+	iteration 264/5000
+Residual variance: 0.4264, Delta bound: 5.9477, Delta var(residuals): -0.0000
+
+	iteration 265/5000
+Residual variance: 0.4265, Delta bound: -56.5247, Delta var(residuals): -0.0000
+
+	iteration 266/5000
+Residual variance: 0.4265, Delta bound: 44.1207, Delta var(residuals): -0.0000
+
+	iteration 267/5000
+Residual variance: 0.4265, Delta bound: -35.2052, Delta var(residuals): -0.0000
+
+	iteration 268/5000
+Residual variance: 0.4265, Delta bound: 4.4018, Delta var(residuals): -0.0000
+
+	iteration 269/5000
+Residual variance: 0.4265, Delta bound: -23.8532, Delta var(residuals): -0.0000
+
+	iteration 270/5000
+Residual variance: 0.4265, Delta bound: 3.1981, Delta var(residuals): -0.0000
+
+	iteration 271/5000
+Residual variance: 0.4265, Delta bound: 64.4634, Delta var(residuals): -0.0000
+
+	iteration 272/5000
+Residual variance: 0.4265, Delta bound: -32.6095, Delta var(residuals): -0.0000
+
+	iteration 273/5000
+Residual variance: 0.4265, Delta bound: -7.1474, Delta var(residuals): -0.0000
+
+	iteration 274/5000
+Residual variance: 0.4265, Delta bound: 51.1097, Delta var(residuals): -0.0000
+
+	iteration 275/5000
+Residual variance: 0.4265, Delta bound: -19.7002, Delta var(residuals): -0.0000
+
+	iteration 276/5000
+Residual variance: 0.4265, Delta bound: 29.5245, Delta var(residuals): -0.0000
+
+	iteration 277/5000
+Residual variance: 0.4265, Delta bound: -51.0213, Delta var(residuals): -0.0000
+
+	iteration 278/5000
+Residual variance: 0.4265, Delta bound: -18.8986, Delta var(residuals): -0.0000
+
+	iteration 279/5000
+Residual variance: 0.4265, Delta bound: 62.4813, Delta var(residuals): -0.0000
+
+	iteration 280/5000
+Residual variance: 0.4265, Delta bound: -41.4530, Delta var(residuals): -0.0000
+
+	iteration 281/5000
+Residual variance: 0.4265, Delta bound: 67.5443, Delta var(residuals): -0.0000
+
+	iteration 282/5000
+Residual variance: 0.4265, Delta bound: -161.2531, Delta var(residuals): -0.0000
+
+	iteration 283/5000
+Residual variance: 0.4265, Delta bound: 111.7347, Delta var(residuals): 0.0000
+
+Converged (var(residuals)) after 283 iterations
+
+[1] 16  1
+> 
+> print(" PEER Executed ")
+[1] " PEER Executed "
+> 
+> 
+> ##for (i in 1:20) 
+> ##{
+> ##  doPEER(RPKM.cqn=t(RPKM.cqn),nFactors=13,
+> ##         covs=covs[as.character(colnames(RPKM.cqn)),c("Age","Gender","Region")]
+> ##         ,outputFile=paste0("testPEER/RNDMPEERrun",i))
+> ##}
+> 
+> 
+> ## this is actually the library I executed 
+> #  library(doParallel)
+> #  library(foreach)
+> #   cl <- makeCluster(20)
+> #   registerDoParallel(cl)
+> #   foreach(i=1:20, .verbose=T)%dopar%system(paste0("R --vanilla --file=/home/seb/projectsR/eQTLPipeline/optimisationPEER.R --args ",i," > /home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".log"))
+> #   stopCluster(cl)
+> #   rm(cl)
+> ## test
+> ## foreach(i=1:20, .verbose=T)%dopar%system(paste0("echo ",i," > /home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".log"))
+> # 
+> # 
+> # 
+> # 
+> #  load("data/general/RPKMCQNcovs.rda")
+> #  
+> #  corPEER <- data.frame(matrix(NA, nrow=15, ncol=20))
+> #  for (i in 1:20) 
+> #    {
+> #            PEER <- read.csv(paste0("/home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i), row.names=1)
+> #            # do plot
+> #             jpeg(paste0("/home/seb/projectsR/eQTLPipeline/testPEER/RNDMPEER",i,".jpeg"))
+> #             correPlot(PEER,covs[rownames(PEER),],paste("PEER random",i,"vs Known factors"))
+> #            dev.off()
+> #           # calculate correaltion
+> #           corPEER[,i] <- as.data.frame(apply(PEER[,c(1:2,4:16)],2,function(x) cor(PEER[,3],x)))      
+> #           colnames(corPEER)[i] <- paste0("RNDMPEER",i)
+> #           rm(PEER)
+> #   }
+> #   rm(i)
+> # 
+> # save(corPEER,file="testPEER/correlation.rda")
+> # 
+> # rm(RPKM.cqn)
+> # rm(cortmp)
+> # rm(covs)
+> # 
+> 
+> # How I select the best PEER I basically calculate the rsquared for all the PEER test,
+> # from each test calculate the maximum and then I select the PEER test that has minimum rsquared beetween all the tests  
+> # load("testPEER/correlation.rda")
+> # print(paste("Test with minimun correlation",match(min(apply((corPEER^2),2,max)),apply((corPEER^2),2,max))))
+> # 
+> # load("data/general/RPKMCQNcovs.rda")
+> # PEERRNDPEER20 <- read..csv("testPEER/RNDMPEER20",row.names=1)
+> # correPlot(PEERRNDPEER20,covs[rownames(PEERRNDPEER20),],"Correlation 'best' PEER and known factors")
+> # 
+> # 
+> # cor(covs$Region,covs$uniqueMappedRead)
+> #
+> #
+> 
+> 

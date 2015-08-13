@@ -1,0 +1,143 @@
+## main for genic quantification only exonic
+
+    ## Now we correct for PEER using simple quantification Exons+Introns
+    exprGenic <- read.csv("data/expr/rawCounts/genic/exprSQ.csv", row.names=1)
+    # load the sample info to get the IDs for each tissue
+    load("data/general/sampleInfo.rda")
+    
+    # transpose the expression matrix this to have the format of: In the rows the observations(genes) and in the columns the samples
+    exprGenic <- t(exprGenic)
+    ## convert the genes that have NAs
+    exprGenic[is.na(exprGenic)]=0
+    ## remove genes that not expressed in any gene
+    exprGenic <- exprGenic[rowSums(exprGenic>0)>0,]
+    
+    PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
+    
+    # now we select the expression for the PUTM only samples
+    expr <- exprGenic[,as.character(PUTM$A.CEL_file)]
+    rm(exprGenic)
+
+    librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+    librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
+    names(librarySize) <- as.character(PUTM$A.CEL_file)
+    
+    # convert in RPKM
+    library(easyRNASeq)
+    
+    # load the GC content genic and gene length
+    
+    #geneLength <- read.delim("data/general/ensemblGenes.txt",row.names=1)
+    #geneLength <- geneLength[as.character(rownames(expr)),c(3,1:2)]
+    
+    # load the definition of the exons
+    exonsdef <- read.csv("/home/seb/reference/exonDef.csv")
+    
+    ## calculation of genes only exons length
+    
+    library(doParallel)
+    library(foreach)
+    
+    detectCores()
+    ## [1] 24
+    
+    cl <- makeCluster(20)
+    registerDoParallel(cl)
+    getDoParWorkers()
+    start <- Sys.time()
+    geneswidth <- foreach(i=1:length(rownames(expr)),.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
+    ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+    end <- Sys.time()
+    end-start
+    stopCluster(cl)
+    rm(cl,end,start)
+    
+    length <- as.numeric(geneswidth[,2])
+    names(length) <-  as.character(geneswidth[,1])
+    length <- length[as.character(rownames(expr))]
+    stopifnot(identical(colnames(expr),names(librarySize)))
+    stopifnot(identical(rownames(expr),names(length)))              
+    
+    
+    RPKM.std <- RPKM(expr, NULL, 
+                     lib.size=librarySize, 
+                     feature.size=length)
+    
+    ## filtering
+    RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+    genesList <- rownames(RPKM.std) 
+    rm(RPKM.std,geneswidth)
+    expr <- expr[as.character(genesList),]
+    
+    
+    # now we calculate the GC content 
+    detectCores()
+    ## [1] 24
+    
+    cl <- makeCluster(20)
+    registerDoParallel(cl)
+    getDoParWorkers()
+    start <- Sys.time()
+    exonicRegions <- foreach(i=1:length(rownames(expr)),.combine=rbind,.verbose=F)%dopar%getRegionsBED(rownames(expr)[i],exonsdef)
+    ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+    end <- Sys.time()
+    end-start
+    stopCluster(cl)
+    rm(cl)
+    
+
+    write.table(data.frame(exonicRegions), file = paste0("/home/seb/projectsR/eQTLPipeline/data/general/exonicRegions.BED"), row.names = F, 
+                col.names = F, quote = F)
+    
+    ## we filter things that not match with the fasta file
+    
+    system("grep -v HG* /home/seb/projectsR/eQTLPipeline/data/general/exonicRegions.BED  | grep -v LRG* | grep -v HS* | cat > /home/seb/projectsR/eQTLPipeline/data/general/exonicRegionsFiltered.BED ")
+        
+    cmd <- paste0("bedtools nuc -fi /home/seb/reference/genome37.72.fa -bed /home/seb/projectsR/eQTLPipeline/data/general/exonicRegionsFiltered.BED > /home/seb/projectsR/eQTLPipeline/data/general/GCcontRegionsExonic")
+    
+    ## calculate GC content with bedtools
+    system(cmd)
+    
+    GCcontentTab <- read.delim("/home/seb/projectsR/eQTLPipeline/data/general/GCcontRegionsExonic")
+
+    rm(cmd)
+    detectCores()
+    ## [1] 24
+    
+    cl <- makeCluster(20)
+    registerDoParallel(cl)
+    getDoParWorkers()
+    start <- Sys.time()
+    GCcontentByGene <- foreach(i=1:length(rownames(expr)),.combine=rbind,.verbose=F)%dopar%ratioGCcontent(rownames(expr)[i],GCcontentTab)
+    end <- Sys.time()
+    end-start
+    stopCluster(cl)
+    rm(cl,end,start,GCcontentTab,exonsdef)
+    
+    
+    GCcontent <- GCcontentByGene
+    head(as.character(rownames(GCcontent)))
+    length <- length[as.character(rownames(GCcontent))]  
+    names(length) <- rownames(GCcontent)
+    GCcontent <- cbind(GCcontent,length[as.character(rownames(GCcontent))])    
+    colnames(GCcontent)[2] <- "length"
+    # we update gene expression with the filtered genes
+    head(GCcontent)
+    expr <- expr[genesList,]
+    rm(length,geneLength,genesList)
+    
+    ## load the library size
+    
+    library(cqn)
+    library(scales)
+    
+    ## CQN
+    stopifnot(identical(colnames(expr),names(librarySize)))
+    stopifnot(identical(rownames(expr),rownames(GCcontent)))              
+    
+    my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent,sizeFactors=librarySize, verbose = TRUE)
+    
+    
+    
+    
+    
