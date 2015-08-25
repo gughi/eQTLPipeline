@@ -5,18 +5,16 @@
     # load the sample info to get the IDs for each tissue
     load("data/general/sampleInfo.rda")
     
-    # transpose the expression matrix this to have the format of: In the rows the observations(genes) and in the columns the samples
-    exprGenic <- t(exprGenic)
     ## convert the genes that have NAs
-    exprGenic[is.na(exprGenic)]=0
+    exprSQ[is.na(exprSQ)]=0
     ## remove genes that not expressed in any gene
-    exprGenic <- exprGenic[rowSums(exprGenic>0)>0,]
+    exprSQ <- exprSQ[rowSums(exprSQ>0)>0,]
     
     PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
     
     # now we select the expression for the PUTM only samples
-    expr <- exprGenic[,as.character(PUTM$A.CEL_file)]
-    rm(exprGenic)
+    expr <- exprSQ[,as.character(PUTM$A.CEL_file)]
+    rm(exprSQ)
 
     librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
     librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
