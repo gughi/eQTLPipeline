@@ -1,7 +1,7 @@
 ## main for genic quantification only exonic
 
     ## Now we correct for PEER using simple quantification Exons+Introns
-    exprGenic <- read.csv("data/expr/rawCounts/genic/exprSQ.csv", row.names=1)
+    load("data/expr/rawCounts/genic/exprSQ.rda")
     # load the sample info to get the IDs for each tissue
     load("data/general/sampleInfo.rda")
     
