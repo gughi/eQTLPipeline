@@ -1,9 +1,5 @@
 ## This script writes a sh script to send R jobs
 
-
-
-
-
 writeSH <- function(nameSH,logName,numJobs=1,numParJobs=1,numThreads=1)
 {
   sink(nameSH)
