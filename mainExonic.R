@@ -1,6 +1,7 @@
 ## main for genic quantification only exonic
 
-
+    library(devtools)
+    load_all()
     setwd("/home/guelfi/eQTLPipeline")
     ## Now we correct for PEER using simple quantification Exons+Introns
     load("data/expr/rawCounts/genic/exprSQ.rda")
@@ -40,30 +41,29 @@
     
     detectCores()
     ## [1] 24
-    
+    # create the cluster with the functions needed to run
     cl <- makeCluster(3)
-    
+    clusterExport(cl, c("getRegionsWidth","defExonicRegions"))
   
-    
     registerDoParallel(cl)
     getDoParWorkers()
 
     start <- Sys.time()
-    geneswidth <- foreach(i=1:length(rownames(expr)),.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
+    geneswidth <- foreach(i=1:length(rownames(expr)),.export=c("getRegionsWidth","defExonicRegions"),.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
+    #geneswidth <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
     ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
     end <- Sys.time()
     end-start
     stopCluster(cl)
     rm(cl,end,start)
-    library(parallel)    
-        
+
     length <- as.numeric(geneswidth[,2])
     names(length) <-  as.character(geneswidth[,1])
     length <- length[as.character(rownames(expr))]
     stopifnot(identical(colnames(expr),names(librarySize)))
     stopifnot(identical(rownames(expr),names(length)))              
     
-    RPKM.std <- RPKM(expr, NULL, 
+    RPKM.std <- RPKM(as.matrix(expr), NULL, 
                      lib.size=librarySize, 
                      feature.size=length)
     
@@ -78,7 +78,9 @@
     detectCores()
     ## [1] 24
     
-    cl <- makeCluster(20)
+    cl <- makeCluster(3)
+    clusterExport(cl, c("getRegionsBED","defExonicRegions"))
+    
     registerDoParallel(cl)
     getDoParWorkers()
     start <- Sys.time()

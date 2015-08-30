@@ -1,7 +1,6 @@
 getRegionsWidth <-
 function(geneID,exonsdef)
 {
-  
   regionsGene <- exonsdef[which(exonsdef$Ensembl.Gene.ID %in% geneID),]
   ## remove duplicates
   regionsGene <- unique(regionsGene)
@@ -10,5 +9,4 @@ function(geneID,exonsdef)
   ## write the GC content
   sums <- regionsGene$Exon.Chr.End..bp. -regionsGene$Exon.Chr.Start..bp.
   return(c(paste(geneID),sum(sums)))
-  
 }
