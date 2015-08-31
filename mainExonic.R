@@ -1,5 +1,6 @@
 ## main for genic quantification only exonic
-
+    
+    nCores <- 15
     library(devtools)
     load_all()
     setwd("/home/guelfi/eQTLPipeline")
@@ -42,7 +43,7 @@
     detectCores()
     ## [1] 24
     # create the cluster with the functions needed to run
-    cl <- makeCluster(3)
+    cl <- makeCluster(nCores)
     clusterExport(cl, c("getRegionsWidth","defExonicRegions"))
   
     registerDoParallel(cl)
@@ -78,7 +79,7 @@
     detectCores()
     ## [1] 24
     
-    cl <- makeCluster(3)
+    cl <- makeCluster(nCores)
     clusterExport(cl, c("getRegionsBED","defExonicRegions"))
     
     registerDoParallel(cl)
@@ -91,26 +92,26 @@
     stopCluster(cl)
     rm(cl)
     
-
-    write.table(data.frame(exonicRegions), file = paste0("/home/seb/projectsR/eQTLPipeline/data/general/exonicRegions.BED"), row.names = F, 
+    write.table(data.frame(exonicRegions), file = paste0("data/general/exonicRegions.BED"), row.names = F, 
                 col.names = F, quote = F)
     
     ## we filter things that not match with the fasta file
     
-    system("grep -v HG* /home/seb/projectsR/eQTLPipeline/data/general/exonicRegions.BED  | grep -v LRG* | grep -v HS* | cat > /home/seb/projectsR/eQTLPipeline/data/general/exonicRegionsFiltered.BED ")
+    system("grep -v HG* data/general/exonicRegions.BED  | grep -v LRG* | grep -v HS* | cat > data/general/exonicRegionsFiltered.BED ")
         
-    cmd <- paste0("bedtools nuc -fi /home/seb/reference/genome37.72.fa -bed /home/seb/projectsR/eQTLPipeline/data/general/exonicRegionsFiltered.BED > /home/seb/projectsR/eQTLPipeline/data/general/GCcontRegionsExonic")
+    cmd <- paste0("/apps/BEDTools/2.24.0/bin/bedtools nuc -fi /home/ukbec/bowtie2Index/genome37.72.fa -bed data/general/exonicRegionsFiltered.BED > data/general/GCcontRegionsExonic")
     
     ## calculate GC content with bedtools
     system(cmd)
     
-    GCcontentTab <- read.delim("/home/seb/projectsR/eQTLPipeline/data/general/GCcontRegionsExonic")
+    GCcontentTab <- read.delim("data/general/GCcontRegionsExonic")
 
     rm(cmd)
     detectCores()
     ## [1] 24
     
-    cl <- makeCluster(20)
+    cl <- makeCluster(nCores)
+    clusterExport(cl, c("ratioGCcontent"))
     registerDoParallel(cl)
     getDoParWorkers()
     start <- Sys.time()
@@ -122,14 +123,15 @@
     
     
     GCcontent <- GCcontentByGene
+    rownames(GCcontent) <- GCcontent[,1]
+    GCcontent <- as.matrix(GCcontent[,-1]) 
     head(as.character(rownames(GCcontent)))
     length <- length[as.character(rownames(GCcontent))]  
-    names(length) <- rownames(GCcontent)
+    stopifnot(identical(names(length),rownames(GCcontent)))
     GCcontent <- cbind(GCcontent,length[as.character(rownames(GCcontent))])    
-    colnames(GCcontent)[2] <- "length"
+    colnames(GCcontent) <- c("GCcontent","length")
     # we update gene expression with the filtered genes
     head(GCcontent)
-    expr <- expr[genesList,]
     rm(length,geneLength,genesList)
     
     ## load the library size
