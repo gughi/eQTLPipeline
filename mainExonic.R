@@ -134,8 +134,6 @@
     head(GCcontent)
     rm(length,geneLength,genesList)
     
-    ## load the library size
-    
     library(cqn)
     library(scales)
     
