@@ -1,9 +1,10 @@
 ## main for genic quantification only exonic
     
     nCores <- 15
+    setwd("/home/guelfi/eQTLPipeline")
     library(devtools)
     load_all()
-    setwd("/home/guelfi/eQTLPipeline")
+    
     ## Now we correct for PEER using simple quantification Exons+Introns
     load("data/expr/rawCounts/genic/exprSQ.rda")
     # load the sample info to get the IDs for each tissue
