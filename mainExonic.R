@@ -208,7 +208,8 @@
 ### SNIG ###    
 ############
     
-    
+    nCores <- 15
+    cat(paste("Number of cores",nCores,"\n"))
     ## Now we correct for PEER using simple quantification Exons+Introns
     load("data/expr/rawCounts/genic/exprSQ.rda")
     # load the sample info to get the IDs for each tissue
