@@ -2,8 +2,8 @@ splitExprByGene <-
 function(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG,pathResExpr)
 {
   ## general functions ##
-  sys.source("/home/adai/scripts/common_functions.R",
-             attach(NULL, name="myenv"))
+  ##sys.source("/home/adai/scripts/common_functions.R",
+  ##           attach(NULL, name="myenv"))
   
   
   ## load the ensembl file with ENSG, ENST, gene start and stop and chr

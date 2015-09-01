@@ -166,7 +166,7 @@
     
     # save results
     cat("Saving the the RPKM CQN normalised in data/expr/normalisedCounts/SQPRKM.cqn.rda")
-    save(RPKM.cqn,file="data/expr/normalisedCounts/SQPRKM.cqn.rda",compress="bzip2")
+    ##save(RPKM.cqn,file="data/expr/normalisedCounts/SQPRKM.cqn.rda",compress="bzip2")
     
     PUTM$U.Region_simplified <- NULL
     covs <- PUTM 
@@ -366,7 +366,7 @@
     
     # save results
     cat("Saving the the RPKM CQN normalised in data/expr/normalisedCounts/SQPRKM.cqn.rda \n")
-    save(RPKM.cqn,file="data/expr/normalisedCounts/SQPRKM.cqn.rda",compress="bzip2")
+    ##save(RPKM.cqn,file="data/expr/normalisedCounts/SQPRKM.cqn.rda",compress="bzip2")
     
     SNIG$U.Region_simplified <- NULL
     covs <- SNIG 
@@ -403,6 +403,56 @@
                                    "data/expr/normalisedCounts/genic/geneExons/resids.SNIG.rda")
     
     ##doSwamp(resids,covs)
+    
+    
+    
+    #########################################################################
+    ### We split the expression by gene using the parallelisation of the jobs
+    #########################################################################
+    
+    # delete all the objects
+    rm(list=ls())
+    
+    library(doParallel)
+    library(foreach)
+    
+    ## detectCores()
+    ## [1] 24
+    
+    ##sys.source("/home/adai/scripts/common_functions.R",
+    ##           attach(NULL, name="myenv"))
+    setwd("/home/guelfi/eQTLPipeline/")
+    cl <- makeCluster(15)
+    clusterExport(cl,"splitExprByGene")
+    registerDoParallel(cl)
+    getDoParWorkers()
+    ## [1] 16
+    ## we load the expression data this to save the loading time
+    ensemblGenes <- read.delim(file="data/general/ensemblGenes.txt", as.is=T,header=T)
+    ensemblRef <- read.delim(file="data/general/ensemblRef.txt", as.is=T,header=T)
+    pathResExpr <- "data/results/genic/geneExons/"
+    ## load the data from PUTM
+    load("data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda")
+    exprPUTM <- resids
+    ## load the data from SNIG
+    rm(resids)
+    load("data/expr/normalisedCounts/genic/geneExons/resids.SNIG.rda")
+    exprSNIG <- resids
+    rm(resids)
+    
+    Sys.time()
+    foreach(i=1:10)%dopar%splitExprByGene(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG,pathResExpr)
+    
+    foreach(i=1:nrow(ensemblGenes))%dopar%splitExprByGene(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG,pathResExpr)
+    Sys.time()
+    stopCluster(cl)
+    rm(cl)
+    
+    
+    
+    
+    
+    
     
     sink()
     
