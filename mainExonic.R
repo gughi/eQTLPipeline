@@ -151,7 +151,7 @@
     cat("Conditional quantile normalisation \n")
     my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent,sizeFactors=librarySize, verbose = TRUE)
     
-    jpeg("plots/exonic/CQNPUTM.jpeg")
+    png(paste0("plots/exonic/CQNPUTM.jpeg"), type="cairo")
     par(mfrow=c(1,2))
     cqnplot(my.cqn, n = 1, xlab = "GC content", lty = 1, ylim = c(1,7))
     cqnplot(my.cqn, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
@@ -353,7 +353,7 @@
     cat("Conditional quantile normalisation \n")
     my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent,sizeFactors=librarySize, verbose = TRUE)
     
-    jpeg("plots/exonic/CQN.jpeg")
+    png(paste0("plots/exonic/CQNSNIG.jpeg"), type="cairo")
     par(mfrow=c(1,2))
     cqnplot(my.cqn, n = 1, xlab = "GC content", lty = 1, ylim = c(1,7))
     cqnplot(my.cqn, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
