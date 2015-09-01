@@ -403,5 +403,5 @@
     
     ##doSwamp(resids,covs)
     
-    
+    sink()
     
