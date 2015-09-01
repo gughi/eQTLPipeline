@@ -7,16 +7,17 @@ writeSH <- function(nameSH,logName, cmdScript,numJobs=1,numParJobs=1,numThreads=
   cat("#$ -S /bin/sh\n")
   cat("#$ -cwd\n")
   cat(paste("#$ -N",logName,"\n"))
-  cat(paste("#$ -t 1:",numJobs,"\n"))
+  cat(paste0("#$ -t 1:",numJobs,"\n"))
   cat(paste("#$ -tc",numParJobs,"\n"))
   cat("#$ -j y\n")
   cat(paste("#$ -pe threaded",numThreads,"\n"))
   cat("\n")
+  cat("date \n")
   cat(paste(cmdScript,"\n"))
+  cat("date \n")
   cat("\n")
   sink()
 }  
-  
-  
-## writeSH("test.sh","test")
 
+
+## writeSH("test.sh","test")
