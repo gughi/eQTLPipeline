@@ -1,6 +1,8 @@
 ## main for genic quantification only exonic
     
+    sink("logExonic.log")
     nCores <- 15
+    cat(paste("Number of cores",nCores))
     setwd("/home/guelfi/eQTLPipeline")
     library(devtools)
     load_all()
@@ -14,7 +16,7 @@
     exprSQ[is.na(exprSQ)]=0
     ## remove genes that not expressed in any gene
     exprSQ <- exprSQ[rowSums(exprSQ>0)>0,]
-    
+    cat("Processing PUTM")
     PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
     
     # now we select the expression for the PUTM only samples
@@ -71,13 +73,14 @@
     
     ## filtering
     RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
-    genesList <- rownames(RPKM.std) 
+    genesList <- rownames(RPKM.std)
+    ## write log
+    cat(paste("Number of Genes after filtering:",length(genesList)))
     rm(RPKM.std,geneswidth)
     expr <- expr[as.character(genesList),]
     
-    
     # now we calculate the GC content 
-    detectCores()
+    ## detectCores()
     ## [1] 24
     
     cl <- makeCluster(nCores)
@@ -86,10 +89,9 @@
     registerDoParallel(cl)
     getDoParWorkers()
     start <- Sys.time()
+    cat(paste("calculating GC content..."))
     exonicRegions <- foreach(i=1:length(rownames(expr)),.combine=rbind,.verbose=F)%dopar%getRegionsBED(rownames(expr)[i],exonsdef)
     ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
-    end <- Sys.time()
-    end-start
     stopCluster(cl)
     rm(cl)
     
@@ -105,10 +107,14 @@
     ## calculate GC content with bedtools
     system(cmd)
     
+    end <- Sys.time()
+    end-start
+    cat(paste("GC content calculated in",end-start))
     GCcontentTab <- read.delim("data/general/GCcontRegionsExonic")
+    cat(paste("GC content saved in data/general/GCcontRegionsExonic"))
 
     rm(cmd)
-    detectCores()
+    ## detectCores()
     ## [1] 24
     
     cl <- makeCluster(nCores)
@@ -142,7 +148,27 @@
     stopifnot(identical(colnames(expr),names(librarySize)))
     stopifnot(identical(rownames(expr),rownames(GCcontent)))              
     
+    cat("calculating the")
+    GCcontent <- as.data.frame(GCcontent)
     my.cqn <- cqn(expr, lengths = GCcontent$length,x = GCcontent$GCcontent,sizeFactors=librarySize, verbose = TRUE)
+    
+    
+    jpeg("plots/exonic/CQN.jpeg")
+    par(mfrow=c(1,2))
+    cqnplot(my.cqn, n = 1, xlab = "GC content", lty = 1, ylim = c(1,7))
+    cqnplot(my.cqn, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
+    dev.off()
+    RPKM.cqn <- my.cqn$y + my.cqn$offset
+    
+    
+    # length(grep("ENS",rownames(RPKM.cqn)))
+    # 25985 genic regions kept
+    # length(grep("DER",rownames(RPKM.cqn)))
+    # 42577 intergenic regiond kept
+    
+    # save results
+    save(RPKM.cqn,file="data/expr/normalisedCounts/genicIntergenic.rda",compress="bzip2")
+    
     
     
     
