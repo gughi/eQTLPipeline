@@ -36,7 +36,7 @@ function(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG,pathResExpr)
   #samples <- rownames(exprPUTM)
   # indID <- read.table.rows("/home/seb/phenotype/PUTMinfo.csv", keepRows=samples, sep=",")
   # IDs <- indID[samples,6]
-  IDs <- PUTM[which(PUTM$A.CEL_file %in% as.character(rownames(exprPUTM))),1]
+  IDs <- PUTM[which(PUTM$A.CEL_file %in% as.character(rownames(exprPUTM))),"U.SD_No"]
   IDs <- gsub("/","_",IDs)
   rownames(exprPUTM) <- IDs
   rm(indID,IDs)
@@ -44,7 +44,7 @@ function(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG,pathResExpr)
 #   indID <- read.table.rows("/home/seb/phenotype/SNIGinfo.csv", keepRows=samples, sep=",")
 #   IDs <- indID[samples,6]
 #   rownames(exprSNIG) <- IDs
-  IDs <- SNIG[which(SNIG$A.CEL_file %in% as.character(rownames(exprSNIG))),1]
+  IDs <- SNIG[which(SNIG$A.CEL_file %in% as.character(rownames(exprSNIG))),"U.SD_No"]
   IDs <- gsub("/","_",IDs)
   rownames(exprSNIG) <- IDs
   rm(IDs)

@@ -430,7 +430,7 @@
     ## we load the expression data this to save the loading time
     ensemblGenes <- read.delim(file="data/general/ensemblGenes.txt", as.is=T,header=T)
     ensemblRef <- read.delim(file="data/general/ensemblRef.txt", as.is=T,header=T)
-    pathResExpr <- "data/results/genic/geneExons/"
+    pathResExpr <- "data/expr/genic/geneExons/"
     ## load the data from PUTM
     load("data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda")
     exprPUTM <- resids
@@ -439,7 +439,12 @@
     load("data/expr/normalisedCounts/genic/geneExons/resids.SNIG.rda")
     exprSNIG <- resids
     rm(resids)
+    ## load the covariates
+    load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
+    rm(covs,RPKM.cqn)
     
+    load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.SNIG")
+    rm(covs,RPKM.cqn)
     Sys.time()
     foreach(i=1:10)%dopar%splitExprByGene(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG,pathResExpr)
     
