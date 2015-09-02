@@ -409,5 +409,9 @@
     writeSH(nameSH="splitByGene.sh",logName="splitByGene",
             cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonic.R"),numThreads=16)
             
-            
+    ### now send qsub comand
+    
+    
+    
+    
             

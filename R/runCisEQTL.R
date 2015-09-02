@@ -1,10 +1,7 @@
 runCisEQTL <-
-function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,MySQL=FALSE)
+function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,fullResults,MySQL=FALSE)
 {
   library(RMySQL) 
-  ## general functions ##
-  sys.source("/home/adai/scripts/common_functions.R",
-             attach(NULL, name="myenv"))
   
   
   ##load the entire list of genes
@@ -106,6 +103,10 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,MySQL
       dbWriteTable(conn=con,name=as.character(tissue),value=my.eQTLstmp,row.names=F,append=T)
       dbDisconnect(con)
     }
+    else
+    {
+      save(my.eQTLstmp,file=fullResults,compress="bzip2")
+    }
     
     my.eQTLs <- my.eQTLstmp[which(my.eQTLstmp$myFDR <= 0.10),]
     rm(my.eQTLstmp) 
@@ -116,10 +117,6 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,MySQL
     {
       write.table(my.eQTLs,outputFile,row.names=F)
     }
-    
-    
-    
-    
   }
   
   rm(my.expr,my.markers,my.cov, markers.info)
