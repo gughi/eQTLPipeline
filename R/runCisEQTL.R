@@ -87,7 +87,7 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,fullR
     outputFile=paste0(outputFolder,"resMatrixEQTL/",tissue,"/",geneID)
     
     
-    store <- Matrix_eQTL_main( my.markers, my.expr, my.cov,output_file_name=paste0(fullResults,tissue,"/",geneID) ,pvOutputThreshold=0, useModel=modelLINEAR, errorCovariance=numeric(0), verbose=T )
+    store <- Matrix_eQTL_main( my.markers, my.expr, my.cov,output_file_name = paste0(fullResults,tissue,"/",geneID),pvOutputThreshold=1, useModel=modelLINEAR, errorCovariance=numeric(0), verbose=T )
     
     
     ## we calculate the FDR without taking the min as the method used by Shabalin
@@ -103,7 +103,7 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,fullR
       dbWriteTable(conn=con,name=as.character(tissue),value=my.eQTLstmp,row.names=F,append=T)
       dbDisconnect(con)
     }
-
+    
     my.eQTLs <- my.eQTLstmp[which(my.eQTLstmp$myFDR <= 0.10),]
     rm(my.eQTLstmp) 
     ##print(head(my.eQTLs))
