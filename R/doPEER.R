@@ -1,3 +1,8 @@
+#' Function that calculates hidden factors in the experiment usin PEER 
+#' @param RPKM.cqn = The expression normalised
+#' @param nFactors the number of hidden factor we want to discover
+#' @param covs the covariates to exclude from PEER analysis
+#' @param outputFile where the results are going to be saved
 doPEER <-
 function(RPKM.cqn,nFactors,covs,outputFile)
 {

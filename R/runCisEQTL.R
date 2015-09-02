@@ -105,7 +105,7 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,fullR
     }
     else
     {
-      save(my.eQTLstmp,file=fullResults,compress="bzip2")
+      save(my.eQTLstmp,file=paste0(fullResults,tissue,"/",geneID,".rda"),compress="bzip2")
     }
     
     my.eQTLs <- my.eQTLstmp[which(my.eQTLstmp$myFDR <= 0.10),]

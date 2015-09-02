@@ -1,3 +1,8 @@
+#' Function that does that returns the residuals 
+#' @param exprThe expression matrix nxm where n are the samples and m the genes
+#' @param covariates to use for the correction
+#' @param covs the covariates to exclude from PEER analysis
+#' @param outputFile where the results are going to be saved 
 doResidualCorrection <-
 function(expr,covs,outputFile)
 {

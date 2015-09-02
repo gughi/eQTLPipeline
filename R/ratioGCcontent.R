@@ -1,3 +1,4 @@
+#' @description This function returns the ratio of the GC exonic GC content given all the regions
 ratioGCcontent <-
 function(geneID,GCcontentTab)
 {

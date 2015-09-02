@@ -1,3 +1,9 @@
+#' Calculate the GC content
+#' 
+#' @param data frame with the regions with the following fixed structure: first column is the chr, second column is the start position, third column is the stop position, forth column is the Identifier
+#' @param the location of the .fa file of the genome reference to calculate the GC content
+#' @note this function need bedtools installed in your system
+#' @return data frame with one column as GC content, the rownames are the identifiers
 GCcalculation <-
 function (region,genRef) {
   ##We now define the BED file to then use it to calculate GC content
