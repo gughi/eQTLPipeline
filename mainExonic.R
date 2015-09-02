@@ -413,5 +413,10 @@
     
     
     
+    writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
+            cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExonic.R"),numThreads=16)
+    
+    
+    
     
             

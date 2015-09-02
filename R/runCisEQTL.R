@@ -25,6 +25,9 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,fullR
   dir.create(file.path(outputFolder,"resMatrixEQTL/"),showWarnings=FALSE)
   dir.create(file.path(paste0(outputFolder,"resMatrixEQTL/"), "SNIG"),showWarnings=FALSE)
   dir.create(file.path(paste0(outputFolder,"resMatrixEQTL/"), "PUTM"),showWarnings=FALSE)
+  dir.create(file.path(paste0(fullResults), "SNIG"),showWarnings=FALSE)
+  dir.create(file.path(paste0(fullResults), "PUTM"),showWarnings=FALSE)
+  
   
   
   tissues <- c("PUTM","SNIG")
