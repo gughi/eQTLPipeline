@@ -106,7 +106,7 @@
     
     rm(list=ls())
     
-    load("data/expr/normalisedCounts/genic/exonsIntrons/RPKM.cqn.PUTM")
+    load("data/expr/normalisedCounts/genic/ExonIntrons/RPKM.cqn.PUTM")
     
     ##doSwamp(RPKM.cqn,covs)
     
@@ -114,7 +114,7 @@
     PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
     
     resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
-                                   "data/expr/normalisedCounts/genic/exonsIntrons/resids.PUTM.rda")
+                                   "data/expr/normalisedCounts/genic/ExonIntrons/resids.PUTM.rda")
     
     ##doSwamp(resids,covs)
     
@@ -227,7 +227,7 @@
     
     rm(list=ls())
     
-    load("data/expr/normalisedCounts/genic/exonsIntrons/RPKM.cqn.SNIG")
+    load("data/expr/normalisedCounts/genic/ExonIntrons/RPKM.cqn.SNIG")
     
     ##doSwamp(RPKM.cqn,covs)
     
@@ -235,7 +235,7 @@
     PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
     
     resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
-                                   "data/expr/normalisedCounts/genic/exonsIntrons/resids.SNIG.rda")
+                                   "data/expr/normalisedCounts/genic/ExonIntrons/resids.SNIG.rda")
     
     ##doSwamp(resids,covs)
     

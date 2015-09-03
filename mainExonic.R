@@ -427,10 +427,21 @@
     system("qsub LDsentinalisation.sh")
     
     
+    ## collect all the eQTL in one file
+    ## Collect for PUTM
+    system("perl getAllEQTLsent.pl data/results/genic/geneExons/resMatrixEQTL/sentinalised/PUTM data/results/finaleQTLs/geneExonic.PUTM.txt")
+    ## Collect for SNIG
+    system("perl getAllEQTLsent.pl data/results/genic/geneExons/resMatrixEQTL/sentinalised/SNIG data/results/finaleQTLs/geneExonic.SNIG.txt")
     
-    system("perl getAllEQTLsent.pl ")
+    # number of eTQL in PUTM
+    system("wc -l data/results/finaleQTLs/geneExonic.PUTM.txt")
+    # 1609
     
+    # number of eTQL in SNIG
+    system("wc -l data/results/finaleQTLs/geneExonic.SNIG.txt | wc -l")
+    # 951
     
+ 
     
     
             
