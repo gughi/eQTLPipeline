@@ -43,15 +43,3 @@ stopCluster(cl)
 
 
 
-LDsentinalisation(i=1,
-                  ensemblGenes=ensemblGenes,
-                  pathFinalSentinalised=pathFinalSentinalised,
-                  pathUnsentinalised=pathUnsentinalised,
-                  FDRthr=0.10,
-                  exprLocation="data/expr/normalisedCounts/genic/geneExons/byGene_snps1Mb/",
-                  snpLocation="/home/guelfi/eQTL/snps/byGene/",
-                  genotypeFile="/home/guelfi/plinkOutput/eigenvec",
-                  tmpFolder="tmp/")
-
-
-
