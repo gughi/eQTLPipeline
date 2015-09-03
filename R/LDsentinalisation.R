@@ -2,8 +2,8 @@ LDsentinalisation <-
 function(i,ensemblGenes,pathFinalSentinalised,pathUnsentinalised,FDRthr,exprLocation,snpLocation,genotypeFile,tmpFolder)
 {
   ## general functions ##
-  sys.source("/home/adai/scripts/common_functions.R",
-             attach(NULL, name="myenv"))
+  ##sys.source("/home/adai/scripts/common_functions.R",
+  ##           attach(NULL, name="myenv"))
   
   
   geneID  <- ensemblGenes[i,1 ]; rm(i)
@@ -12,10 +12,10 @@ function(i,ensemblGenes,pathFinalSentinalised,pathUnsentinalised,FDRthr,exprLoca
   dir.create(file.path(pathFinalSentinalised),showWarnings=FALSE)
   dir.create(file.path(pathFinalSentinalised, "SNIG"),showWarnings=FALSE)
   dir.create(file.path(pathFinalSentinalised, "PUTM"),showWarnings=FALSE)
+  dir.create(file.path(tmpFolder, "SNIG"),showWarnings=FALSE)
+  dir.create(file.path(tmpFolder, "PUTM"),showWarnings=FALSE)
   
   ## initialise my.cov0
-  
-  
   
   fn.rda <- paste0(exprLocation, geneID, ".rda")
   load(fn.rda)
