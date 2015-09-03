@@ -245,9 +245,11 @@
     nCores <- 15
     
     setwd("/home/guelfi/eQTLPipeline")
-    
+    cat("starting the split by expression \n")
     writeSH(nameSH="splitByGene.sh",logName="splitByGene",
             cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonicIntronic.R"),numThreads=(nCores+1))
     
     ### now send qsub comand
     system("qsub splitByGene.sh")
+
+    sink()
