@@ -420,7 +420,7 @@
     system("qsub runCisEQTL.sh")
     
     writeSH(nameSH="LDsentinalisation.sh",logName="LDsentinalisation",
-            cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/LDsentinalisation.R"),numThreads=16)
+            cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExonic.R"),numThreads=16)
     
     system("qsub LDsentinalisation.sh")
     
