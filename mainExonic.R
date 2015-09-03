@@ -428,5 +428,9 @@
     
     
     
+    system("perl getAllEQTLsent.pl ")
+    
+    
+    
     
             
