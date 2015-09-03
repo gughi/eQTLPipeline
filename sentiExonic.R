@@ -14,7 +14,7 @@ clusterExport(cl,c("LDsentinalisation","read.table.rows"))
 registerDoParallel(cl)
 getDoParWorkers()
 ## path we put the results
-pathFinalSentinalised <-"data/results/genic/geneExons/resMatrixEQTL/sentinalised/FDR10/"
+pathFinalSentinalised <-"data/results/genic/geneExons/resMatrixEQTL/sentinalised/"
 ## path where get the unsentinalised eQTLs
 pathUnsentinalised <- "data/results/genic/geneExons/resMatrixEQTL/"
 
@@ -40,4 +40,18 @@ foreach(i=1:nrow(ensemblGenes))%dopar%LDsentinalisation(i=i,
 ##foreach(i=1:20)%dopar%splitExprByGene(i,ensemblRef,ensemblGenes,PUTM,exprPUTM,SNIG,exprSNIG)
 Sys.time()
 stopCluster(cl)
+
+
+
+LDsentinalisation(i=1,
+                  ensemblGenes=ensemblGenes,
+                  pathFinalSentinalised=pathFinalSentinalised,
+                  pathUnsentinalised=pathUnsentinalised,
+                  FDRthr=0.10,
+                  exprLocation="data/expr/normalisedCounts/genic/geneExons/byGene_snps1Mb/",
+                  snpLocation="/home/guelfi/eQTL/snps/byGene/",
+                  genotypeFile="/home/guelfi/plinkOutput/eigenvec",
+                  tmpFolder="tmp/")
+
+
 
