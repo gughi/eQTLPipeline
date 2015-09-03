@@ -5,7 +5,7 @@
 #' @note this function need bedtools installed in your system
 #' @return data frame with one column as GC content, the rownames are the identifiers
 GCcalculation <-
-function (region,genRef) {
+function (region,genRef,pathBedtools) {
   ##We now define the BED file to then use it to calculate GC content
   print("creting the BED file")
   tmpBED <- tempfile("GCcont", fileext = ".BED")
@@ -15,7 +15,7 @@ function (region,genRef) {
   rm(BED)
   
   tmpGCcon <- tempfile("GCcont")  
-  cmd <- paste0("bedtools nuc -fi ",genRef," -bed ",tmpBED," > ",tmpGCcon)
+  cmd <- paste0(pathBedtools," nuc -fi ",genRef," -bed ",tmpBED," > ",tmpGCcon)
   
   print("executing the bedtools")
   system(cmd)
