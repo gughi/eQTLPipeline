@@ -11,7 +11,7 @@ library(foreach)
 load_all()
 
 setwd("/home/guelfi/eQTLPipeline/")
-cl <- makeCluster(7)
+cl <- makeCluster(15)
 clusterExport(cl,c("runCisEQTL","read.table.rows"))
 registerDoParallel(cl)
 getDoParWorkers()
