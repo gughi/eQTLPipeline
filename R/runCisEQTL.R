@@ -89,7 +89,6 @@ function(i,ensemblGenes,exprLocation,snpLocation,outputFolder,genotypeFile,fullR
     ## outputfile
     outputFile=paste0(outputFolder,"resMatrixEQTL/",tissue,"/",geneID)
     
-    
     store <- Matrix_eQTL_main( my.markers, my.expr, my.cov,output_file_name = paste0(fullResults,tissue,"/",geneID),pvOutputThreshold=1, useModel=modelLINEAR, errorCovariance=numeric(0), verbose=T )
     
     

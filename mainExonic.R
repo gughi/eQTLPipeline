@@ -404,17 +404,21 @@
     
     ##doSwamp(resids,covs)
     
-    
+    setwd("/home/guelfi/eQTLPipeline")
     
     writeSH(nameSH="splitByGene.sh",logName="splitByGene",
             cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonic.R"),numThreads=16)
             
     ### now send qsub comand
-    
+    system("qsub splitByGene.sh")
     
     
     writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
             cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExonic.R"),numThreads=16)
+    
+
+    system("qsub runCisEQTL.sh")
+    
     
     
     
