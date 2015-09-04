@@ -251,5 +251,12 @@
     
     ### now send qsub comand
     system("qsub splitByGene.sh")
+    
+    ### Run the eQTL analysis
+    writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
+            cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExonicIntronic.R"),numThreads=(nCores+1))
+    
+    
+    
 
     sink()
