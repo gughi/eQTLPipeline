@@ -249,14 +249,20 @@
     writeSH(nameSH="splitByGene.sh",logName="splitByGene",
             cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonicIntronic.R"),numThreads=(nCores+1))
     
-    ### now send qsub comand
+    ### send qsub comand
     system("qsub splitByGene.sh")
     
     ### Run the eQTL analysis
     writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
             cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExonicIntronic.R"),numThreads=(nCores+1))
     
+    ### send qsub comand
+    system("qsub runCisEQTL.sh")
     
+    writeSH(nameSH="LDsentinalisation.sh",logName="LDsentinalisation",
+            cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExonicIntronic.R"),numThreads=16)
+    
+    system("qsub LDsentinalisation.sh")
     
 
     sink()

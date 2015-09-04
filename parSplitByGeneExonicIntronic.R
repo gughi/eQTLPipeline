@@ -12,8 +12,6 @@ load_all()
 ## detectCores()
 ## [1] 24
 
-##sys.source("/home/adai/scripts/common_functions.R",
-##           attach(NULL, name="myenv"))
 setwd("/home/guelfi/eQTLPipeline/")
 cl <- makeCluster(15)
 clusterExport(cl,"splitExprByGene")
