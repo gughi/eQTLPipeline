@@ -27,7 +27,7 @@ splitSNPsByRegion <- function(i,allMarkers,intergenicRegions,outputFolder,logFol
     
     ##system( paste("touch", fn.pval) )
     
-    cat(rownames(intergenicRegions)[i], chr, intergenicRegions[i,]$start,intergenicRegions[i,]$end, 0, 0, "\n",
+    cat(rownames(intergenicRegions)[i], intergenicRegions[i,]$chr, intergenicRegions[i,]$start,intergenicRegions[i,]$end, 0, 0, "\n",
         file=paste(logFolder,rownames(intergenicRegions)[i],".log", sep="")) 
     cat(rownames(intergenicRegions)[i], "\n", file=paste0(regIDsLogNo), append=T)
     
