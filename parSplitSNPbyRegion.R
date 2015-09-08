@@ -3,10 +3,12 @@ print( chr <- as.numeric( commandArgs(trailingOnly=T)[1] ) )
 
 library(doParallel)
 library(foreach)
+load_all()
 
 cl <- makeCluster(7)
 registerDoParallel(cl)
 getDoParWorkers()
+
 
 load("data/expr/normalisedCounts/intergenic/RPKM.cqn.PUTM")
 rm(covs,PUTM,RPKM.cqn)

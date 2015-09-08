@@ -264,11 +264,11 @@ resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
 rm(list=ls())
 
 
-# nCores <- 7
-# setwd("/home/guelfi/eQTLPipeline")
-# writeSH(nameSH="SNPbyRegion.sh",logName="SNPbyRegion",
-#        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitSNPbyRegion.R --args $SGE_TASK_ID"),numThreads=(nCores+1))
-
+ nCores <- 7
+ setwd("/home/guelfi/eQTLPipeline")
+ writeSH(nameSH="SNPbyRegion.sh",logName="SNPbyRegion",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitSNPbyRegion.R --args $SGE_TASK_ID"),
+          numThreads=(nCores+1),numJobs=22,numParJobs=5)
 
 
 # nCores <- 15
