@@ -3,6 +3,7 @@ print( chr <- as.numeric( commandArgs(trailingOnly=T)[1] ) )
 
 library(doParallel)
 library(foreach)
+library(devtools)
 load_all()
 
 cl <- makeCluster(7)
