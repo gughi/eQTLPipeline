@@ -7,6 +7,7 @@ library(devtools)
 load_all()
 
 cl <- makeCluster(7)
+clusterExport(cl,c("splitSNPsByRegion","read.table.rows"))
 registerDoParallel(cl)
 getDoParWorkers()
 
@@ -48,6 +49,7 @@ rm(outputFolder,logFolder,
    snps.map,intergenicRegions,resids)
 
 cl <- makeCluster(7)
+clusterExport(cl,c("splitSNPsByRegion","read.table.rows"))
 registerDoParallel(cl)
 getDoParWorkers()
 
