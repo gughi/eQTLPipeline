@@ -264,5 +264,49 @@
     
     system("qsub LDsentinalisation.sh")
     
+    system("perl getAllEQTLsent.pl data/results/genic/ExonIntrons/resMatrixEQTL/sentinalised/PUTM data/results/finaleQTLs/exonicIntronic.PUTM.txt")
+    ## Collect for SNIG
+    system("perl getAllEQTLsent.pl data/results/genic/ExonIntrons/resMatrixEQTL/sentinalised/SNIG data/results/finaleQTLs/exonicIntronic.SNIG.txt")
+    
+    # number of eTQL in PUTM at <10% FDR
+    system("wc -l data/results/finaleQTLs/exonicIntronic.PUTM.txt")
+    # 2290
+    
+    # number of eTQL in SNIG at <10% FDR
+    system("wc -l data/results/finaleQTLs/exonicIntronic.SNIG.txt")
+    # 1446
 
+    ## secondary signals SNIG at <1% FDR
+    system("cut -f8 -d' ' data/results/finaleQTLs/exonicIntronic.SNIG.txt | sort | grep 2 | wc -l")
+    ## 36
+    ## tetrary signals SNIG at <1% FDR
+    system("cut -f8 -d' ' data/results/finaleQTLs/exonicIntronic.SNIG.txt | sort | grep 3 | wc -l")
+    ## 0
+    
+    ## secondary signals PUTM
+    system("cut -f8 -d' ' data/results/finaleQTLs/exonicIntronic.PUTM.txt | sort | grep 2 | wc -l")
+    ## 70
+    ## tetrary signals PUTM
+    system("cut -f8 -d' ' data/results/finaleQTLs/exonicIntronic.PUTM.txt | sort | grep 3 | wc -l")
+    ## 2
+    
+    eQTLPUTM <- read.delim("data/results/finaleQTLs/exonicIntronic.PUTM.txt",sep=" ")
+    table(eQTLPUTM$myFDR<0.05)
+#     FALSE  TRUE
+#     494  1795
+    table(eQTLPUTM$myFDR<0.01)
+#     FALSE  TRUE
+#      1222  1067
+    
+    
+    eQTLSNIG <- read.delim("data/results/finaleQTLs/exonicIntronic.SNIG.txt",sep=" ")
+    table(eQTLSNIG$myFDR<0.05)
+#     FALSE  TRUE
+#     430  1015
+    table(eQTLSNIG$myFDR<0.01)
+#     FALSE  TRUE
+#     886   559
+    
+
+    
     sink()

@@ -279,3 +279,12 @@ rm(list=ls())
 #         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonicIntronic.R"),numThreads=(nCores+1))
 
 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
