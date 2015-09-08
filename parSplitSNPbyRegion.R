@@ -39,7 +39,7 @@ regIDsLogNo <- "data/snps/byRegion/PUTM/tIDs_noPolys"
 
 
 Sys.time()
-foreach(i=1:length(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
+foreach(i=1:nrow(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
 Sys.time()
 stopCluster(cl)
 
@@ -77,7 +77,7 @@ regIDsLogNo <- "data/snps/byRegion/SNIG/tIDs_noPolys"
 
 
 Sys.time()
-foreach(i=1:length(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
+foreach(i=1:nrow(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
 Sys.time()
 stopCluster(cl)
 
