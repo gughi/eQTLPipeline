@@ -1,8 +1,6 @@
 
 setwd("/home/guelfi/eQTLPipeline")
 sink("logExonicIntornic.log")
-nCores <- 15
-cat(paste("Number of cores",nCores,"\n"))
 library(devtools)
 load_all()
 
@@ -138,9 +136,7 @@ save(RPKM.cqn,PUTM,covs,starStopReg,file="data/expr/normalisedCounts/intergenic/
 ### SNIG ###
 ############
 
-nCores<-15
-load_all()
-
+rm(list=ls())
 cat(paste("Processing SNIG region \n"))
 
 ## Intergenic data was counts were generated using DerFinder
@@ -266,13 +262,12 @@ resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
 
 rm(list=ls())
 
-nCores <- 15
 
-setwd("/home/guelfi/eQTLPipeline")
-cat("starting splitting the expression \n")
-writeSH(nameSH="splitByRegion.sh",logName="splitByRegion",
-        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonicIntronic.R"),numThreads=(nCores+1))
-
-
+# nCores <- 15
+# 
+# setwd("/home/guelfi/eQTLPipeline")
+# cat("starting splitting the expression \n")
+# writeSH(nameSH="splitByRegion.sh",logName="splitByRegion",
+#         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonicIntronic.R"),numThreads=(nCores+1))
 
 
