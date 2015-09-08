@@ -1,6 +1,6 @@
 
 setwd("/home/guelfi/eQTLPipeline")
-sink("logExonicIntornic.log")
+sink("logIntergenic.log")
 library(devtools)
 load_all()
 
@@ -241,6 +241,7 @@ covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
 colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
                     "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
 
+starStopReg <- exprIntergenic[,1:4]
 
 save(RPKM.cqn,SNIG,covs,starStopReg,file="data/expr/normalisedCounts/intergenic/RPKM.cqn.SNIG")
 
