@@ -1,13 +1,10 @@
-chr<- 21
 
+print( chr <- as.numeric( commandArgs(trailingOnly=T)[1] ) )
 
 library(doParallel)
 library(foreach)
 
-detectCores()
-## [1] 24
-
-cl <- makeCluster(16)
+cl <- makeCluster(7)
 registerDoParallel(cl)
 getDoParWorkers()
 
@@ -22,9 +19,10 @@ allMarkers <- read.delim(paste0("/home/ramasamya/genotyped/imputed_v3/chr", chr,
 ##load the residual corrected expression
 load("data/expr/normalisedCounts/intergenic/resids.PUTM.rda")
 
+intergenicRegions <- starStopReg[which(starStopReg$chr %in% paste0("chr",chr)),]
+
 outputFolder <- "data/snps/byRegion/PUTM/"
 logFolder <- "data/snps/byRegion/logs/PUTM/"
-dir.create(paste0(outputFolder,"chr",chr), showWarnings=FALSE )
 dir.create(file.path(paste0(logFolder)), showWarnings=FALSE)
 
 
@@ -33,15 +31,50 @@ snps.map <- "/home/ramasamya/genotyped/imputed_v3/polys.map"
 ## path to the imputed.info file
 imputed.info <- "/home/ramasamya/genotyped/imputed_v3/imputed.info"
 ## path folder for regions with no SNPs    
-regIDsLogNo <- "data/snps/byRegion/PUTM/tIDs_noPolys/"
+regIDsLogNo <- "data/snps/byRegion/PUTM/tIDs_noPolys"
 
 
 Sys.time()
-foreach(i=1:length(intergenicRegions))%dopar%splitSNPsByRegion(i,chr,allMarkers,intergenicRegions,outputFolder,snps.map,imputed.info,regIDsLogNo)
+foreach(i=1:length(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
 Sys.time()
 stopCluster(cl)
 
 
+rm(outputFolder,logFolder,
+   regIDsLogNo,imputed.info,
+   snps.map,intergenicRegions,resids)
+
+cl <- makeCluster(7)
+registerDoParallel(cl)
+getDoParWorkers()
+
+load("data/expr/normalisedCounts/intergenic/RPKM.cqn.SNIG")
+rm(covs,SNIG,RPKM.cqn)
+
+## we load the expression data this to save the loading time
+
+##load the residual corrected expression
+load("data/expr/normalisedCounts/intergenic/resids.SNIG.rda")
+
+intergenicRegions <- starStopReg[which(starStopReg$chr %in% paste0("chr",chr)),]
+
+outputFolder <- "data/snps/byRegion/SNIG/"
+logFolder <- "data/snps/byRegion/logs/SNIG/"
+dir.create(file.path(paste0(logFolder)), showWarnings=FALSE)
+
+
+## map of the snps 
+snps.map <- "/home/ramasamya/genotyped/imputed_v3/polys.map"
+## path to the imputed.info file
+imputed.info <- "/home/ramasamya/genotyped/imputed_v3/imputed.info"
+## path folder for regions with no SNPs    
+regIDsLogNo <- "data/snps/byRegion/SNIG/tIDs_noPolys"
+
+
+Sys.time()
+foreach(i=1:length(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
+Sys.time()
+stopCluster(cl)
 
 
 
