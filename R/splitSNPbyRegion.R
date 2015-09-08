@@ -2,7 +2,7 @@
 ### 30-06-15
 ### This scripts put all the SNPs in cis with all the regions
 
-splitSNPsByRegion <- function(i,allMarkers,tissue,intergenicRegions,outputFolder,logFolder,imputed.info,regIDsLogNo){
+splitSNPsByRegion <- function(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo){
   
   ## we select the chromosome
   ##chr <- "21
