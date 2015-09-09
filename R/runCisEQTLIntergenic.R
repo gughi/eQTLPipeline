@@ -1,5 +1,5 @@
 runCisEQTLIntergenic <-
-  function(i,exprIntergenic, tissue,simpleInfo,snpLocation,outputFolder,my.covTMP,fullResults,MySQL=FALSE)
+  function(i,exprIntergenic,snpLocation,outputFolder,my.covTMP,fullResults,MySQL=FALSE)
   {
     library(RMySQL)
     
@@ -39,7 +39,7 @@ runCisEQTLIntergenic <-
       
       
       ## transpose needed to have the individuals as columns
-      my.expr0 <- as.matrix(my.expr[colnames(my.markers0),])
+      my.expr0 <- as.matrix(expr[colnames(my.markers0),])
       ## in case number of columns is equal to 1 we assign again the name of the column again
       if (ncol(my.expr0)==1)
       {

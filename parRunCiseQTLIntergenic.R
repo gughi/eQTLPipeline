@@ -40,13 +40,13 @@ fullResults <- "data/results/intergenic/fullResults/PUTM/"
 
 my.covTMP <- read.table.rows(paste0("/home/guelfi/plinkOutput/eigenvec"), keepRows=rownames(resids), sep=" ",header=F)
 
+
 Sys.time()
-foreach(i=1:numGenes)%dopar%runCisEQTL(i=i,ensemblGenes=ensemblGenes,
-                                       exprLocation="data/expr/normalisedCounts/genic/geneExons/byGene_snps1Mb/",
-                                       snpLocation="/home/guelfi/eQTL/snps/byGene/",
-                                       outputFolder="data/results/genic/geneExons/",
+foreach(i=1:ncol(resids))%dopar%runCisEQTLIntergenic(i=i,exprIntergenic=resids,
+                                       snpLocation="data/snps/byRegion/PUTM/",
+                                       outputFolder=outputFolder,
                                        my.covTMP=my.covTMP,
-                                       fullResults="data/results/genic/geneExons/fullResults/")
+                                       fullResults=fullResults)
 
 Sys.time()
 stopCluster(cl)
