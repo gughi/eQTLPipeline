@@ -441,7 +441,46 @@
     system("wc -l data/results/finaleQTLs/geneExonic.SNIG.txt | wc -l")
     # 951
     
+    
+    eQTLPUTM <- read.delim("data/results/finaleQTLs/geneExonic.PUTM.txt",sep=" ")
+    table(eQTLPUTM$myFDR<0.05)
+#     FALSE  TRUE
+#     373  1235
+    table(eQTLPUTM$myFDR<0.01)
+#     FALSE  TRUE
+#     841   767
+    
+    
+    eQTLSNIG <- read.delim("data/results/finaleQTLs/geneExonic.SNIG.txt",sep=" ")
+    table(eQTLSNIG$myFDR<0.05)
+#     FALSE  TRUE
+#     300   650
+    table(eQTLSNIG$myFDR<0.01)
+#     FALSE  TRUE
+#     618   332
+
+    ###########################
+    ####    Annotation ########
+    ###########################
+    
+    
+    library("biomaRt")
+    ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                       dataset="hsapiens_gene_ensembl")
+    
+    
+    geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
+                                    verbose = T,
+                                    filters="ensembl_gene_id",
+                                    values=eQTLPUTM$gene, mart=ensembl)
+    
+    
+    
+    rownames(geneNames)<- geneNames$ensembl_gene_id
+    geneNames$ensembl_gene_id <- NULL
+    
+    
+    eQTLPUTM <- cbind(eQTLPUTM,geneNames[as.character(eQTLPUTM$gene),])
  
-    
-    
-            
+    save(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+    write.csv(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.csv",row.names=F)    

@@ -271,7 +271,7 @@ rm(list=ls())
           numThreads=(nCores+1),numJobs=22,numParJobs=5)
 
 
-nCores <- 15
+ nCores <- 15
  
  setwd("/home/guelfi/eQTLPipeline")
  cat("starting run the expression \n")
