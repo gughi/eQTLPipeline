@@ -271,12 +271,12 @@ rm(list=ls())
           numThreads=(nCores+1),numJobs=22,numParJobs=5)
 
 
-# nCores <- 15
-# 
-# setwd("/home/guelfi/eQTLPipeline")
-# cat("starting splitting the expression \n")
-# writeSH(nameSH="splitByRegion.sh",logName="splitByRegion",
-#         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonicIntronic.R"),numThreads=(nCores+1))
+nCores <- 15
+ 
+ setwd("/home/guelfi/eQTLPipeline")
+ cat("starting run the expression \n")
+ writeSH(nameSH="runCiseQTLIntergenic.sh",logName="runCiseQTLIntergenic",
+         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLIntergenic.R"),numThreads=(nCores+1))
 
 
  
