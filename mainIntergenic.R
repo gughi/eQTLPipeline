@@ -275,10 +275,14 @@ rm(list=ls())
  
  setwd("/home/guelfi/eQTLPipeline")
  cat("starting run the expression \n")
- writeSH(nameSH="runCiseQTLIntergenic.sh",logName="runCiseQTLIntergenic",
+ writeSH(nameSH="runCisEQTLIntergenic.sh",logName="runCisEQTLIntergenic",
          cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLIntergenic.R"),numThreads=(nCores+1))
 
 
+ writeSH(nameSH="LDsentinalisationIntergenic.sh",logName="LDsentinalisationIntergenic",
+         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExonicIntronicIntergenic.R"),numThreads=16)
+ 
+ system("qsub LDsentinalisation.sh")
  
  
  

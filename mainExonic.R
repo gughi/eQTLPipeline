@@ -463,6 +463,8 @@
     ####    Annotation ########
     ###########################
     
+    ### PUTM ###
+    
     
     library("biomaRt")
     ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
@@ -484,3 +486,28 @@
  
     save(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
     write.csv(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.csv",row.names=F)    
+
+    ### SNIG ###
+    
+    rm(geneNames)
+    
+    geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
+                       verbose = T,
+                       filters="ensembl_gene_id",
+                       values=eQTLSNIG$gene, mart=ensembl)
+    
+    
+    
+    rownames(geneNames)<- geneNames$ensembl_gene_id
+    geneNames$ensembl_gene_id <- NULL
+    
+    
+    eQTLSNIG <- cbind(eQTLSNIG,geneNames[as.character(eQTLSNIG$gene),])
+    
+    save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+    write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
+    
+    
+    
+    
+    
