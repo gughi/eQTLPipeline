@@ -6,10 +6,10 @@ library(foreach)
 library(devtools)
 load_all()
 
-# cl <- makeCluster(7)
-# clusterExport(cl,c("splitSNPsByRegion","read.table.rows"))
-# registerDoParallel(cl)
-# getDoParWorkers()
+cl <- makeCluster(7)
+clusterExport(cl,c("splitSNPsByRegion","read.table.rows"))
+registerDoParallel(cl)
+getDoParWorkers()
 
 
 load("data/expr/normalisedCounts/intergenic/RPKM.cqn.PUTM")
@@ -37,11 +37,11 @@ imputed.info <- "/home/ramasamya/genotyped/imputed_v3/imputed.info"
 ## path folder for regions with no SNPs    
 regIDsLogNo <- "data/snps/byRegion/PUTM/tIDs_noPolys"
 
-# 
-# Sys.time()
-# foreach(i=1:nrow(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
-# Sys.time()
-# stopCluster(cl)
+
+Sys.time()
+foreach(i=1:nrow(intergenicRegions))%dopar%splitSNPsByRegion(i,allMarkers,intergenicRegions,outputFolder,logFolder,snps.map,imputed.info,regIDsLogNo)
+Sys.time()
+stopCluster(cl)
 
 
 rm(outputFolder,logFolder,

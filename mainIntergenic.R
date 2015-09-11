@@ -280,7 +280,7 @@ rm(list=ls())
 
 
  writeSH(nameSH="LDsentinalisationIntergenic.sh",logName="LDsentinalisationIntergenic",
-         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExonicIntronicIntergenic.R"),numThreads=16)
+         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiIntergenic.R"),numThreads=16)
  
  system("qsub LDsentinalisation.sh")
  
