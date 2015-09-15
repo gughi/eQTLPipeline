@@ -8,7 +8,6 @@ load("data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
 
 load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
 
-
 numeQTLs10 <- c(nrow(eQTLPUTM),nrow(eQTLSNIG))
 names(numeQTLs10) <- c("PUTM","SNIG")
 barplot(numeQTLs10,col='skyblue',main= "eQTLs gene exonic",border=F,
