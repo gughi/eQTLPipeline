@@ -26,7 +26,7 @@ countsTable <- countsTable[rowSums(countsTable>0)>0,]
 cat("Processing PUTM \n")
 PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
 
-# now we select the expression for the PUTM only samples
+# now we select the expression for the PUTM only samples+
 expr <- countsTable[,as.character(PUTM$A.CEL_file)]
 rm(countsTable)
 
@@ -81,70 +81,68 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","chromosome_name"),
                    filters="ensembl_gene_id",
                    values=genes, mart=ensembl)
 
+rownames(geneNames) <- geneNames$ensembl_gene_id
+geneNames$ensembl_gene_id <- NULL
+
 exondef <- geneNames[as.character(genes),]
 exondef <- cbind(row.names(expr),exondef)
 exondef <- cbind(exondef,transcriptomeInfo[as.character(exondef[,1]),])
 exondef <- exondef[,c(2:4,6)]
-colnames(exondef) <- c("chr",colnames(exondef)[2:4])
+colnames(exondef) <- c("Chromosome.Name","Exon.Chr.Start..bp.","Exon.Chr.End..bp.","Ensembl.Gene.ID")
 
 
-library(doParallel)
-library(foreach)
+
+exons <- apply(exondef,1,function(x){paste(x[1],as.integer(x[2]),as.integer(x[3]),x[4],sep='\t')})
 
 
-# now we calculate the GC content 
-## detectCores()
-## [1] 24
-
-cl <- makeCluster(nCores)
-clusterExport(cl, c("getRegionsBED","defExonicRegions"))
-
-registerDoParallel(cl)
-getDoParWorkers()
-start <- Sys.time()
-cat(paste("calculating GC content...","\n"))
-exonicRegions <- foreach(i=1:length(rownames(expr)),.combine=rbind,.verbose=F)%dopar%getRegionsBED(rownames(expr)[i],exondef)
-##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
-stopCluster(cl)
-rm(cl)
-
-write.table(data.frame(exonicRegions), file = paste0("data/general/exons.BED"), row.names = F, 
+write.table(data.frame(exons), file = paste0("data/general/exons.BED"), row.names = F, 
             col.names = F, quote = F)
 
 ## we filter things that not match with the fasta file
 
-system("grep -v HG* data/general/exonicRegions.BED  | grep -v LRG* | grep -v HS* | cat > data/general/exonicRegionsFiltered.BED ")
+##system("grep -v HG* data/general/exons.BED  | grep -v LRG* | grep -v HS* | cat > data/general/exons.BED ")
 
-cmd <- paste0("/apps/BEDTools/2.24.0/bin/bedtools nuc -fi /home/ukbec/bowtie2Index/genome37.72.fa -bed data/general/exonicRegionsFiltered.BED > data/general/GCcontRegionsExonic")
+cmd <- paste0("/apps/BEDTools/2.24.0/bin/bedtools nuc -fi /home/ukbec/bowtie2Index/genome37.72.fa -bed data/general/exons.BED > data/general/GCexons")
 
 ## calculate GC content with bedtools
 system(cmd)
 
-end <- Sys.time()
-end-start
 cat(paste("GC content calculated in",end-start,"\n"))
-rm(end,start)
-GCcontentTab <- read.delim("data/general/GCcontRegionsExonic")
-cat(paste("GC content saved in data/general/GCcontRegionsExonic","\n"))
+GCcontentTab <- read.delim("data/general/GCexons")
+cat(paste("GC content saved in data/general/GCexons","\n"))
 
 rm(cmd)
 ## detectCores()
 ## [1] 24
 
-cl <- makeCluster(nCores)
-clusterExport(cl, c("ratioGCcontent"))
-registerDoParallel(cl)
-getDoParWorkers()
-start <- Sys.time()
-GCcontentByGene <- foreach(i=1:length(rownames(expr)),.combine=rbind,.verbose=F)%dopar%ratioGCcontent(rownames(expr)[i],GCcontentTab)
-end <- Sys.time()
-stopCluster(cl)
-cat(paste("GC content ratios calculated in ",end-start,"\n"))
-rm(cl,end,start,GCcontentTab,exonsdef)
+
+GCcontentByExons <- sapply(rownames(expr),function(x)
+    {
+      if(x %in% GCcontentTab$X6_pct_gc)
+      {  
+        return(GCcontentTab[which(GCcontentTab$X6_pct_gc %in% x),])
+      }else{
+        tmp <- unlist(strsplit(x,":"))
+        
+        GCtmp <- GCcontentTab[grep(tmp[1],GCcontentTab$X4_usercol),]
+        
+        if(which.min(c(min(abs(GCtmp$X2_usercol-exondef[x,2])),
+                     min(abs(GCtmp$X3_usercol-exondef[x,2]))))==1)
+        {
+          return(GCtmp[which.min(abs(GCtmp$X2_usercol-exondef[x,2])),"X6_pct_gc"])
+          
+        }else{
+          return(GCtmp[which.min(abs(GCtmp$X3_usercol-exondef[x,2])),"X6_pct_gc"])
+        
+        }
+      }
+      
+    }
+    )
 
 
-GCcontent <- GCcontentByGene
-rownames(GCcontent) <- GCcontent[,1]
+GCcontent <- GCcontentByExons
+##rownames(GCcontent) <- GCcontent[,1]
 GCcontent <- as.data.frame(GCcontent[,-1]) 
 length <- length[as.character(rownames(GCcontent))]  
 stopifnot(identical(names(length),rownames(GCcontent)))
