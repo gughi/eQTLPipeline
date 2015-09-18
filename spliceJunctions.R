@@ -173,7 +173,7 @@ library(spliceclust)
 load("data/expr/rawCounts/intergenic/fullCoverage/fullCoverageChr12.rda")
 
 
-tt <- apply(fullCov$[exonAnnbyGene$V3[2]:exonAnnbyGene$V4[2],],mean)
+tt <- apply(fullCov$[exonAnnbyGene$V3[2]:exonAnnbyGene$V4[2],],1,mean)
 
 
 
