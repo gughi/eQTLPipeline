@@ -439,8 +439,8 @@ cat(paste("Number of Genes and samples",dim(RPKM.cqn),"\n"))
 cat("Saving the the RPKM CQN normalised in data/expr/normalisedCounts/genic/exons/RPKM.cqn.SNIG")
 ##save(RPKM.cqn,file="data/expr/normalisedCounts/exonsRPKM.cqn.rda",compress="bzip2")
 
-PUTM$U.Region_simplified <- NULL
-covs <- PUTM 
+SNIG$U.Region_simplified <- NULL
+covs <- SNIG 
 rownames(covs) <- covs$A.CEL_file
 #convert the female and male info in numeric
 covs[covs=="M"]=0
@@ -456,7 +456,7 @@ covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
 colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
                     "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
 
-save(RPKM.cqn,PUTM,covs,file="data/expr/normalisedCounts/genic/exons/RPKM.cqn.SNIG")
+save(RPKM.cqn,SNIG,covs,file="data/expr/normalisedCounts/genic/exons/RPKM.cqn.SNIG")
 
 
 ### Residual correction ###
