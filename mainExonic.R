@@ -507,43 +507,17 @@
     save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
     write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
     
+
+    load(file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+    eQTLPUTM <-  annSNP(eQTLPUTM)
     
-    
-    library(biomaRt)
-    ensembl <- useMart(biomart="ENSEMBL_MART_SNP", host="Jun2013.archive.ensembl.org",
-                       dataset="hsapiens_snp")
+    save(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+    write.csv(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.csv",row.names=F)    
     
     load(file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+    eQTLSNIG <-  annSNP(eQTLSNIG)
     
-    snps <- NULL
-    snps$chr <- gsub("chr","",unlist(lapply(strsplit(as.character(eQTLSNIG$snps),":")
-           ,function(x){c(x[1])})))
-    snps$start <- unlist(lapply(strsplit(as.character(eQTLSNIG$snps),":")
-                              ,function(x){c(x[2])}))
-    
-    snps$end <- unlist(lapply(strsplit(as.character(eQTLSNIG$snps),":")
-                              ,function(x){c((as.numeric(x[2])+2))}))
-    
-    snps <- as.data.frame(snps)
+    save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+    write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
     
 
-
-    rs <- apply(snps,1,function(x){
-                rsID <- getBM(attributes = c("refsnp_id", "allele","chr_name","chrom_start"),
-                              filters = c("chr_name", "chrom_start", "chrom_end"),
-                              values=list(x[1],x[2],x[3]),
-                              mart = ensembl)
-                marPos <- paste0("chr",x[1],":",x[2])
-                rsID <- cbind(rsID,marPos)
-               return(rsID)
-                    }
-                )
-
-    library (plyr)
-    df <- ldply (rs, data.frame)
-    
-
-    
-    
-
-    
