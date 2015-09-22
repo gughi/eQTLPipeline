@@ -477,112 +477,109 @@ resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
 
 
 
+setwd("/home/guelfi/eQTLPipeline")
+
+writeSH(nameSH="splitByGene.sh",logName="splitByGene",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonic.R"),numThreads=16)
+
+### now send qsub comand
+system("qsub splitByGene.sh")
+
+### Run the eQTL analysis
+writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExonic.R"),numThreads=16)
 
 
-# 
-# setwd("/home/guelfi/eQTLPipeline")
-# 
-# writeSH(nameSH="splitByGene.sh",logName="splitByGene",
-#         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parSplitByGeneExonic.R"),numThreads=16)
-# 
-# ### now send qsub comand
-# system("qsub splitByGene.sh")
-# 
-# ### Run the eQTL analysis
-# writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
-#         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExonic.R"),numThreads=16)
-# 
-# 
-# system("qsub runCisEQTL.sh")
-# 
-# 
-# ### Run the Sentinalisation
-# writeSH(nameSH="LDsentinalisation.sh",logName="LDsentinalisation",
-#         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExonic.R"),numThreads=16)
-# 
-# system("qsub LDsentinalisation.sh")
-# 
-# 
-# ## collect all the eQTL in one file
-# ## Collect for PUTM
-# system("perl getAllEQTLsent.pl data/results/genic/geneExons/resMatrixEQTL/sentinalised/PUTM data/results/finaleQTLs/geneExonic.PUTM.txt")
-# ## Collect for SNIG
-# system("perl getAllEQTLsent.pl data/results/genic/geneExons/resMatrixEQTL/sentinalised/SNIG data/results/finaleQTLs/geneExonic.SNIG.txt")
-# 
-# # number of eTQL in PUTM
-# system("wc -l data/results/finaleQTLs/geneExonic.PUTM.txt")
-# # 1609
-# 
-# # number of eTQL in SNIG
-# system("wc -l data/results/finaleQTLs/geneExonic.SNIG.txt | wc -l")
-# # 951
-# 
-# 
-# eQTLPUTM <- read.delim("data/results/finaleQTLs/geneExonic.PUTM.txt",sep=" ")
-# table(eQTLPUTM$myFDR<0.05)
-# #     FALSE  TRUE
-# #     373  1235
-# table(eQTLPUTM$myFDR<0.01)
-# #     FALSE  TRUE
-# #     841   767
-# 
-# 
-# eQTLSNIG <- read.delim("data/results/finaleQTLs/geneExonic.SNIG.txt",sep=" ")
-# table(eQTLSNIG$myFDR<0.05)
-# #     FALSE  TRUE
-# #     300   650
-# table(eQTLSNIG$myFDR<0.01)
-# #     FALSE  TRUE
-# #     618   332
-# 
-# ###########################
-# ####    Annotation ########
-# ###########################
-# 
-# ### PUTM ###
-# 
-# 
-# library("biomaRt")
-# ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
-#                    dataset="hsapiens_gene_ensembl")
-# 
-# 
-# geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
-#                    verbose = T,
-#                    filters="ensembl_gene_id",
-#                    values=eQTLPUTM$gene, mart=ensembl)
-# 
-# 
-# 
-# rownames(geneNames)<- geneNames$ensembl_gene_id
-# geneNames$ensembl_gene_id <- NULL
-# 
-# 
-# eQTLPUTM <- cbind(eQTLPUTM,geneNames[as.character(eQTLPUTM$gene),])
-# 
-# save(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
-# write.csv(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.csv",row.names=F)    
-# 
-# ### SNIG ###
-# 
-# rm(geneNames)
-# 
-# geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
-#                    verbose = T,
-#                    filters="ensembl_gene_id",
-#                    values=eQTLSNIG$gene, mart=ensembl)
-# 
-# 
-# 
-# rownames(geneNames)<- geneNames$ensembl_gene_id
-# geneNames$ensembl_gene_id <- NULL
-# 
-# 
-# eQTLSNIG <- cbind(eQTLSNIG,geneNames[as.character(eQTLSNIG$gene),])
-# 
-# save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
-# write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
-# 
-# 
-# 
-# 
+system("qsub runCisEQTL.sh")
+
+
+### Run the Sentinalisation
+writeSH(nameSH="LDsentinalisation.sh",logName="LDsentinalisation",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExonic.R"),numThreads=16)
+
+system("qsub LDsentinalisation.sh")
+
+
+## collect all the eQTL in one file
+## Collect for PUTM
+system("perl getAllEQTLsent.pl data/results/genic/geneExons/resMatrixEQTL/sentinalised/PUTM data/results/finaleQTLs/geneExonic.PUTM.txt")
+## Collect for SNIG
+system("perl getAllEQTLsent.pl data/results/genic/geneExons/resMatrixEQTL/sentinalised/SNIG data/results/finaleQTLs/geneExonic.SNIG.txt")
+
+# number of eTQL in PUTM
+system("wc -l data/results/finaleQTLs/geneExonic.PUTM.txt")
+# 1609
+
+# number of eTQL in SNIG
+system("wc -l data/results/finaleQTLs/geneExonic.SNIG.txt | wc -l")
+# 951
+
+
+eQTLPUTM <- read.delim("data/results/finaleQTLs/geneExonic.PUTM.txt",sep=" ")
+table(eQTLPUTM$myFDR<0.05)
+#     FALSE  TRUE
+#     373  1235
+table(eQTLPUTM$myFDR<0.01)
+#     FALSE  TRUE
+#     841   767
+
+
+eQTLSNIG <- read.delim("data/results/finaleQTLs/geneExonic.SNIG.txt",sep=" ")
+table(eQTLSNIG$myFDR<0.05)
+#     FALSE  TRUE
+#     300   650
+table(eQTLSNIG$myFDR<0.01)
+#     FALSE  TRUE
+#     618   332
+
+###########################
+####    Annotation ########
+###########################
+
+### PUTM ###
+
+
+library("biomaRt")
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=eQTLPUTM$gene, mart=ensembl)
+
+
+
+rownames(geneNames)<- geneNames$ensembl_gene_id
+geneNames$ensembl_gene_id <- NULL
+
+
+eQTLPUTM <- cbind(eQTLPUTM,geneNames[as.character(eQTLPUTM$gene),])
+
+save(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+write.csv(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.csv",row.names=F)    
+
+### SNIG ###
+
+rm(geneNames)
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=eQTLSNIG$gene, mart=ensembl)
+
+
+
+rownames(geneNames)<- geneNames$ensembl_gene_id
+geneNames$ensembl_gene_id <- NULL
+
+
+eQTLSNIG <- cbind(eQTLSNIG,geneNames[as.character(eQTLSNIG$gene),])
+
+save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
+
+
+
+
