@@ -512,8 +512,4 @@ PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
 resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
                                "data/expr/normalisedCounts/genic/geneIntronic/resids.SNIG.rda")
 
-##doSwamp(resids,covs)
-
-
-
-
+ 

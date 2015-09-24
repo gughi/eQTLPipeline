@@ -23,6 +23,10 @@ annSNP <- function(eQTLres)
                     filters = c("chr_name", "chrom_start", "chrom_end"),
                     values=list(x[1],x[2],x[3]),
                     mart = ensembl)
+      if(nrow(rsID)<1)
+      {
+        rsID <- rbind(rsID,c("NA","NA","NA","NA"))
+      }
       marPos <- paste0("chr",x[1],":",x[2])
       rsID <- cbind(rsID,marPos)
       return(rsID)
@@ -38,7 +42,9 @@ annSNP <- function(eQTLres)
       c(paste(tmp$refsnp_id,collapse = ";"),paste(tmp$allele,collapse = ";"))
     })
 
+    tmp <- colnames(eQTLres)
     eQTLres <- cbind(eQTLres,t(rs))
+    colnames(eQTLres) <- c(tmp,"rs","Allele")
     rm(df,rs)    
     return(eQTLres)
 }

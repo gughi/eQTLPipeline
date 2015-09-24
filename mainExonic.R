@@ -501,15 +501,21 @@
     rownames(geneNames)<- geneNames$ensembl_gene_id
     geneNames$ensembl_gene_id <- NULL
     
-    
     eQTLSNIG <- cbind(eQTLSNIG,geneNames[as.character(eQTLSNIG$gene),])
     
     save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
     write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
     
-
+    
+    #########################
+    ### Annotation by SNP ###
+    #########################
+    
+    rm(list=ls())
+    
     load(file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
     eQTLPUTM <-  annSNP(eQTLPUTM)
+    
     
     save(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
     write.csv(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.csv",row.names=F)    
@@ -520,4 +526,66 @@
     save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
     write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
     
+    
+    ################################################ 
+    #### check overlapping genes between tissues ###
+    ################################################
+    
+    
+    load(file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+    load(file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+  
+    library(gplots)
+    ## FDR10%
+    venn(list(PUTM=unique(eQTLPUTM$gene),SNIG=unique(eQTLSNIG$gene)))
+    
+    ## FDR5%    
+    eQTLSNIG <- eQTLSNIG[which(eQTLSNIG$myFDR<0.05),]
+    eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.05),]
+    
+    venn(list(PUTM=unique(eQTLPUTM$gene),SNIG=unique(eQTLSNIG$gene)))
+    
+    
+    eQTLSNIG <- eQTLSNIG[which(eQTLSNIG$myFDR<0.01),]
+    eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.01),]
+    
+    venn(list(PUTM=unique(eQTLPUTM$gene),SNIG=unique(eQTLSNIG$gene)))
+    
+    
+    
+    
+    ################################################ 
+    #### check overlapping snp between tissues ###
+    ################################################
+    
+    library (plyr)
+    
+    my.eQTLs   <- read.delim(file="data/results/finaleQTLs/eQTLgeneExons.unsentinalised.PUTM.txt",  as.is=T, header=T)
+    tmp <- strsplit(my.eQTLs$SNP," ")
+    df <- ldply(list(tmp), data.frame)
+    rm(tmp)
+    df <- t(df)
+    rownames(df) <- NULL
+    df <- df[which(df[,7] < 0.01),]
+    snpsPUTM <- paste0(df[,1],df[,2])
+    
+    
+    my.eQTLs   <- read.delim(file="data/results/finaleQTLs/eQTLgeneExons.unsentinalised.SNIG.txt",  as.is=T, header=T)
+    tmp <- strsplit(my.eQTLs$SNP," ")
+    df <- ldply(list(tmp), data.frame)
+    rm(tmp)
+    df <- t(df)
+    rownames(df) <- NULL
+    df <- df[which(df[,7] < 0.01),]
+    snpsSNIG <- paste0(df[,1],df[,2])
+    
+    library(gplots)
+    ## FDR1%
+    venn(list(PUTM=unique(snpsPUTM),SNIG=unique(snpsSNIG)))
+    
 
+    
+    
+    
+        
+    

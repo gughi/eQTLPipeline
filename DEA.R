@@ -7,6 +7,7 @@
 # biocLite("cqn")
 
 
+
 library(DESeq2)
 
 setwd("/home/guelfi/eQTLPipeline/")

@@ -360,3 +360,53 @@
     write.csv(eQTLSNIG,file="data/results/finaleQTLs/exonicIntronic.Ann.SNIG.csv",row.names=F)    
     
     sink()
+    
+    
+    #########################
+    ### Annotation by SNP ###
+    #########################
+    
+    rm(list=ls())
+    
+    load(file="data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+    eQTLPUTM <-  annSNP(eQTLPUTM)
+    head(eQTLPUTM)
+    
+    save(eQTLPUTM,file="data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+    write.csv(eQTLPUTM,file="data/results/finaleQTLs/exonicIntronic.Ann.PUTM.csv",row.names=F)    
+    
+    load(file="data/results/finaleQTLs/exonicIntronic.Ann.SNIG.rda")
+    eQTLSNIG <-  annSNP(eQTLSNIG)
+    
+    save(eQTLSNIG,file="data/results/finaleQTLs/exonicIntronic.Ann.SNIG.rda")
+    write.csv(eQTLSNIG,file="data/results/finaleQTLs/exonicIntronic.Ann.SNIG.csv",row.names=F)    
+    
+    
+    ################################################ 
+    #### check overlapping genes between tissues ###
+    ################################################
+    
+    
+    load(file="data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+    load(file="data/results/finaleQTLs/exonicIntronic.Ann.SNIG.rda")
+    
+    library(gplots)
+    ## FDR10%
+    venn(list(PUTM=unique(eQTLPUTM$gene),SNIG=unique(eQTLSNIG$gene)))
+    
+    ## FDR5%    
+    eQTLSNIG <- eQTLSNIG[which(eQTLSNIG$myFDR<0.05),]
+    eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.05),]
+    
+    venn(list(PUTM=unique(eQTLPUTM$gene),SNIG=unique(eQTLSNIG$gene)))
+    
+    
+    eQTLSNIG <- eQTLSNIG[which(eQTLSNIG$myFDR<0.01),]
+    eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.01),]
+    
+    venn(list(PUTM=unique(eQTLPUTM$gene),SNIG=unique(eQTLSNIG$gene)))
+    
+    
+    
+    
+    

@@ -250,7 +250,6 @@ plotTracks(list(gtrack, dtrack,grtrack,dtrack_heat),transcriptAnnotation = "symb
 
 
 
-65505809 65506637
 
 
 
