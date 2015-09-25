@@ -256,6 +256,38 @@ venn(list(PUTMEI=unique(eQTLPUTM$gene),PUTME=unique(eQTLPUTMEx$gene)))
 venn(list(SNIGEI=unique(eQTLSNIG$gene),SNIGE=unique(eQTLSNIGEx$gene)))
 
 
-test
+##################################
+#### Comparison with Lappainen ###
+##################################
+
+
+
+load(file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+load(file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+
+
+## FDR5%    
+eQTLSNIG <- eQTLSNIG[which(eQTLSNIG$myFDR<0.05),]
+eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.05),]
+
+
+cmd <- "cut -f1,3 /home/guelfi/eQTL/465lymphoblastoid/EUR373.gene.cis.FDR5.all.rs137.txt | cut -d '.' -f1 | cut -f1,2"
+lym.eQTLs.gene <- read.delim(pipe(cmd),header=T)
+lym.eQTLs <- read.delim(file="/home/guelfi/eQTL/465lymphoblastoid/EUR373.gene.cis.FDR5.all.rs137.txt",header=T)
+
+cmd <- "cut -f1,3 /home/guelfi/eQTL/465lymphoblastoid/EUR373.gene.cis.FDR5.best.rs137.txt | cut -d '.' -f1 | cut -f1,2"
+lym.eQTLs.best.gene <- read.delim(pipe(cmd),header=F)
+lym.eQTLs.best <- read.delim(file="/home/guelfi/eQTL/465lymphoblastoid/EUR373.gene.cis.FDR5.best.rs137.txt",header=F)
+
+length(intersect(unique(eQTLPUTM$gene),unique(lym.eQTLs.gene$GENE_ID)))
+
+length(intersect(unique(eQTLPUTM$gene),unique(lym.eQTLs.best.gene[,2])))
+
+
+
+
+
+
+
 
 
