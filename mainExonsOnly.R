@@ -483,13 +483,13 @@ writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
 
 system("qsub runCisEQTL.sh")
 
-# 
-# ### Run the Sentinalisation
-# writeSH(nameSH="LDsentinalisation.sh",logName="LDsentinalisation",
-#         cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExonic.R"),numThreads=16)
-# 
-# system("qsub LDsentinalisation.sh")
-# 
+ 
+### Run the Sentinalisation
+writeSH(nameSH="LDsentinalisation.sh",logName="LDsentinalisation",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiExons.R"),numThreads=8)
+
+system("qsub LDsentinalisation.sh")
+
 # 
 # ## collect all the eQTL in one file
 # ## Collect for PUTM
