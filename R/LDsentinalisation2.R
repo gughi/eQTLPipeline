@@ -6,9 +6,12 @@ LDsentinalisation2 <-
     expr <- as.matrix(resids[,as.character(regID)])
     colnames(expr) <- regID
     
-    
+    ## if exons
+    geneID <- unlist(lapply(strsplit(as.character(regID),":"),function(x){x[1]}))
+    geneID <- unlist(sapply(strsplit(as.character(regID),"+",fixed=T),function(x){x[1]}))
+
     ## initialise my.cov0
-    fn.rda <- paste0(snpLocation, regID, ".rda")
+    fn.rda <- paste0(snpLocation, geneID, ".rda")
     load(fn.rda)
     
     rm(fn.rda)
