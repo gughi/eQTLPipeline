@@ -64,7 +64,7 @@ runCisEQTLGene <- function(i,resids,snpLocation,outputFolder,my.covTMP,fullResul
   
   ## outputfile
   outputFile=paste0(outputFolder,geneID)
-  store <- Matrix_eQTL_main( my.markers, my.expr, my.cov,output_file_name = paste0(fullResults,exonID),pvOutputThreshold=1, useModel=modelLINEAR, errorCovariance=numeric(0), verbose=T )
+  store <- Matrix_eQTL_main( my.markers, my.expr, my.cov,output_file_name = paste0(fullResults,geneID),pvOutputThreshold=1, useModel=modelLINEAR, errorCovariance=numeric(0), verbose=T )
   
   ## we calculate the FDR without taking the min as the method used by Shabalin
   pval <- store$all$eqtls$pvalue
