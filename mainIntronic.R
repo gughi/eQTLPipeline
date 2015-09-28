@@ -514,6 +514,19 @@ resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
 
 
 
+setwd("/home/guelfi/eQTLPipeline")
+
+
+### Run the eQTL analysis
+writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLIntronic.R"),numThreads=8)
+
+
+system("qsub runCisEQTL.sh")
+
+
+
+
 
 
 

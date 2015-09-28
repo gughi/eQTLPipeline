@@ -18,7 +18,7 @@
   ## load the residual corrected expression
   load("data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda")
   ## load the information about tissue
-  load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM.rda")
+  load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
   ## remove the object we don't need
   rm(covs,RPKM.cqn)
 
