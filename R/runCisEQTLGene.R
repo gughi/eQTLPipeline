@@ -11,7 +11,7 @@ runCisEQTLGene <- function(i,resids,snpLocation,outputFolder,my.covTMP,fullResul
   ## load the snp data
   fn.rda <- paste0(snpLocation,"/", geneID, ".rda")
   load(fn.rda)
-  rm(fn.rda, gene.info)
+  rm(fn.rda)
   
   ## create folder for the output
   dir.create(file.path(outputFolder),showWarnings=FALSE)
