@@ -9,7 +9,7 @@ library(foreach)
 load_all()
 
 setwd("/home/guelfi/eQTLPipeline/")
-cl <- makeCluster(15)
+cl <- makeCluster(7)
 clusterExport(cl,c("LDsentinalisation2","read.table.rows"))
 registerDoParallel(cl)
 getDoParWorkers()
