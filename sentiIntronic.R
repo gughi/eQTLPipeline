@@ -40,7 +40,7 @@ my.covTMP <- read.table.rows(paste0("/home/guelfi/plinkOutput/eigenvec"), keepRo
 
 
 Sys.time()
-foreach(i=1:nrow(regions))%dopar%LDsentinalisation2(resids=resids,
+foreach(i=1:nrow(genes))%dopar%LDsentinalisation2(resids=resids,
                                                              regID=genes[i,1],
                                                              pathFinalSentinalised=pathFinalSentinalised,
                                                              pathUnsentinalised=pathUnsentinalised,
@@ -84,7 +84,7 @@ my.covTMP <- read.table.rows(paste0("/home/guelfi/plinkOutput/eigenvec"), keepRo
 
 
 Sys.time()
-foreach(i=1:nrow(regions))%dopar%LDsentinalisation2(resids=resids,
+foreach(i=1:nrow(genes))%dopar%LDsentinalisation2(resids=resids,
                                                     regID=genes[i,1],
                                                     pathFinalSentinalised=pathFinalSentinalised,
                                                     pathUnsentinalised=pathUnsentinalised,
