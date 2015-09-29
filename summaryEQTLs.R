@@ -285,6 +285,54 @@ length(intersect(unique(eQTLPUTM$gene),unique(lym.eQTLs.best.gene[,2])))
 
 
 
+############################
+#### Comparison Networks ###
+############################
+
+load(file="data/results/finaleQTLs/exonicIntronic.Ann.SNIG.rda")
+load(file="data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+
+netwPUTM <- read.csv("data/networs/network1237918.4.PUTM.6.rds_MM.csv")
+netwSNIG <- read.csv("data/networs/network1237511.4.SNIG.6.rds_MM.csv")
+
+
+eQTLSNIG <- eQTLSNIG[which(eQTLSNIG$myFDR<0.01),]
+eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.01),]
+
+
+percentage <- (table(netwPUTM$module)/nrow(netwPUTM))*100
+barplot(sort(table(netwPUTM$module),decreasing = T),las=2,col = names(sort(table(netwPUTM$module),decreasing = T)) )
+barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decreasing = T)),
+        main= "Percentage of genes for each module PUTM") 
+
+#PUTM
+modules <- netwPUTM[which(netwPUTM$gene %in% eQTLPUTM$gene),"module"]
+barplot(sort(table(modules),decreasing = T),las=2,col = names(sort(table(modules),decreasing = T)) )
+## checking for correlation between streghness in the eQTL and hub modules 
+eQTLmod <- netwPUTM[which(netwPUTM$gene %in% eQTLPUTM$gene),]
+cor(eQTLmod[,"quantile"],eQTLPUTM[as.character(eQTLmod$gene),"myFDR"])
+
+percentage <- (table(eQTLmod$module)/nrow(eQTLmod))*100
+barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decreasing = T)),
+        main= "Percentage of eQTLs for each module PUTM") 
+
+#SNIG
+percentage <- (table(netwSNIG$module)/nrow(netwSNIG))*100
+barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decreasing = T)),
+        main= "Percentage of genes for each module SNIG") 
+
+modules <- netwSNIG[which(netwSNIG$ensgene %in% eQTLSNIG$gene),"module"]
+barplot(sort(table(modules),decreasing = T),las=2,col = names(sort(table(modules),decreasing = T)) )
+## checking for correlation between streghness in the eQTL and hub modules 
+eQTLmod <- netwSNIG[which(netwSNIG$ensgene %in% eQTLSNIG$gene),]
+cor(eQTLmod[,"mm"],eQTLSNIG[as.character(eQTLmod$ensgene),"myFDR"])
+
+percentage <- (table(eQTLmod$module)/nrow(eQTLmod))*100
+barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decreasing = T)),
+        main= "Percentage of eQTLs for each module SNIG")
+
+
+
 
 
 

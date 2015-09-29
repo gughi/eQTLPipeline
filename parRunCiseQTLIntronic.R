@@ -10,6 +10,7 @@
   load_all()
 
   setwd("/home/guelfi/eQTLPipeline/")
+  
 #   cl <- makeCluster(7)
 #   clusterExport(cl,c("runCisEQTLGene","read.table.rows"))
 #   registerDoParallel(cl)
@@ -96,3 +97,7 @@ foreach(i=1:ncol(resids))%dopar%runCisEQTLGene(i=i,resids=resids,
 Sys.time()
 stopCluster(cl)
 rm(cl)
+
+
+
+
