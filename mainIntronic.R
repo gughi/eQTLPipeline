@@ -525,6 +525,11 @@ writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
 system("qsub runCisEQTL.sh")
 
 
+### Run the Sentinalisation
+writeSH(nameSH="LDsentinalisation.sh",logName="LDsentinalisation",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/sentiIntronic.R"),numThreads=8)
+
+system("qsub LDsentinalisation.sh")
 
 
 
