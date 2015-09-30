@@ -208,6 +208,10 @@ entrezID <- getBM(attributes=c("entrezgene"),
 DOres <- enrichDO(entrezID[,1], pvalueCutoff=0.01)
 head(summary(DOres))
 
+## intronic qunatification
+
+
+
 #############################################
 ##### share between diff qunatifications ####
 #############################################
@@ -254,6 +258,47 @@ venn(list(PUTMEI=unique(eQTLPUTM$gene),SNIGEI=unique(eQTLSNIG$gene),SNIGE=unique
 
 venn(list(PUTMEI=unique(eQTLPUTM$gene),PUTME=unique(eQTLPUTMEx$gene)))
 venn(list(SNIGEI=unique(eQTLSNIG$gene),SNIGE=unique(eQTLSNIGEx$gene)))
+
+
+##########################################
+### Relationship between the eQTLs PUTM ##
+##########################################
+
+
+load("data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+eQTLPUTMEI <- eQTLPUTM
+load("data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+eQTLPUTMI <- eQTLPUTM
+load("data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
+eQTLPUTMInter <- eQTLPUTM
+eQTLPUTMExons <- read.delim("data/results/finaleQTLs/exons.PUTM.txt")
+load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+eQTLPUTMEx <- eQTLPUTM
+rm(eQTLPUTM)
+
+library("gplots")
+venn(list(PUTMEI=unique(eQTLPUTMEI$gene),
+          PUTMEx=unique(eQTLPUTMEx$gene),
+          PUTMIntr=unique(eQTLPUTMI$gene)))
+
+## overlap gene Exons and intronic
+
+venn(list(PUTMEx=unique(eQTLPUTMEx$gene),
+          PUTMIntr=unique(eQTLPUTMI$gene)))
+
+## overlap gene Exons+Intronic and intronic 
+
+venn(list(PUTMEI=unique(eQTLPUTMEI$gene),
+          PUTMIntr=unique(eQTLPUTMI$gene)))
+
+
+plot(density(eQTLPUTMI[which(eQTLPUTMI$myFDR<0.01),"beta"]),col='red',main = "Density beta values PUTM")
+lines(density(eQTLPUTMEx[which(eQTLPUTMEx$myFDR<0.01),"beta"]),col='skyblue')
+legend("topright",c("Whole-gene Exonic","Whole-gene Intronic"),fill=c("skyblue","red"))
+
+
+plot(density(eQTLPUTMEI[which(eQTLPUTMEI$myFDR<0.01),"beta"]))
+
 
 
 ##################################
@@ -330,6 +375,214 @@ cor(eQTLmod[,"mm"],eQTLSNIG[as.character(eQTLmod$ensgene),"myFDR"])
 percentage <- (table(eQTLmod$module)/nrow(eQTLmod))*100
 barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decreasing = T)),
         main= "Percentage of eQTLs for each module SNIG")
+
+
+
+
+
+
+######################
+### Plots bio Type ###
+######################
+
+
+load("data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+eQTLPUTMEI <- eQTLPUTM
+load("data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+eQTLPUTMI <- eQTLPUTM
+load("data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
+eQTLPUTMInter <- eQTLPUTM
+eQTLPUTMExons <- read.delim("data/results/finaleQTLs/exons.PUTM.txt")
+load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+eQTLPUTMEx <- eQTLPUTM
+rm(eQTLPUTM)
+
+par(mar=c(9,5,3,2))
+barplot(sort((table(eQTLPUTMEx$gene_biotype)/nrow(eQTLPUTMEx)*100),decreasing = T),las=2,main = "Bio type eQTLs PUTM (whole-gene exonic)",
+        col=1:length(unique(eQTLPUTMEx$gene_biotype)),ylim=c(0,70))
+barplot(sort((table(eQTLPUTMI$gene_biotype)/nrow(eQTLPUTMI)*100),decreasing = T),las=2,main = "Bio type eQTLs PUTM (whole-gene intronic)",
+        col=1:length(unique(eQTLPUTMI$gene_biotype)),ylim=c(0,70))
+par(mar=c(11,5,3,2))
+barplot(sort((table(eQTLPUTMEI$gene_biotype)/nrow(eQTLPUTMEI)*100),decreasing = T),las=2,main = "Bio type eQTLs PUTM (whole-gene exonic+intronic)",
+        col=1:length(unique(eQTLPUTMEI$gene_biotype)),ylim=c(0,60))
+
+
+### we check the common between protein coding and intronic
+
+common <- intersect(eQTLPUTMEx$gene,eQTLPUTMI$gene) 
+tmp <- intersect(eQTLPUTMEI$gene,eQTLPUTMI$gene)
+## get the specific eQTLs for intronic and exonic
+intronicExSpe <- common[which(!common%in%tmp)]
+ 
+eQTLPUTMEx[which(eQTLPUTMEx$gene %in% intronicExSpe),]
+eQTLPUTMI[which(eQTLPUTMI$gene %in% intronicExSpe),]
+
+
+gene <- intronicExSpe[9]
+eQTLPUTMEx[gene,]; eQTLPUTMI[gene,] 
+
+######################
+### intersect SNps ###
+######################
+
+
+length(intersect(eQTLPUTMEI$gene,eQTLPUTMI$gene))
+
+library(gplots)
+venn(list(PUTMExonInt=unique(eQTLPUTMEI$gene),
+          PUTMIntr=unique(eQTLPUTMI$gene)))
+
+venn(list(PUTMExonInt=paste0(eQTLPUTMEI$snps,eQTLPUTMEI$gene),
+          PUTMIntr=paste0(eQTLPUTMI$snps,eQTLPUTMI$gene)))
+
+venn(list(PUTMExon=paste0(eQTLPUTMEx$snps,eQTLPUTMEx$gene),
+          PUTMIntr=paste0(eQTLPUTMI$snps,eQTLPUTMI$gene)))
+
+com <- intersect(paste0(eQTLPUTMEx$snps,eQTLPUTMEx$gene),
+paste0(eQTLPUTMI$snps,eQTLPUTMI$gene))
+
+
+head(com)
+
+
+
+##########################################################
+### plot the eQTLs by tissue accross different tissues ###
+##########################################################
+
+
+load("data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+eQTLPUTMEI <- eQTLPUTM
+load("data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+eQTLPUTMI <- eQTLPUTM
+load("data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
+eQTLPUTMInter <- eQTLPUTM
+eQTLPUTMExons <- read.delim("data/results/finaleQTLs/exons.PUTM.txt",sep=" ")
+load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+eQTLPUTMEx <- eQTLPUTM
+rm(eQTLPUTM)
+
+
+
+numeQTLs10 <- c(length(unique(eQTLPUTMEI$gene)),
+                length(unique(eQTLPUTMEx$gene)),
+                length(unique(eQTLPUTMI$gene)),
+                length(unique(eQTLPUTMInter$gene)),
+                length(unique(eQTLPUTMExons$gene)))
+
+                
+names(numeQTLs10) <- c("GeneExo+Int","GeneExonic","GeneIntronic","Intergenic","Exons")
+
+barplot(numeQTLs10,col='red',main= "eQTLs PUTM",border=F,
+        sub=paste("PUTM"))
+
+numeQTLs5 <- c(length(unique(eQTLPUTMEI[which(eQTLPUTMEI$myFDR<0.05),"gene"])),
+               length(unique(eQTLPUTMEx[which(eQTLPUTMEx$myFDR<0.05),"gene"])),
+               length(unique(eQTLPUTMI[which(eQTLPUTMI$myFDR<0.05),"gene"])),
+               length(unique(eQTLPUTMInter[which(eQTLPUTMInter$myFDR<0.05),"gene"])),
+               length(unique(eQTLPUTMExons[which(eQTLPUTMExons$myFDR<0.05),"gene"])))
+
+names(numeQTLs5) <- c("GeneExo+Int","GeneExonic","GeneIntronic","Intergenic","Exons")
+barplot(numeQTLs5,add=T,col='orange',border=F)
+
+numeQTLs1 <- c(length(unique(eQTLPUTMEI[which(eQTLPUTMEI$myFDR<0.01),"gene"])),
+               length(unique(eQTLPUTMEx[which(eQTLPUTMEx$myFDR<0.01),"gene"])),
+               length(unique(eQTLPUTMI[which(eQTLPUTMI$myFDR<0.01),"gene"])),
+               length(unique(eQTLPUTMInter[which(eQTLPUTMInter$myFDR<0.01),"gene"])),
+               length(unique(eQTLPUTMExons[which(eQTLPUTMExons$myFDR<0.01),"gene"])))
+
+names(numeQTLs1) <- c("GeneExo+Int","GeneExonic","GeneIntronic","Intergenic","Exons")
+barplot(numeQTLs1,add=T,col='darkgreen',border=F)
+legend("topleft",c("10%","5%","1%"),col=c('red','orange','darkgreen'),title="FDR",pch=15)
+
+## table of the independecy of the signals
+sign <- cbind(table(eQTLPUTM$degree),table(eQTLSNIG$degree))
+
+par(mar=c(9,3,1,1))
+barplot(sort(table(eQTLPUTM$gene_biotype),decreasing=T),
+        col=c(1:length(table(eQTLPUTM$gene_biotype))),las=2)
+
+barplot(sort(table(eQTLSNIG$gene_biotype),decreasing=T),
+        col=c(1:length(table(eQTLSNIG$gene_biotype))),las=2,main="test")
+
+rm(numeQTLs1,numeQTLs10,numeQTLs5)
+
+
+
+############
+### SNIG ###
+############
+
+
+load("data/results/finaleQTLs/exonicIntronic.Ann.SNIG.rda")
+eQTLSNIGEI <- eQTLSNIG
+load("data/results/finaleQTLs/intronic.Ann.SNIG.rda")
+eQTLSNIGI <- eQTLSNIG
+load("data/results/finaleQTLs/intergenic.Ann.SNIG.rda")
+eQTLSNIGInter <- eQTLSNIG
+eQTLSNIGExons <- read.delim("data/results/finaleQTLs/exons.SNIG.txt",sep=" ")
+load("data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+eQTLSNIGEx <- eQTLSNIG
+rm(eQTLSNIG)
+
+
+
+numeQTLs10 <- c(length(unique(eQTLSNIGEI$gene)),
+                length(unique(eQTLSNIGEx$gene)),
+                length(unique(eQTLSNIGI$gene)),
+                length(unique(eQTLSNIGInter$gene)),
+                length(unique(eQTLSNIGExons$gene)))
+
+
+names(numeQTLs10) <- c("GeneExo+Int","GeneExonic","GeneIntronic","Intergenic","Exons")
+
+barplot(numeQTLs10,col='red',main= "eQTLs SNIG",border=F,
+        sub=paste("SNIG"))
+
+numeQTLs5 <- c(length(unique(eQTLSNIGEI[which(eQTLSNIGEI$myFDR<0.05),"gene"])),
+               length(unique(eQTLSNIGEx[which(eQTLSNIGEx$myFDR<0.05),"gene"])),
+               length(unique(eQTLSNIGI[which(eQTLSNIGI$myFDR<0.05),"gene"])),
+               length(unique(eQTLSNIGInter[which(eQTLSNIGInter$myFDR<0.05),"gene"])),
+               length(unique(eQTLSNIGExons[which(eQTLSNIGExons$myFDR<0.05),"gene"])))
+
+names(numeQTLs5) <- c("GeneExo+Int","GeneExonic","GeneIntronic","Intergenic","Exons")
+barplot(numeQTLs5,add=T,col='orange',border=F)
+
+numeQTLs1 <- c(length(unique(eQTLSNIGEI[which(eQTLSNIGEI$myFDR<0.01),"gene"])),
+               length(unique(eQTLSNIGEx[which(eQTLSNIGEx$myFDR<0.01),"gene"])),
+               length(unique(eQTLSNIGI[which(eQTLSNIGI$myFDR<0.01),"gene"])),
+               length(unique(eQTLSNIGInter[which(eQTLSNIGInter$myFDR<0.01),"gene"])),
+               length(unique(eQTLSNIGExons[which(eQTLSNIGExons$myFDR<0.01),"gene"])))
+
+names(numeQTLs1) <- c("GeneExo+Int","GeneExonic","GeneIntronic","Intergenic","Exons")
+barplot(numeQTLs1,add=T,col='darkgreen',border=F)
+legend("topleft",c("10%","5%","1%"),col=c('red','orange','darkgreen'),title="FDR",pch=15)
+
+## table of the independecy of the signals
+sign <- cbind(table(eQTLSNIG$degree),table(eQTLSNIG$degree))
+
+par(mar=c(9,3,1,1))
+barplot(sort(table(eQTLSNIG$gene_biotype),decreasing=T),
+        col=c(1:length(table(eQTLSNIG$gene_biotype))),las=2)
+
+barplot(sort(table(eQTLSNIG$gene_biotype),decreasing=T),
+        col=c(1:length(table(eQTLSNIG$gene_biotype))),las=2,main="test")
+
+rm(numeQTLs1,numeQTLs10,numeQTLs5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

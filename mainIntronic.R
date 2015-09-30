@@ -535,6 +535,102 @@ system("qsub LDsentinalisation.sh")
 
 
 
+eQTLPUTM <- read.delim("data/results/finaleQTLs/intronic.PUTM.txt",sep=" ")
+table(eQTLPUTM$myFDR<0.05)
+#     FALSE  TRUE
+#     494  1795
+table(eQTLPUTM$myFDR<0.01)
+#     FALSE  TRUE
+#      1222  1067
+
+
+eQTLSNIG <- read.delim("data/results/finaleQTLs/intronic.SNIG.txt",sep=" ")
+table(eQTLSNIG$myFDR<0.05)
+#     FALSE  TRUE
+#     430  1015
+table(eQTLSNIG$myFDR<0.01)
+#     FALSE  TRUE
+#     886   559
+
+
+
+
+
+###########################
+####    Annotation ########
+###########################
+
+### PUTM ###
+
+
+library("biomaRt")
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=eQTLPUTM$gene, mart=ensembl)
+
+
+
+rownames(geneNames)<- geneNames$ensembl_gene_id
+geneNames$ensembl_gene_id <- NULL
+
+
+eQTLPUTM <- cbind(eQTLPUTM,geneNames[as.character(eQTLPUTM$gene),])
+
+save(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+write.csv(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.csv",row.names=F)    
+
+### SNIG ###
+
+rm(geneNames)
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","gene_biotype","description"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=eQTLSNIG$gene, mart=ensembl)
+
+
+
+rownames(geneNames)<- geneNames$ensembl_gene_id
+geneNames$ensembl_gene_id <- NULL
+
+
+eQTLSNIG <- cbind(eQTLSNIG,geneNames[as.character(eQTLSNIG$gene),])
+
+save(eQTLSNIG,file="data/results/finaleQTLs/intronic.Ann.SNIG.rda")
+write.csv(eQTLSNIG,file="data/results/finaleQTLs/intronic.Ann.SNIG.csv",row.names=F)    
+
+
+#########################
+### Annotation by SNP ###
+#########################
+
+
+rm(list=ls())
+
+load(file="data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+eQTLPUTM <-  annSNP(eQTLPUTM)
+
+
+save(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+write.csv(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.csv",row.names=F)    
+
+load(file="data/results/finaleQTLs/intronic.Ann.SNIG.rda")
+eQTLSNIG <-  annSNP(eQTLSNIG)
+
+save(eQTLSNIG,file="data/results/finaleQTLs/intronic.Ann.SNIG.rda")
+write.csv(eQTLSNIG,file="data/results/finaleQTLs/intronic.Ann.SNIG.csv",row.names=F)    
+
+
+
+
+
+
+
 
 
 
