@@ -377,6 +377,30 @@ barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decrea
         main= "Percentage of eQTLs for each module SNIG")
 
 
+### check weather genes targetee by eQTL are more hubbier
+
+
+eQTLmod <- netwPUTM[which(netwPUTM$gene %in% eQTLPUTM$gene),]
+
+
+hubsGenes <- eQTLmod[which(eQTLmod$quantile>0.9),]
+percentage <- (table(hubsGenes[,"module"])/nrow(hubsGenes))*100
+barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decreasing = T)),
+        main= "Percentage of eQTLs for hub genes PUTM") 
+
+
+eQTLmod <- netwSNIG[which(netwSNIG$ensgene %in% eQTLSNIG$gene),]
+
+hist(netwSNIG$mm)
+hubsGenes <- eQTLmod[which(eQTLmod$mm>0.9),]
+percentage <- (table(hubsGenes[,"module"])/nrow(hubsGenes))*100
+barplot(sort(percentage,decreasing = T),las=2,col = names(sort(percentage,decreasing = T)),
+        main= "Percentage of eQTLs for hub genes SNIG") 
+
+
+
+
+
 
 
 
@@ -569,9 +593,6 @@ barplot(sort(table(eQTLSNIG$gene_biotype),decreasing=T),
         col=c(1:length(table(eQTLSNIG$gene_biotype))),las=2,main="test")
 
 rm(numeQTLs1,numeQTLs10,numeQTLs5)
-
-
-
 
 
 
