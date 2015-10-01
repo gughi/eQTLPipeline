@@ -598,10 +598,44 @@ rm(numeQTLs1,numeQTLs10,numeQTLs5)
 
 
 
+########################
+### Mina Suggestion ####
+########################
 
 
+load("data/results/finaleQTLs/exonicIntronic.Ann.SNIG.rda")
+eQTLSNIGEI <- eQTLSNIG
+load("data/results/finaleQTLs/intronic.Ann.SNIG.rda")
+eQTLSNIGI <- eQTLSNIG
+load("data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+eQTLSNIGEx <- eQTLSNIG
+rm(eQTLSNIG)
+
+library(gplots)
+## overlap exonic and intronic
+
+venn(list(SNIGExon=paste0(eQTLSNIGEx$snps,eQTLSNIGEx$gene),
+          SNIGIntr=paste0(eQTLSNIGI$snps,eQTLSNIGI$gene)))
+
+## in common we have 127 eQTLs
+
+commonEQTLs <- intersect(paste0(eQTLSNIGEx$snps,eQTLSNIGEx$gene),
+                    paste0(eQTLSNIGI$snps,eQTLSNIGI$gene))
+
+## we get the exonic specific eQTLs
+ExSpe <- paste0(eQTLSNIGEx$snps,eQTLSNIGEx$gene)
+ExSpe <- ExSpe[-which(ExSpe %in% commonEQTLs)]
+library (plyr)
+
+geneSpe <- unlist(lapply(strsplit(ExSpe,"E")
+                          ,function(x){(paste0("E",x[2]))}))
+
+write.csv(unique(geneSpe),file="tmp/geneSpe.csv")
 
 
+InSpe <- ExSpe[-which(ExSpe %in% commonEQTLs)]
+geneSpe <- unlist(lapply(strsplit(ExSpe,"E")
+                         ,function(x){(paste0("E",x[2]))}))
 
 
 
