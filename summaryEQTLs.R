@@ -602,6 +602,7 @@ rm(numeQTLs1,numeQTLs10,numeQTLs5)
 ### Mina Suggestion ####
 ########################
 
+## PUTM
 
 load("data/results/finaleQTLs/exonicIntronic.Ann.SNIG.rda")
 eQTLSNIGEI <- eQTLSNIG
@@ -614,35 +615,85 @@ rm(eQTLSNIG)
 library(gplots)
 ## overlap exonic and intronic
 
-venn(list(SNIGExon=paste0(eQTLSNIGEx$snps,eQTLSNIGEx$gene),
-          SNIGIntr=paste0(eQTLSNIGI$snps,eQTLSNIGI$gene)))
+venn(list(SNIGExon=paste0(eQTLSNIGEx$snps,eQTLSNIGEx$external_gene_id),
+          SNIGIntr=paste0(eQTLSNIGI$snps,eQTLSNIGI$external_gene_id)))
 
 ## in common we have 127 eQTLs
 
-commonEQTLs <- intersect(paste0(eQTLSNIGEx$snps,eQTLSNIGEx$gene),
-                    paste0(eQTLSNIGI$snps,eQTLSNIGI$gene))
+commonEQTLs <- intersect(paste0(eQTLSNIGEx$snps,";",eQTLSNIGEx$external_gene_id),
+                    paste0(eQTLSNIGI$snps,";",eQTLSNIGI$external_gene_id))
 
 ## we get the exonic specific eQTLs
-ExSpe <- paste0(eQTLSNIGEx$snps,eQTLSNIGEx$gene)
+ExSpe <- paste0(eQTLSNIGEx$snps,";",eQTLSNIGEx$external_gene_id)
 ExSpe <- ExSpe[-which(ExSpe %in% commonEQTLs)]
 library (plyr)
 
-geneSpe <- unlist(lapply(strsplit(ExSpe,"E")
-                          ,function(x){(paste0("E",x[2]))}))
-
-write.csv(unique(geneSpe),file="tmp/geneSpe.csv")
+geneSpe <- unlist(lapply(strsplit(ExSpe,";")
+                          ,function(x){x[2]}))
 
 
-InSpe <- ExSpe[-which(ExSpe %in% commonEQTLs)]
-geneSpe <- unlist(lapply(strsplit(ExSpe,"E")
-                         ,function(x){(paste0("E",x[2]))}))
+##install.packages("/Users/mguelfi/Downloads/gProfileR_0.5.3.tar.gz", repos = NULL, type="source")
+require(gProfileR)
 
 
+go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLSNIGI$external_gene_id,eQTLSNIGEx$external_gene_id), src_filter = "GO")
+##write.csv(unique(geneSpe),file="tmp/geneSpe.csv")
+write.csv(go,file="data/results/GO/GOExonSpeSNIG.csv")
+
+InSpe <- paste0(eQTLSNIGI$snps,";",eQTLSNIGI$external_gene_id)
+InSpe <- InSpe[-which(InSpe %in% commonEQTLs)]
+geneSpe <- unlist(lapply(strsplit(InSpe,":")
+                         ,function(x){x[2]}))
+
+go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLSNIGI$external_gene_id,eQTLSNIGEx$external_gene_id), src_filter = "GO")
+
+## no point to save the file since there is no significant term
+
+## PUTM
+
+load("data/results/finaleQTLs/exonicIntronic.Ann.PUTM.rda")
+eQTLPUTMEI <- eQTLPUTM
+load("data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+eQTLPUTMI <- eQTLPUTM
+load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+eQTLPUTMEx <- eQTLPUTM
+rm(eQTLPUTM)
+
+library(gplots)
+## overlap exonic and intronic
+
+venn(list(PUTMExon=paste0(eQTLPUTMEx$snps,eQTLPUTMEx$external_gene_id),
+          PUTMIntr=paste0(eQTLPUTMI$snps,eQTLPUTMI$external_gene_id)))
+
+## in common we have 127 eQTLs
+
+commonEQTLs <- intersect(paste0(eQTLPUTMEx$snps,";",eQTLPUTMEx$external_gene_id),
+                         paste0(eQTLPUTMI$snps,";",eQTLPUTMI$external_gene_id))
+
+## we get the exonic specific eQTLs
+ExSpe <- paste0(eQTLPUTMEx$snps,";",eQTLPUTMEx$external_gene_id)
+ExSpe <- ExSpe[-which(ExSpe %in% commonEQTLs)]
+library (plyr)
+
+geneSpe <- unlist(lapply(strsplit(ExSpe,";")
+                         ,function(x){x[2]}))
 
 
+##install.packages("/Users/mguelfi/Downloads/gProfileR_0.5.3.tar.gz", repos = NULL, type="source")
+require(gProfileR)
 
 
+go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLPUTMI$external_gene_id,eQTLPUTMEx$external_gene_id), src_filter = "GO")
+##write.csv(unique(geneSpe),file="tmp/geneSpe.csv")
+write.csv(go,file="data/results/GO/GOExonSpePUTM.csv")
 
+InSpe <- paste0(eQTLPUTMI$snps,";",eQTLPUTMI$external_gene_id)
+InSpe <- InSpe[-which(InSpe %in% commonEQTLs)]
+geneSpe <- unlist(lapply(strsplit(InSpe,":")
+                         ,function(x){x[2]}))
+
+go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLPUTMI$external_gene_id,eQTLPUTMEx$external_gene_id), src_filter = "GO")
+head(go)
 
 
 
