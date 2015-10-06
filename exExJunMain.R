@@ -132,14 +132,14 @@ library(foreach)
 detectCores()
 ## [1] 24
 # create the cluster with the functions needed to run
-cl <- makeCluster(nCores)
+cl <- makeCluster(7)
 clusterExport(cl, c("lengthJunction"))
 
 registerDoParallel(cl)
 getDoParWorkers()
 
 start <- Sys.time()
-length <- foreach(i=1:length(nrow(juncdef[,1:2])),.combine=rbind,.verbose=F)%dopar%lengthJunction(juncdef[i,1:2],mapExon)
+length <- foreach(i=1:nrow(juncdef[,1:2]),.verbose=F)%dopar%lengthJunction(juncdef[i,1:2],mapExon)
 #geneswidth <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
 ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
 end <- Sys.time()

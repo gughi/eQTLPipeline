@@ -13,5 +13,3 @@ lengthJunction <- function(exons,mapExon)
   Le2 <- mapExon[which(mapExon$exonID %in% exons[2]), "length"]
   return(Le1+Le2)
 }
-
-  
