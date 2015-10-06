@@ -6,46 +6,48 @@ cat(paste("Number of cores",nCores,"\n"))
 library(devtools)
 load_all()
 
-## Now we correct for PEER using simple quantification Exons+Introns
+# Now we correct for PEER using simple quantification Exons+Introns
 
 
 
-expr <- read.delim("data/expr/rawCounts/genic/exonExonJunctions")
-## first four columns have the exon1ID - exon2ID - chr and TSS
+# expr <- read.delim("data/expr/rawCounts/genic/exonExonJunctions")
+# ## first four columns have the exon1ID - exon2ID - chr and TSS
+# 
+# ## Loading information of exon -exon junctions
+# # chr - start - end - ID
+# map <- read.delim(pipe("grep GB data/general/exongrps.log | cut -f2-5 -d' '"),sep=" ",header=F)
+# # Number of exons - length - max exon length If it's a complicated groupr and whether there are overlapping exons
+# mapTmp <- read.delim(pipe("grep GI data/general/exongrps.log | cut -f2-6 -d' '"),sep=" ",header=F)
+# map <- cbind(map,mapTmp)
+# 
+# ## load the map of the ID with the exon IDs
+# mapTmp <- read.delim(pipe("grep GE data/general/exongrps.log"),sep=" ",header=F,fill=T , col.names=paste("col", 1:64, sep="_"))
+# ##mapTmp[1,!is.na(mapTmp[1,])]
+# 
+# y <-1:nrow(mapTmp)
+# IDs <- unlist(sapply(y, function(x){ rep(x,length(mapTmp[x,2:64][!is.na(mapTmp[x,2:64])]))}))
+# 
+# mapExon <- read.delim(pipe("grep -w E data/general/exongrps.log"),sep=" ",header=F)
+# mapExon <- cbind(mapExon,IDs)
+# ## columns check the Altrans manual if something unclear
+# mapExon$V1 <- NULL
+# 
+# 
+# ## clean the data
+# 
+# colnames(mapExon) <- c("chr","start", "end", "exonID","geneID", "transID", "unifiedExon",
+#                      "differentStrand","strand","length","UnRegStartEnd",
+#                      "groupID")
+# 
+# colnames(map) <- c("chr","start", "end", "groupID","noExons", "length",
+#                    "maxExonLength","probleGroup","nonOverlaExon")
+# 
+# map$noExons <- gsub("NoExons:","",map$noExons)
+# map$length <- gsub("Length:","",map$length)
+# map$maxExonLength <- gsub("MaxExonLength:","",map$maxExonLength)
+# save(map,mapExon,expr,file="data/expr/rawCounts/fullExExJun.rda")
 
-## Loading information of exon -exon junctions
-# chr - start - end - ID
-map <- read.delim(pipe("grep GB data/general/exongrps.log | cut -f2-5 -d' '"),sep=" ",header=F)
-# Number of exons - length - max exon length If it's a complicated groupr and whether there are overlapping exons
-mapTmp <- read.delim(pipe("grep GI data/general/exongrps.log | cut -f2-6 -d' '"),sep=" ",header=F)
-map <- cbind(map,mapTmp)
-
-## load the map of the ID with the exon IDs
-mapTmp <- read.delim(pipe("grep GE data/general/exongrps.log"),sep=" ",header=F,fill=T , col.names=paste("col", 1:64, sep="_"))
-##mapTmp[1,!is.na(mapTmp[1,])]
-
-y <-1:nrow(mapTmp)
-IDs <- unlist(sapply(y, function(x){ rep(x,length(mapTmp[x,2:64][!is.na(mapTmp[x,2:64])]))}))
-
-mapExon <- read.delim(pipe("grep -w E data/general/exongrps.log"),sep=" ",header=F)
-mapExon <- cbind(mapExon,IDs)
-## columns check the Altrans manual if something unclear
-mapExon$V1 <- NULL
-
-
-## clean the data
-
-colnames(mapExon) <- c("chr","start", "end", "exonID","EnsID", "unifiedExon",
-                     "differentStrand","strand","length","UnRegStart",
-                     "UnRegEnd","groupID")
-
-colnames(map) <- c("chr","start", "end", "groupID","noExons", "length",
-                   "maxExonLength","probleGroup","nonOverlaExon")
-
-map$noExons <- gsub("NoExons:","",map$noExons)
-map$length <- gsub("Length:","",map$length)
-map$maxExonLength <- gsub("MaxExonLength:","",map$maxExonLength)
-save(map,mapExon,expr,file="data/expr/rawCounts/fullExExJun.rda")
+load("data/expr/rawCounts/fullExExJun.rda")
 
 # load the sample info to get the IDs for each tissue
 load("data/general/sampleInfo.rda")
@@ -91,19 +93,72 @@ cmd <- paste0("/apps/BEDTools/2.24.0/bin/bedtools nuc -fi /home/ukbec/bowtie2Ind
 
 ## calculate GC content with bedtools
 system(cmd)
+rm(cmd,exprSamNam)
 
 cat(paste("GC content saved in data/general/GCcontRegionJunctions","\n"))
 GCcontentTab <- read.delim("data/general/GCcontRegionJunctions")
 
 
 
+# now we select the expression for the PUTM only samples
+exprAll <- expr
+colnames(expr) <- paste0(gsub("Sample_","",colnames(expr)),"_")
 
-rm(cmd)
+# now we select the expression for the PUTM only samples
+expr <- expr[,as.character(PUTM$A.CEL_file)]
+
+
+
 ## detectCores()
 ## [1] 24
 
 
+librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
+names(librarySize) <- as.character(PUTM$A.CEL_file)
+
+# convert in RPKM
+library(easyRNASeq)
+
+# load the GC content genic and gene length
+
+juncdef <- exprAll[,1:4]
+
+## calculation of genes only exons length
+
+library(doParallel)
+library(foreach)
+
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(nCores)
+clusterExport(cl, c("lengthJunction"))
+
+registerDoParallel(cl)
+getDoParWorkers()
+
+start <- Sys.time()
+length <- foreach(i=1:length(nrow(juncdef[,1:2])),.combine=rbind,.verbose=F)%dopar%lengthJunction(juncdef[i,1:2],mapExon)
+#geneswidth <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+rm(cl,end,start)
+
+
+length <- apply(juncdef[,1:2],1,function(x) lengthJunction(x,mapExon))
 
 
 
 
+
+
+
+
+ 
+  
+  
+  
+  
