@@ -689,12 +689,27 @@ write.csv(go,file="data/results/GO/GOExonSpePUTM.csv")
 
 InSpe <- paste0(eQTLPUTMI$snps,";",eQTLPUTMI$external_gene_id)
 InSpe <- InSpe[-which(InSpe %in% commonEQTLs)]
-geneSpe <- unlist(lapply(strsplit(InSpe,":")
+geneSpe <- unlist(lapply(strsplit(InSpe,";")
                          ,function(x){x[2]}))
 
 go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLPUTMI$external_gene_id,eQTLPUTMEx$external_gene_id), src_filter = "GO")
 head(go)
 
+
+kegg <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLPUTMI$external_gene_id,eQTLPUTMEx$external_gene_id), src_filter = "KEGG")
+head(kegg)
+
+library("biomaRt")
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+entrezID <- getBM(attributes=c("entrezgene"),
+                  verbose = T,
+                  filters="ensembl_gene_id",
+                  values=geneSpe, mart=ensembl)
+
+DOres <- enrichDO(entrezID[,1], pvalueCutoff=0.01)
+head(summary(DOres))
 
 
 

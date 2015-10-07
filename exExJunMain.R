@@ -139,7 +139,7 @@ registerDoParallel(cl)
 getDoParWorkers()
 
 start <- Sys.time()
-length <- foreach(i=1:nrow(juncdef[,1:2]),.verbose=F)%dopar%lengthJunction(juncdef[i,1:2],mapExon)
+system.time(length <- foreach(i=1:nrow(juncdef[,1:2]),.combine=c,.verbose=F)%dopar%lengthJunction(juncdef[i,1:2],mapExon))
 #geneswidth <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
 ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
 end <- Sys.time()
