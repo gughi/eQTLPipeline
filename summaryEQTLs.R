@@ -612,6 +612,9 @@ load("data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
 eQTLSNIGEx <- eQTLSNIG
 rm(eQTLSNIG)
 
+eQTLSNIGEx <- eQTLSNIGEx[which(eQTLSNIGEx$myFDR<0.01),]
+eQTLSNIGI <- eQTLSNIGI[which(eQTLSNIGI$myFDR<0.01),]
+
 library(gplots)
 ## overlap exonic and intronic
 
@@ -636,16 +639,17 @@ geneSpe <- unlist(lapply(strsplit(ExSpe,";")
 require(gProfileR)
 
 
-go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLSNIGI$external_gene_id,eQTLSNIGEx$external_gene_id), src_filter = "GO")
+go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLSNIGI$external_gene_id,eQTLSNIGEx$external_gene_id))
 ##write.csv(unique(geneSpe),file="tmp/geneSpe.csv")
 write.csv(go,file="data/results/GO/GOExonSpeSNIG.csv")
 
 InSpe <- paste0(eQTLSNIGI$snps,";",eQTLSNIGI$external_gene_id)
 InSpe <- InSpe[-which(InSpe %in% commonEQTLs)]
-geneSpe <- unlist(lapply(strsplit(InSpe,":")
+geneSpe <- unlist(lapply(strsplit(InSpe,";")
                          ,function(x){x[2]}))
 
-go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLSNIGI$external_gene_id,eQTLSNIGEx$external_gene_id), src_filter = "GO")
+go <- gprofiler(geneSpe ,correction_method="bonferroni",custom_bg = c(eQTLSNIGI$external_gene_id,eQTLSNIGEx$external_gene_id))
+write.csv(go,file="data/results/GO/GOIntronSpeSNIG.csv")
 
 ## no point to save the file since there is no significant term
 
@@ -710,6 +714,147 @@ entrezID <- getBM(attributes=c("entrezgene"),
 
 DOres <- enrichDO(entrezID[,1], pvalueCutoff=0.01)
 head(summary(DOres))
+
+
+#####################################
+###  OVerlap unsentinalised eQTLs ###
+#####################################
+
+
+
+eQTLPUTMI <- read.delim(file="data/results/finaleQTLs/intronic.unsentinalised.PUTM.txt",  as.is=T, header=T)
+tmp <- strsplit(eQTLPUTMI$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+rownames(df) <- NULL
+eQTLPUTMIun <- df 
+colnames(eQTLPUTMIun) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(df)
+
+eQTLSNIGI <- read.delim(file="data/results/finaleQTLs/intronic.unsentinalised.SNIG.txt",  as.is=T, header=T)
+tmp <- strsplit(eQTLSNIGI$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+rownames(df) <- NULL
+head(df)
+eQTLSNIGIun <- df 
+colnames(eQTLSNIGIun) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+save(eQTLSNIGIun,eQTLPUTMIun,file="data/results/finaleQTLs/intronic.unsentinalised.rda")
+rm(df)
+
+eQTLPUTMEx <- read.delim(file="data/results/finaleQTLs/eQTLgeneExons.unsentinalised.PUTM.txt",  as.is=T, header=T)
+tmp <- strsplit(eQTLPUTMEx$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+rownames(df) <- NULL
+eQTLPUTMExun <- df 
+colnames(eQTLPUTMExun) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(df)
+
+eQTLSNIGEx <- read.delim(file="data/results/finaleQTLs/eQTLgeneExons.unsentinalised.SNIG.txt",  as.is=T, header=T)
+tmp <- strsplit(eQTLSNIGEx$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+rownames(df) <- NULL
+head(df)
+eQTLSNIGExun <- df 
+colnames(eQTLSNIGExun) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+save(eQTLSNIGExun,eQTLPUTMExun,file="data/results/finaleQTLs/geneExonic.unsentinalised.rda")
+rm(df)
+
+
+load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
+load("data/results/finaleQTLs/intronic.unsentinalised.rda")
+
+
+# filter by FDR 0.01
+eQTLPUTMExun <- eQTLPUTMExun[which(as.numeric(eQTLPUTMExun[,7]) < 0.01),]
+eQTLPUTMIun <- eQTLPUTMIun[which(as.numeric(eQTLPUTMIun[,7]) < 0.01),]
+
+
+venn(list(PUTMExon=paste0(eQTLPUTMExun[,1],eQTLPUTMExun[,2]),
+          PUTMIntr=paste0(eQTLPUTMIun[,1],eQTLPUTMIun[,2])))
+
+
+
+
+commonEQTLs <- intersect(paste0(eQTLPUTMExun[,1],";",eQTLPUTMExun[,2]),
+                         paste0(eQTLPUTMIun[,1],";",eQTLPUTMIun[,2]))
+
+
+commonGenes <- unlist(lapply(strsplit(commonEQTLs,";")
+                         ,function(x){x[2]}))
+
+
+## only for the plot
+venn(list(PUTMExon=1:(length(unique(eQTLPUTMExun[,2]))),
+          PUTMIntr=(length(unique(eQTLPUTMExun[,2]))-(length(unique(commonGenes)))+1):(length(unique(eQTLPUTMExun[,2]))+(length(unique(eQTLPUTMIun[,2]))-length(unique(commonGenes))))))
+
+ExSpe <- unique(eQTLPUTMExun[,2])[-which(unique(eQTLPUTMExun[,2]) %in% commonGenes)]
+require(gProfileR)
+
+go <- gprofiler(ExSpe ,correction_method="bonferroni",
+                custom_bg = c(unique(eQTLPUTMExun[,2],unique(eQTLPUTMIun[,2]))))
+
+write.csv(go,file="data/results/GO/GOExonSpePUTM.csv")
+
+
+InSpe <- unique(eQTLPUTMIun[,2])[-which(unique(eQTLPUTMIun[,2]) %in% commonGenes)]
+
+go <- gprofiler(InSpe ,correction_method="bonferroni",
+                custom_bg = c(unique(eQTLPUTMExun[,2],unique(eQTLPUTMIun[,2]))))
+
+write.csv(go,file="data/results/GO/GOIntSpePUTM.csv")
+
+###### SNIG #######
+
+eQTLSNIGExun <- eQTLSNIGExun[which(as.numeric(eQTLSNIGExun[,7]) < 0.01),]
+eQTLSNIGIun <- eQTLSNIGIun[which(as.numeric(eQTLSNIGIun[,7]) < 0.01),]
+
+
+venn(list(SNIGExon=paste0(eQTLSNIGExun[,1],eQTLSNIGExun[,2]),
+          SNIGIntr=paste0(eQTLSNIGIun[,1],eQTLSNIGIun[,2])))
+
+
+
+
+commonEQTLs <- intersect(paste0(eQTLSNIGExun[,1],";",eQTLSNIGExun[,2]),
+                         paste0(eQTLSNIGIun[,1],";",eQTLSNIGIun[,2]))
+
+
+commonGenes <- unlist(lapply(strsplit(commonEQTLs,";")
+                             ,function(x){x[2]}))
+
+
+## only for the plot
+venn(list(SNIGExon=1:(length(unique(eQTLSNIGExun[,2]))),
+          SNIGIntr=(length(unique(eQTLSNIGExun[,2]))-(length(unique(commonGenes)))+1):(length(unique(eQTLSNIGExun[,2]))+(length(unique(eQTLSNIGIun[,2]))-length(unique(commonGenes))))))
+
+
+ExSpe <- unique(eQTLSNIGExun[,2])[-which(unique(eQTLSNIGExun[,2]) %in% commonGenes)]
+require(gProfileR)
+
+go <- gprofiler(ExSpe ,correction_method="bonferroni",
+                custom_bg = c(unique(eQTLSNIGExun[,2],unique(eQTLSNIGIun[,2]))))
+
+write.csv(go,file="data/results/GO/GOExonSpeSNIG.csv")
+
+
+InSpe <- unique(eQTLSNIGIun[,2])[-which(unique(eQTLSNIGIun[,2]) %in% commonGenes)]
+
+go <- gprofiler(InSpe ,correction_method="bonferroni",
+                custom_bg = c(unique(eQTLSNIGExun[,2],unique(eQTLSNIGIun[,2]))))
+
+write.csv(go,file="data/results/GO/GOIntSpeSNIG.csv")
+
+
+
+
+
 
 
 
