@@ -1,5 +1,8 @@
 
-setwd("/home/guelfi/eQTLPipeline")
+# Apollo
+##setwd("/home/guelfi/eQTLPipeline")
+# Caprica
+setwd("/home/seb/projectsR/eQTLPipeline")
 sink("logExonExonJunctions.log")
 nCores <- 15
 cat(paste("Number of cores",nCores,"\n"))
@@ -47,7 +50,7 @@ load_all()
 # map$maxExonLength <- gsub("MaxExonLength:","",map$maxExonLength)
 # save(map,mapExon,expr,file="data/expr/rawCounts/fullExExJun.rda")
 
-load("data/expr/rawCounts/fullExExJun.rda")
+load("data/expr/rawCounts/genic/fullExExJun.rda")
 
 # load the sample info to get the IDs for each tissue
 load("data/general/sampleInfo.rda")
@@ -75,11 +78,11 @@ exprSamNam <- sapply(SNIG$A.CEL_file,function(x){
 points(PCAres$x[paste0("Sample_",exprSamNam),1],
        PCAres$x[paste0("Sample_",exprSamNam),2],col="blue")
 
-legend("bottomright", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
+legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
 
 rm(PUTM,SNIG,PCAres)
 
-
+doSwamp(t(expr[,5:ncol(expr)]),covs=sampleInfo)
 ## we calculate the GC content for all the junctions
 
 write.table(data.frame(mapExon[,1:4]), file = paste0("data/general/regionJunction.BED"), row.names = F, 
@@ -132,7 +135,7 @@ library(foreach)
 detectCores()
 ## [1] 24
 # create the cluster with the functions needed to run
-cl <- makeCluster(7)
+cl <- makeCluster(20)
 clusterExport(cl, c("lengthJunction"))
 
 registerDoParallel(cl)
