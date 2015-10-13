@@ -775,7 +775,7 @@ load("data/results/finaleQTLs/intronic.unsentinalised.rda")
 eQTLPUTMExun <- eQTLPUTMExun[which(as.numeric(eQTLPUTMExun[,7]) < 0.01),]
 eQTLPUTMIun <- eQTLPUTMIun[which(as.numeric(eQTLPUTMIun[,7]) < 0.01),]
 
-
+library(gplots)
 venn(list(PUTMExon=paste0(eQTLPUTMExun[,1],eQTLPUTMExun[,2]),
           PUTMIntr=paste0(eQTLPUTMIun[,1],eQTLPUTMIun[,2])))
 
@@ -850,6 +850,96 @@ go <- gprofiler(InSpe ,correction_method="bonferroni",
                 custom_bg = c(unique(eQTLSNIGExun[,2],unique(eQTLSNIGIun[,2]))))
 
 write.csv(go,file="data/results/GO/GOIntSpeSNIG.csv")
+
+####################################################
+#### Overlap exonic,intronic and exonic-intronic ###
+####################################################
+
+eQTLPUTMEI <- read.delim(file="data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.PUTM.txt",  as.is=T, header=T)
+tmp <- strsplit(eQTLPUTMEI$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+rownames(df) <- NULL
+eQTLPUTMEIun <- df 
+colnames(eQTLPUTMEIun) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(df)
+
+eQTLSNIGEI <- read.delim(file="data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.SNIG.txt",  as.is=T, header=T)
+tmp <- strsplit(eQTLSNIGEI$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+rownames(df) <- NULL
+head(df)
+eQTLSNIGEIun <- df 
+colnames(eQTLSNIGEIun) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+save(eQTLSNIGEIun,eQTLPUTMEIun,file="data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.rda")
+rm(df)
+
+load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
+load("data/results/finaleQTLs/intronic.unsentinalised.rda")
+load("data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.rda")
+
+eQTLPUTMExun <- eQTLPUTMExun[which(as.numeric(eQTLPUTMExun[,7]) < 0.01),]
+eQTLPUTMIun <- eQTLPUTMIun[which(as.numeric(eQTLPUTMIun[,7]) < 0.01),]
+eQTLPUTMEIxun <- eQTLPUTMExun[which(as.numeric(eQTLPUTMExun[,7]) < 0.01),]
+
+## common eQTL for the three groups
+commonEQTLs <- intersect(intersect(paste0(eQTLSNIGExun[,1],";",eQTLSNIGExun[,2]),
+                         paste0(eQTLSNIGIun[,1],";",eQTLSNIGIun[,2])),
+                         paste0(eQTLSNIGEIun[,1],";",eQTLSNIGEIun[,2]))
+
+
+commonGenes <- unlist(lapply(strsplit(commonEQTLs,";")
+                             ,function(x){x[2]}))
+
+## intersection between the three groups
+length(unique(commonGenes))
+# 171
+
+commonEQTLs <- intersect(paste0(eQTLSNIGExun[,1],";",eQTLSNIGExun[,2]),
+                                   paste0(eQTLSNIGIun[,1],";",eQTLSNIGIun[,2]))
+
+
+commonGenes <- unlist(lapply(strsplit(commonEQTLs,";")
+                             ,function(x){x[2]}))
+
+## intersection between the exon -introns groups
+length(unique(commonGenes))
+# 173
+
+commonEQTLs <- intersect(paste0(eQTLSNIGExun[,1],";",eQTLSNIGExun[,2]),
+                         paste0(eQTLSNIGEIun[,1],";",eQTLSNIGEIun[,2]))
+
+
+commonGenes <- unlist(lapply(strsplit(commonEQTLs,";")
+                             ,function(x){x[2]}))
+
+## intersection between the Exon - Exon+introns groups
+length(unique(commonGenes))
+# 321
+
+
+commonEQTLs <- intersect(paste0(eQTLSNIGEIun[,1],";",eQTLSNIGEIun[,2]),
+                         paste0(eQTLSNIGIun[,1],";",eQTLSNIGIun[,2]))
+
+
+commonGenes <- unlist(lapply(strsplit(commonEQTLs,";")
+                             ,function(x){x[2]}))
+
+## intersection between the introns - Exon+introns groups
+length(unique(commonGenes))
+# 602
+
+
+
+length(unique(eQTLSNIGEIun[,2]))
+length(unique(eQTLSNIGIun[,2]))
+length(unique(eQTLSNIGExun[,2]))
+
+
+
 
 
 

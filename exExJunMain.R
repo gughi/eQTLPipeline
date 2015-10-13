@@ -110,12 +110,8 @@ colnames(expr) <- paste0(gsub("Sample_","",colnames(expr)),"_")
 # now we select the expression for the PUTM only samples
 expr <- expr[,as.character(PUTM$A.CEL_file)]
 
-
-
 ## detectCores()
 ## [1] 24
-
-
 librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
 librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
 names(librarySize) <- as.character(PUTM$A.CEL_file)
@@ -128,30 +124,75 @@ library(easyRNASeq)
 juncdef <- exprAll[,1:4]
 
 ## calculation of genes only exons length
+# THIS WAS CALCULATED IN CAPRICA BECAUSE didn't manage to do it in Apollo
+#
+# library(doParallel)
+# library(foreach)
+# 
+# detectCores()
+# ## [1] 24
+# # create the cluster with the functions needed to run
+# cl <- makeCluster(20)
+# clusterExport(cl, c("lengthJunction"))
+# 
+# registerDoParallel(cl)
+# getDoParWorkers()
+# 
+# start <- Sys.time()
+# system.time(length <- foreach(i=1:nrow(juncdef[,1:2]),.combine=c,.verbose=F)%dopar%lengthJunction(juncdef[i,1:2],mapExon))
+# #geneswidth <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
+# ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+# end <- Sys.time()
+# end-start
+# stopCluster(cl)
+# rm(cl,end,start)
+# 
+# 
+# length <- apply(juncdef[,1:2],1,function(x) lengthJunction(x,mapExon))
 
-library(doParallel)
-library(foreach)
-
-detectCores()
-## [1] 24
-# create the cluster with the functions needed to run
-cl <- makeCluster(20)
-clusterExport(cl, c("lengthJunction"))
-
-registerDoParallel(cl)
-getDoParWorkers()
-
-start <- Sys.time()
-system.time(length <- foreach(i=1:nrow(juncdef[,1:2]),.combine=c,.verbose=F)%dopar%lengthJunction(juncdef[i,1:2],mapExon))
-#geneswidth <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%getRegionsWidth(rownames(expr)[i],exonsdef)
-##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
-end <- Sys.time()
-end-start
-stopCluster(cl)
-rm(cl,end,start)
 
 
-length <- apply(juncdef[,1:2],1,function(x) lengthJunction(x,mapExon))
+load("data/general/lengthExExJun.rda")
+juncdef <- cbind(juncdef,length)
+IDs <- do.call(paste, c(juncdef[,1:2],sep="_"))
+rownames(juncdef) <- IDs
+rownames(expr) <- IDs
+names(length) <- IDs
+
+stopifnot(identical(colnames(expr),names(librarySize)))
+stopifnot(identical(rownames(expr),names(length)))              
+
+
+RPKM.std <- RPKM(as.matrix(expr), NULL, 
+                 lib.size=librarySize, 
+                 feature.size=length)
+
+## BEFORE FILTERING WE HAD 551102 exon-exon junctions
+
+## filtering
+RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+genesList <- rownames(RPKM.std)
+
+# ALTER FILTERING 96738 RETAINED exon-exon junctions
+## write log
+cat(paste("Number of exon-exon after filtering:",length(genesList),"\n"))
+rm(RPKM.std,length)
+expr <- expr[as.character(genesList),]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
