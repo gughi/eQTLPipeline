@@ -20,8 +20,8 @@ ratioGCcontentExonExon <-
     ## geneID: geneID from ensembl
     ## GCcontent: matrix with the GC content by exons
     
-    exons <- strsplit(juncID,"_")
-    GC <- (GCcontentTab[which(GCcontentTab[,4] %in% exons[1]),6] + GCcontentTab[which(GCcontentTab[,4] %in% exons[2]),6])
+    exons <- unlist(strsplit(juncID,"_"))
+    GC <- ((GCcontentTab[which(GCcontentTab[,4] %in% exons[1]),6] + GCcontentTab[which(GCcontentTab[,4] %in% exons[2]),6])/2)
     return(c(as.character(juncID), (sum(GC)/length(GC))))
   }
 

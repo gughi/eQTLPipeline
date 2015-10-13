@@ -151,7 +151,6 @@ juncdef <- exprAll[,1:4]
 # length <- apply(juncdef[,1:2],1,function(x) lengthJunction(x,mapExon))
 
 
-
 load("data/general/lengthExExJun.rda")
 juncdef <- cbind(juncdef,length)
 IDs <- do.call(paste, c(juncdef[,1:2],sep="_"))
@@ -178,6 +177,10 @@ genesList <- rownames(RPKM.std)
 cat(paste("Number of exon-exon after filtering:",length(genesList),"\n"))
 rm(RPKM.std,length)
 expr <- expr[as.character(genesList),]
+
+
+
+
 
 
 
