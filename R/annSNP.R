@@ -48,3 +48,36 @@ annSNP <- function(eQTLres)
     rm(df,rs)    
     return(eQTLres)
 }
+
+## this function annotated a single snp adding the consequence information
+annSinSNP <- function(snp,ensembl){
+    
+  snps <- NULL
+  snps$chr <- gsub("chr","",unlist(lapply(strsplit(as.character(snp),":")
+                                          ,function(x){c(x[1])})))
+  snps$start <- unlist(lapply(strsplit(as.character(snp),":")
+                              ,function(x){c(x[2])}))
+  
+  snps$end <- unlist(lapply(strsplit(as.character(snp),":")
+                            ,function(x){c((as.numeric(x[2])+2))}))
+  
+  rsID <- getBM(attributes = c("refsnp_id", "allele","chr_name","chrom_start",
+                               "consequence_type_tv"),
+                filters = c("chr_name", "chrom_start", "chrom_end"),
+                values=list(snps$chr,snps$start,snps$end),
+                mart = ensembl)
+  
+  if(nrow(rsID)<1)
+  {
+    rsID <- c("NA","NA")
+  }else{
+      
+    rsID <- c(paste(unique(rsID$refsnp_id),collapse = ";"),
+              paste(unique(rsID$consequence_type_tv),collapse = ";"))
+  }
+  
+  return(rsID)
+    
+}
+
+

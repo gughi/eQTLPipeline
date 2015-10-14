@@ -920,7 +920,6 @@ commonGenes <- unlist(lapply(strsplit(commonEQTLs,";")
 length(unique(commonGenes))
 # 321
 
-
 commonEQTLs <- intersect(paste0(eQTLSNIGEIun[,1],";",eQTLSNIGEIun[,2]),
                          paste0(eQTLSNIGIun[,1],";",eQTLSNIGIun[,2]))
 
@@ -937,6 +936,43 @@ length(unique(commonGenes))
 length(unique(eQTLSNIGEIun[,2]))
 length(unique(eQTLSNIGIun[,2]))
 length(unique(eQTLSNIGExun[,2]))
+
+
+
+
+########################
+## Annotation of eQTL ##
+########################
+
+
+load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
+
+library(doParallel)
+library(foreach)
+
+library(biomaRt)
+ensembl <- useMart(biomart="ENSEMBL_MART_SNP", host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_snp")
+
+
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(20)
+clusterExport(cl, c("annSinSNP","getBM"))
+
+registerDoParallel(cl)
+getDoParWorkers()
+
+start <- Sys.time()
+conse <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%annSinSNP(eQTLPUTMExun[i,1],ensembl)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+rm(cl,end,start)
+colnames(conse) <- c("rsID","consequence")
+save(conse,eQTLPUTMExun,file="data/results/finaleQTLs/geneExonic.un.SNPAnn.rda")
 
 
 

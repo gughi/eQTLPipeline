@@ -449,7 +449,9 @@ points(PCAres$x[SNIG$A.CEL_file,1],PCAres$x[SNIG$A.CEL_file,2],col="blue")
 legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
 
 rm(PUTM,SNIG,PCAres)
->>>>>>> 0977e569b81a0e9215f95ecd770cbcb91a7ef258
+
+
+
 
 
 
