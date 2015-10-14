@@ -944,7 +944,6 @@ length(unique(eQTLSNIGExun[,2]))
 ## Annotation of eQTL ##
 ########################
 
-
 load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
 
 library(doParallel)
@@ -965,14 +964,34 @@ registerDoParallel(cl)
 getDoParWorkers()
 
 start <- Sys.time()
-conse <- foreach(i=1:10,.combine=rbind,.verbose=F)%dopar%annSinSNP(eQTLPUTMExun[i,1],ensembl)
+conse <- foreach(i=1:nrow(eQTLPUTMExun),.combine=rbind,.verbose=F)%dopar%annSinSNP(eQTLPUTMExun[i,1],ensembl)
 ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
 end <- Sys.time()
 end-start
 stopCluster(cl)
 rm(cl,end,start)
 colnames(conse) <- c("rsID","consequence")
-save(conse,eQTLPUTMExun,file="data/results/finaleQTLs/geneExonic.un.SNPAnn.rda")
+save(conse,eQTLPUTMExun,file="data/results/finaleQTLs/geneExonic.un.SNPAnn.PUTM.rda")
+
+
+load("data/results/finaleQTLs/intronic.unsentinalised.rda")
+
+cl <- makeCluster(20)
+clusterExport(cl, c("annSinSNP","getBM"))
+
+registerDoParallel(cl)
+getDoParWorkers()
+
+start <- Sys.time()
+conse <- foreach(i=1:nrow(eQTLPUTMIun),.combine=rbind,.verbose=F)%dopar%annSinSNP(eQTLPUTMIun[i,1],ensembl)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+rm(cl,end,start)
+colnames(conse) <- c("rsID","consequence")
+save(conse,eQTLPUTMIun,file="data/results/finaleQTLs/intronic.un.SNPAnn.PUTM.rda")
+
 
 
 
