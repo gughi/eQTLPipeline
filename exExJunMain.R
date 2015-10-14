@@ -246,6 +246,23 @@ colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
 save(RPKM.cqn,PUTM,covs,file="data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.PUTM")
 
 
+### Residual correction ###
+
+rm(list=ls())
+
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.PUTM")
+
+##doSwamp(RPKM.cqn,covs)
+
+PEERRNDPEER18 <- read.csv("testPEER/RNDMPEER18",row.names=1)
+PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
+
+resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
+                               "data/expr/normalisedCounts/genic/exonExonJunc/resids.PUTM.rda")
+
+
+
+
 
 ##############
 ### SNIG #####
@@ -368,19 +385,49 @@ colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
 save(RPKM.cqn,SNIG,covs,file="data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.SNIG")
 
 
+### Residual correction ###
+
+rm(list=ls())
+
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.SNIG")
+
+##doSwamp(RPKM.cqn,covs)
+
+PEERRNDPEER18 <- read.csv("testPEER/RNDMPEER18",row.names=1)
+PEERRNDPEER18 <- PEERRNDPEER18[colnames(RPKM.cqn),c(1:2,4:16)]
+
+resids <- doResidualCorrection(t(RPKM.cqn),PEERRNDPEER18,
+                               "data/expr/normalisedCounts/genic/exonExonJunc/resids.SNIG.rda")
 
 
 
 
+## check PCA before correcting
 
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.SNIG")
+RPKM.cqn.SNIG <- RPKM.cqn
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.PUTM")
+RPKM.cqn.PUTM <- RPKM.cqn
 
+rm(RPKM.cqn)
 
+comJunc <- intersect(rownames(RPKM.cqn.SNIG),rownames(RPKM.cqn.PUTM))
+length(comJunc)
+RPKM.cqn <- cbind(RPKM.cqn.SNIG[as.character(comJunc),],RPKM.cqn.PUTM[as.character(comJunc),])
 
+PCAres<- prcomp(t(RPKM.cqn))
+par(mfrow=c(1,1))
+PUTM <- sampleInfo[sampleInfo[, 6] == "PUTM",]
+SNIG <- sampleInfo[sampleInfo[, 6] == "SNIG",]
 
+plot(PCAres, main="PCA axis exon-exon juctions (PUTM + SNIG)")
+plot(PCAres$x[,1],PCAres$x[,2],main = "PC1 vs PC2 by tissue",xlab="PC1",ylab="PC2" )
 
+points(PCAres$x[PUTM$A.CEL_file,1],PCAres$x[PUTM$A.CEL_file,2],col="red")
+points(PCAres$x[SNIG$A.CEL_file,1],PCAres$x[SNIG$A.CEL_file,2],col="blue")
+legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
 
-
-
+rm(PUTM,SNIG,PCAres)
 
 
 
