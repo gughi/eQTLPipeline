@@ -80,7 +80,25 @@ points(PCAres$x[paste0("Sample_",exprSamNam),1],
 
 legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
 
-rm(PUTM,SNIG,PCAres)
+rm(PCAres)
+
+PUTM$U.Region_simplified <- NULL
+covs <- PUTM 
+rownames(covs) <- covs$A.CEL_file
+#convert the female and male info in numeric
+covs[covs=="M"]=0
+covs[covs=="F"]=1
+covs <- as.data.frame(apply(covs[,c(2:5,7:9)], 2, as.factor))
+covs[,c(1:4,7)] <- as.data.frame(apply(covs[,c(1:4,7)], 2, as.numeric))
+covs[,5] <- as.numeric(covs[,5])
+covs[,6] <- as.numeric(covs[,6])
+lanes <- read.csv("data/general/QCmetrics.csv",row.names=8)
+rownames(lanes) <- gsub("CEL","",rownames(lanes))
+covs <- cbind(covs,librarySize[as.character(rownames(covs))])
+covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
+colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
+                    "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
+
 
 doSwamp(t(expr[,5:ncol(expr)]),covs=sampleInfo)
 ## we calculate the GC content for all the junctions
@@ -154,7 +172,7 @@ rm(cl,end,start)
 length <- apply(juncdef[,1:2],1,function(x) lengthJunction(x,mapExon))
 
 
-
+save(length,file="/home/seb/projectsR/eQTLPipeline/lengthExExJun.rda")
 
 
 
