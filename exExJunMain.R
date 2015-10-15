@@ -451,14 +451,37 @@ legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissu
 rm(PUTM,SNIG,PCAres)
 
 
-
-
-
-
-
-
- 
   
   
-  
-  
+
+
+load("data/general/sampleInfo.rda")
+
+BB <- read.csv("C:/Users/mguelfi/Dropbox/Work/SampleData.csv")
+
+BB <- BB[which(BB$SD.No %in% sampleInfo$U.SD_No),c("SD.No","Brain.Bank")]
+head(BB)
+
+librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+
+rownames(covs) <- covs$A.CEL_file
+#convert the female and male info in numeric
+covs[covs=="M"]=0
+covs[covs=="F"]=1
+covs <- as.data.frame(apply(covs[,c(2:5,7:9)], 2, as.factor))
+covs[,c(1:4,7)] <- as.data.frame(apply(covs[,c(1:4,7)], 2, as.numeric))
+covs[,5] <- as.numeric(covs[,5])
+covs[,6] <- as.numeric(covs[,6])
+lanes <- read.csv("data/general/QCmetrics.csv",row.names=8)
+rownames(lanes) <- gsub("CEL","",rownames(lanes))
+covs <- cbind(covs,librarySize[as.character(rownames(covs))])
+covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
+colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
+                    "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
+
+
+
+
+doSwamp(head(RPKM.cqn,1000),covs=sampleInfo)
+
+
