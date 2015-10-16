@@ -526,6 +526,52 @@
     save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
     write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
     
+    ########################
+    ### Annotate the TSS ###
+    ########################
+      
+    library("biomaRt")
+    
+    load(file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+    
+    ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                       dataset="hsapiens_gene_ensembl")
+    
+    geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                       verbose = T,
+                       filters="ensembl_gene_id",
+                       values=eQTLPUTM$gene, mart=ensembl)
+    
+  
+    
+    TSS <- sapply(eQTLPUTM$gene, function(x){getTSS(x,geneNames)})
+    
+    eQTLPUTM <- cbind(eQTLPUTM,TSS)
+    
+    save(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+    write.csv(eQTLPUTM,file="data/results/finaleQTLs/geneExonic.Ann.PUTM.csv",row.names=F)    
+
+    ### SNIG
+    
+    load(file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+    
+    ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                       dataset="hsapiens_gene_ensembl")
+    
+    geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                       verbose = T,
+                       filters="ensembl_gene_id",
+                       values=eQTLSNIG$gene, mart=ensembl)
+    
+    
+    
+    TSS <- sapply(eQTLSNIG$gene, function(x){getTSS(x,geneNames)})
+    
+    eQTLSNIG <- cbind(eQTLSNIG,TSS)
+    
+    save(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+    write.csv(eQTLSNIG,file="data/results/finaleQTLs/geneExonic.Ann.SNIG.csv",row.names=F)    
+    
     
     ################################################ 
     #### check overlapping genes between tissues ###
