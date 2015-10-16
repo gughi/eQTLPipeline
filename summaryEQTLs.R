@@ -1311,7 +1311,7 @@ eQTLPUTMI <- cbind(eQTLPUTMI,DisGeneStart)
 par(mfrow=c(1,1))
 hist(eQTLPUTMEx$DisGeneStart,col='skyblue',border=F,main= "TSS Exonic Vs Intronic",
      sub=paste("Exonic:",length(eQTLPUTMEx$DisGeneStart),"Intronic:",length(eQTLPUTMI$DisGeneStart)),
-     xlab=paste("KS pvalue:",ks.test(eQTLPUTMEx$DisGeneStart,eQTLPUTMI$DisGeneStart)$p.value),freq=FALSE)
-hist(eQTLPUTMI$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,prop=TRUE,freq=FALSE)
+     xlab=paste("KS pvalue:",ks.test(eQTLPUTMEx$DisGeneStart,eQTLPUTMI$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(eQTLPUTMI$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,prop=TRUE,freq=FALSE,breaks=40)
 
 
