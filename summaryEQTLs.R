@@ -1043,7 +1043,7 @@ barplot(sort((table(commonAnn)/length(commonAnn))*100,decreasing = T),las=2,main
         col=1:length(table(commonAnn)),ylim=c(0,60),ylab="percentage")
 
 # now we test the different features
-par(mfrow=c(1,3))
+par(mfrow=c(1,2))
 feature <- "intron_variant"
 common <- (table(commonAnn)[feature]/length(commonAnn))*100
 exonic <- (table(speEx)[feature]/length(speEx))*100
@@ -1060,7 +1060,7 @@ exonic <- (table(speEx)[feature]/length(speEx))*100
 intronic <- (table(speIn)[feature]/length(speIn))*100
 tmp <- c(common,exonic,intronic)
 names(tmp) <- c("common","exonic","intronic")
-barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+barplot(tmp,las=2,main=paste(feature ),
         col=1:3,ylab="percentage")
 
 
@@ -1070,7 +1070,7 @@ exonic <- (table(speEx)[feature]/length(speEx))*100
 intronic <- (table(speIn)[feature]/length(speIn))*100
 tmp <- c(common,exonic,intronic)
 names(tmp) <- c("common","exonic","intronic")
-barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+barplot(tmp,las=2,main=paste(feature ),
         col=1:3,ylab="percentage")
 
 
@@ -1142,9 +1142,6 @@ barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
 
 
 library(gplots)
-
-
-
 ### check the overlap of the genes between introns and exonic
 
 load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
@@ -1168,8 +1165,6 @@ load("data/results/finaleQTLs/intronic.unsentinalised.rda")
 
 eQTLPUTMExun <- eQTLPUTMExun[which(as.numeric(eQTLPUTMExun[,7]) < 0.01),]
 eQTLPUTMIun <- eQTLPUTMIun[which(as.numeric(eQTLPUTMIun[,7]) < 0.01),]
-
-
 
 commonGenes <- intersect(paste0(eQTLPUTMExun[,2]),
                          paste0(eQTLPUTMIun[,2]))
@@ -1235,7 +1230,6 @@ exprExonic <- RPKM.cqn
 load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
 exprIntronic <- RPKM.cqn
 
-
 d<-density(exprIntronic)
 plot(d, xlim=c(-10,10), main="Expression All genes")
 polygon(d, col='skyblue') 
@@ -1260,7 +1254,6 @@ polygon(d, col='skyblue')
 polygon(density(var(exprExonic)), col=scales::alpha('red',.5)) 
 legend("topright",c("expr Intronic","expr Exonic"),col=c('skyblue','red'),pch=15)
 rm(d)
-
 
 commonGenes <- intersect(paste0(eQTLPUTMExun[,2]),
                          paste0(eQTLPUTMIun[,2]))
@@ -1287,6 +1280,7 @@ rm(d)
 ############################################################
 
 
+
 load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
 eQTLPUTMEx <- eQTLPUTM[which(eQTLPUTM$myFDR<0.01),]
 load("data/results/finaleQTLs/intronic.Ann.PUTM.rda")
@@ -1298,26 +1292,221 @@ commonGenes <- intersect(paste0(eQTLPUTMEx[,2]),
 eQTLPUTMEx <- eQTLPUTMEx[-which(eQTLPUTMEx$gene %in% commonGenes),]
 
 posSNP <- unlist(lapply(strsplit(as.character(eQTLPUTMEx$snps),":"),function(x){x[2]}))
-DisGeneStart <- eQTLPUTMEx$start_position - as.integer(posSNP)
+DisGeneStart <- eQTLPUTMEx$TSS - as.integer(posSNP)
 eQTLPUTMEx <- cbind(eQTLPUTMEx,DisGeneStart) 
 
 
 eQTLPUTMI <- eQTLPUTMI[-which(eQTLPUTMI$gene %in% commonGenes),]
 
 posSNP <- unlist(lapply(strsplit(as.character(eQTLPUTMI$snps),":"),function(x){x[2]}))
-DisGeneStart <- eQTLPUTMI$start_position - as.integer(posSNP)
+DisGeneStart <- eQTLPUTMI$TSS - as.integer(posSNP)
 eQTLPUTMI <- cbind(eQTLPUTMI,DisGeneStart) 
 
 par(mfrow=c(1,1))
-hist(eQTLPUTMEx$DisGeneStart,col='skyblue',border=F,main= "TSS Exonic Vs Intronic",
-     sub=paste("Exonic:",length(eQTLPUTMEx$DisGeneStart),"Intronic:",length(eQTLPUTMI$DisGeneStart)),
-     xlab=paste("KS pvalue:",ks.test(eQTLPUTMEx$DisGeneStart,eQTLPUTMI$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
-hist(eQTLPUTMI$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,prop=TRUE,freq=FALSE,breaks=40)
+hist(eQTLPUTMI$DisGeneStart,col='skyblue',border=F,main= "TSS Intronic vs Exonic",
+     sub=paste("Intronic:",length(eQTLPUTMEx$DisGeneStart),"Exonic:",length(eQTLPUTMI$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(eQTLPUTMI$DisGeneStart,eQTLPUTMEx$DisGeneStart)$p.value),freq=FALSE,breaks = 40, ylim=c(0,7e-06))
+hist(eQTLPUTMEx$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(eQTLPUTMI$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(eQTLPUTMEx$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("Intronic","Exonic"),col=c('skyblue','red'),pch=15)
 
 
 
 
 
 
+
+load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
+exprExonic <- RPKM.cqn
+load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
+exprIntronic <- RPKM.cqn
+rm(RPKM.cqn,PUTM,covs)
+int <- intersect(rownames(exprExonic),rownames(exprIntronic))
+
+
+load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+eQTLPUTMEx <- eQTLPUTM[which(eQTLPUTM$myFDR<0.01),]
+load("data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+eQTLPUTMI <- eQTLPUTM[which(eQTLPUTM$myFDR<0.01),]
+
+commonGenes <- intersect(paste0(eQTLPUTMEx[,2]),
+                         paste0(eQTLPUTMI[,2]))
+
+eQTLPUTMEx <- eQTLPUTMEx[-which(eQTLPUTMEx$gene %in% commonGenes),]
+eQTLPUTMEx <- eQTLPUTMEx[which(eQTLPUTMEx$gene %in% int),]
+
+
+eQTLPUTMI <- eQTLPUTMI[-which(eQTLPUTMI$gene %in% commonGenes),]
+eQTLPUTMI <- eQTLPUTMI[which(eQTLPUTMI$gene %in% int),]
+
+
+
+posSNP <- unlist(lapply(strsplit(as.character(eQTLPUTMEx$snps),":"),function(x){x[2]}))
+DisGeneStart <- eQTLPUTMEx$TSS - as.integer(posSNP)
+eQTLPUTMEx <- cbind(eQTLPUTMEx,DisGeneStart) 
+
+
+posSNP <- unlist(lapply(strsplit(as.character(eQTLPUTMI$snps),":"),function(x){x[2]}))
+DisGeneStart <- eQTLPUTMI$TSS - as.integer(posSNP)
+eQTLPUTMI <- cbind(eQTLPUTMI,DisGeneStart) 
+
+par(mfrow=c(1,1))
+hist(eQTLPUTMI$DisGeneStart,col='skyblue',border=F,main= "TSS Intronic vs Exonic",
+     sub=paste("Intronic:",length(eQTLPUTMEx$DisGeneStart),"Exonic:",length(eQTLPUTMI$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(eQTLPUTMI$DisGeneStart,eQTLPUTMEx$DisGeneStart)$p.value),freq=FALSE,breaks = 40, ylim=c(0,7e-06))
+hist(eQTLPUTMEx$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(eQTLPUTMI$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(eQTLPUTMEx$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("Intronic","Exonic"),col=c('skyblue','red'),pch=15)
+
+
+
+load("data/results/finaleQTLs/intronic.un.SNPAnn.PUTM.rda")
+# filter by FDR 0.01
+eQTLPUTMIun <- cbind(eQTLPUTMIun,conse)
+eQTLPUTMIun <- eQTLPUTMIun[which(as.numeric(eQTLPUTMIun[,7]) < 0.01),]
+rownames(eQTLPUTMIun) <- 1:nrow(eQTLPUTMIun)
+rm(conse)
+
+load("data/results/finaleQTLs/geneExonic.un.SNPAnn.PUTM.rda")
+# filter by FDR 0.01
+eQTLPUTMExun <- cbind(eQTLPUTMExun,conse)
+eQTLPUTMExun <- eQTLPUTMExun[which(as.numeric(eQTLPUTMExun[,7]) < 0.01),]
+rownames(eQTLPUTMExun) <- 1:nrow(eQTLPUTMExun)
+rm(conse)
+
+common <-intersect(paste0(eQTLPUTMExun[,1],eQTLPUTMExun[,2]),
+                   paste0(eQTLPUTMIun[,1],eQTLPUTMIun[,2]))
+
+## we plot a barplot for teh SNP annotation for teh exon Specific 
+speEx <- eQTLPUTMExun[which(eQTLPUTMExun[,2] %in% commonGenes),]
+speEx <- speEx[-which(paste0(speEx[,1],speEx[,2]) %in% common),9]
+
+speEx <- sapply(speEx,function(x){unlist(strsplit(x,";"))[1]})
+nOfNA <- length(which(speEx=="NA"))
+speEx <-speEx[-which(speEx=="NA")]
+par(mar=c(11,5,3,2))
+barplot(sort((table(speEx)/length(speEx))*100,decreasing = T),las=2,main=paste("Common SNPs annotated gene-exons (SNPs with non annotated",nOfNA,")" ),
+        col=1:length(table(speEx)),ylim=c(0,60),ylab="percentage")
+
+
+## we plot a barplot for teh SNP annotation for the introns specific
+speIn<- eQTLPUTMIun[which(eQTLPUTMIun[,2] %in% commonGenes),]
+speIn <- speIn[-which(paste0(speIn[,1],speIn[,2]) %in% common),9]
+speIn <- sapply(speIn,function(x){unlist(strsplit(x,";"))[1]})
+nOfNA <- length(which(speIn=="NA"))
+speIn <-speIn[-which(speIn=="NA")]
+par(mar=c(11,5,3,2))
+barplot(sort((table(speIn)/length(speIn))*100,decreasing = T),las=2,main=paste("Common SNPs annotated gene-introns (SNPs with non annotated",nOfNA,")" ),
+        col=1:length(table(speIn)),ylim=c(0,60),ylab="percentage")
+
+
+par(mfrow=c(1,3))
+feature <- "intron_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(tmp,las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",ylim = c(0,60),sub = paste("chi-square test:",
+                                                             chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
+
+
+feature <- "downstream_gene_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(tmp,las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",ylim = c(0,16),sub = paste("chi-square test:",
+                                                             chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
+
+
+feature <- "upstream_gene_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(tmp,las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",ylim = c(0,16),sub = paste("chi-square test:",
+                                                             chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
+
+
+feature <- "3_prime_UTR_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",sub = paste("chi-square test:",
+                                              chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
+
+
+feature <- "3_prime_UTR_variant"
+exonic <- table(speEx)[feature]
+intronic <- table(speIn)[feature]
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+        col=1:3,sub = paste("Total Exonic=",length(speEx),"Intronic",length(speIn)))
+
+
+
+
+
+
+load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
+exprExonic <- RPKM.cqn
+load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
+exprIntronic <- RPKM.cqn
+rm(RPKM.cqn,PUTM,covs)
+int <- intersect(rownames(exprExonic),rownames(exprIntronic))
+
+head(rownames(exprExonic)[-which(rownames(exprExonic) %in% int)])
+## "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" "ENSG00000001626" "ENSG00000002822" "ENSG00000003137"
+head(rownames(exprIntronic)[-which(rownames(exprIntronic) %in% int)])
+## "ENSG00000001630" "ENSG00000006555" "ENSG00000008516" "ENSG00000008517" "ENSG00000010704" "ENSG00000011052"
+
+
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+head(listAttributes(ensembl))
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","chromosome_name","start_position","end_position","gene_biotype"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=rownames(exprIntronic)[-which(rownames(exprIntronic) %in% int)], mart=ensembl)
+
+##ENSG00000006283    CACNA1G 17  48638429  48704835 protein_coding
+
+
+barplot(sort(table(geneNames$gene_biotype)),las=2)
+
+
+head(geneNames,20)
+
+##ENSG00000006555            TTC22               1       55245385     55266940 protein_coding
+
+
+
+load_all()
+
+## plot read-depth
+plotReadDepth("ENSG00000006555")
+
+
+load("data/expr/rawCounts/genic/exprIntrons.rda")
+load("data/expr/rawCounts/genic/exprSQ.rda")
+load("data/general/sampleInfo.rda")
+
+
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified =="PUTM"),]
+exprSQ <- exprSQ["ENSG00000006555",as.character(PUTM$A.CEL_file)]
+intronicReads <- intronicReads[as.character(PUTM$A.CEL_file),"ENSG00000006555"]
+
+par(mar=c(3,3,3,1))
+boxplot(as.numeric(exprSQ[1,]),intronicReads,names=c("exonic","intronic"),main="Raw counts ENSG00000006555")
 
 

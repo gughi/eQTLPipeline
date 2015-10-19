@@ -615,7 +615,6 @@ rm(list=ls())
 load(file="data/results/finaleQTLs/intronic.Ann.PUTM.rda")
 eQTLPUTM <-  annSNP(eQTLPUTM)
 
-
 save(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.rda")
 write.csv(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.csv",row.names=F)    
 
@@ -626,15 +625,12 @@ save(eQTLSNIG,file="data/results/finaleQTLs/intronic.Ann.SNIG.rda")
 write.csv(eQTLSNIG,file="data/results/finaleQTLs/intronic.Ann.SNIG.csv",row.names=F)    
 
 
-
-
-
-
 ########################
 ### Annotate the TSS ###
 ########################
 
 library("biomaRt")
+
 
 load(file="data/results/finaleQTLs/intronic.Ann.PUTM.rda")
 
@@ -647,13 +643,12 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position
                    values=eQTLPUTM$gene, mart=ensembl)
 
 
-
 TSS <- sapply(eQTLPUTM$gene, function(x){getTSS(x,geneNames)})
 
 eQTLPUTM <- cbind(eQTLPUTM,TSS)
 
-save(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.SNIG.rda")
-write.csv(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.SNIG.rda",row.names=F)    
+save(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+write.csv(eQTLPUTM,file="data/results/finaleQTLs/intronic.Ann.PUTM.rda",row.names=F)    
 rm(eQTLPUTM,TSS,geneNames)
 
 ### SNIG
@@ -667,8 +662,6 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position
                    verbose = T,
                    filters="ensembl_gene_id",
                    values=eQTLSNIG$gene, mart=ensembl)
-
-
 
 TSS <- sapply(eQTLSNIG$gene, function(x){getTSS(x,geneNames)})
 
