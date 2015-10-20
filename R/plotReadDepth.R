@@ -1,7 +1,7 @@
 plotReadDepth <- function(gene,gen = "hg19")
 {
   ## load the library
-
+  library(biomaRt)
   library(Gviz)
   
   ##geneType <- "lincRNA"
@@ -9,7 +9,8 @@ plotReadDepth <- function(gene,gen = "hg19")
   ##gene <- "ENSG00000006555"
   
   filters <- c("chromosomal_region")
-  startStop <- getBM(attributes=c("start_position","end_position"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
+  startStop <- getBM(attributes=c("chromosome_name","start_position","end_position"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
+  chr <- unique(startStop$chromosome) 
   
   chromoReg <- paste0(chr,":",startStop$start_position,":",startStop$end_position,":-1,",
                       chr,":",startStop$start_position,":",startStop$end_position,":1")

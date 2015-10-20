@@ -1496,11 +1496,10 @@ load_all()
 ## plot read-depth
 plotReadDepth("ENSG00000006555")
 
-
+## boxplot raw counts
 load("data/expr/rawCounts/genic/exprIntrons.rda")
 load("data/expr/rawCounts/genic/exprSQ.rda")
 load("data/general/sampleInfo.rda")
-
 
 PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified =="PUTM"),]
 exprSQ <- exprSQ["ENSG00000006555",as.character(PUTM$A.CEL_file)]
@@ -1508,5 +1507,211 @@ intronicReads <- intronicReads[as.character(PUTM$A.CEL_file),"ENSG00000006555"]
 
 par(mar=c(3,3,3,1))
 boxplot(as.numeric(exprSQ[1,]),intronicReads,names=c("exonic","intronic"),main="Raw counts ENSG00000006555")
+
+
+## boxplot RPKM1
+load("data/general/genesWidthExonic.rda")
+
+load("data/expr/rawCounts/genic/exprSQ.rda")
+# load the sample info to get the IDs for each tissue
+load("data/general/sampleInfo.rda")
+
+## convert the genes that have NAs
+exprSQ[is.na(exprSQ)]=0
+## remove genes that not expressed in any gene
+exprSQ <- exprSQ[rowSums(exprSQ>0)>0,]
+cat("Processing PUTM \n")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
+
+# now we select the expression for the PUTM only samples
+expr <- exprSQ[,as.character(PUTM$A.CEL_file)]
+rm(exprSQ)
+
+librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
+names(librarySize) <- as.character(PUTM$A.CEL_file)
+
+length <- as.numeric(geneswidth[,2])
+names(length) <-  as.character(geneswidth[,1])
+length <- length[as.character(rownames(expr))]
+stopifnot(identical(colnames(expr),names(librarySize)))
+stopifnot(identical(rownames(expr),names(length)))              
+
+library(easyRNASeq)
+RPKM.std <- RPKM(as.matrix(expr), NULL, 
+                 lib.size=librarySize, 
+                 feature.size=length)
+
+RPKM.std <- RPKM.std["ENSG00000006555",as.character(PUTM$A.CEL_file)]
+
+
+load("data/general/genesWidthExonic.rda")
+
+load("data/expr/rawCounts/genic/exprIntrons.rda")
+# load the sample info to get the IDs for each tissue
+load("data/general/sampleInfo.rda")
+
+
+intronicReads <- t(intronicReads)
+## convert the genes that have NAs
+intronicReads[is.na(intronicReads)]=0
+## remove genes that not expressed in any gene
+intronicReads <- intronicReads[rowSums(intronicReads>0)>0,]
+cat("Processing PUTM \n")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
+
+# now we select the expression for the PUTM only samples
+expr <- intronicReads[,as.character(PUTM$A.CEL_file)]
+rm(intronicReads)
+
+librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
+names(librarySize) <- as.character(PUTM$A.CEL_file)
+
+length <- as.numeric(geneswidth[,2])
+names(length) <-  as.character(geneswidth[,1])
+length <- length[as.character(rownames(expr))]
+stopifnot(identical(colnames(expr),names(librarySize)))
+stopifnot(identical(rownames(expr),names(length)))              
+
+library(easyRNASeq)
+RPKM.stdIntronic <- RPKM(as.matrix(expr), NULL, 
+                 lib.size=librarySize, 
+                 feature.size=length)
+
+RPKM.stdIntronic <- RPKM.stdIntronic["ENSG00000006555",as.character(PUTM$A.CEL_file)]
+
+
+par(mar=c(3,3,3,1))
+boxplot(RPKM.std,RPKM.stdIntronic,names=c("exonic","intronic"),main="RPKM ENSG00000006555")
+
+
+
+RPKM.stdIntronic=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+
+
+
+load("data/expr/rawCounts/genic/exprIntrons.rda")
+load("data/expr/rawCounts/genic/exprSQ.rda")
+load("data/general/sampleInfo.rda")
+
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified =="PUTM"),]
+exprSQ <- exprSQ["ENSG00000006555",as.character(PUTM$A.CEL_file)]
+intronicReads <- intronicReads[as.character(PUTM$A.CEL_file),"ENSG00000006555"]
+
+par(mar=c(3,3,3,1))
+boxplot(as.numeric(exprSQ[1,]),intronicReads,names=c("exonic","intronic"),main="Raw counts ENSG00000006555")
+
+
+## boxplot RPKM1
+load("data/general/genesWidthExonic.rda")
+
+load("data/expr/rawCounts/genic/exprSQ.rda")
+# load the sample info to get the IDs for each tissue
+load("data/general/sampleInfo.rda")
+
+## convert the genes that have NAs
+exprSQ[is.na(exprSQ)]=0
+## remove genes that not expressed in any gene
+exprSQ <- exprSQ[rowSums(exprSQ>0)>0,]
+cat("Processing PUTM \n")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
+
+# now we select the expression for the PUTM only samples
+expr <- exprSQ[,as.character(PUTM$A.CEL_file)]
+rm(exprSQ)
+
+librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
+names(librarySize) <- as.character(PUTM$A.CEL_file)
+
+length <- as.numeric(geneswidth[,2])
+names(length) <-  as.character(geneswidth[,1])
+length <- length[as.character(rownames(expr))]
+stopifnot(identical(colnames(expr),names(librarySize)))
+stopifnot(identical(rownames(expr),names(length)))              
+
+library(easyRNASeq)
+RPKM.std <- RPKM(as.matrix(expr), NULL, 
+                 lib.size=librarySize, 
+                 feature.size=length)
+
+
+load("data/general/genesWidthExonic.rda")
+
+load("data/expr/rawCounts/genic/exprIntrons.rda")
+# load the sample info to get the IDs for each tissue
+load("data/general/sampleInfo.rda")
+
+
+intronicReads <- t(intronicReads)
+## convert the genes that have NAs
+intronicReads[is.na(intronicReads)]=0
+## remove genes that not expressed in any gene
+intronicReads <- intronicReads[rowSums(intronicReads>0)>0,]
+cat("Processing PUTM \n")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
+
+# now we select the expression for the PUTM only samples
+expr <- intronicReads[,as.character(PUTM$A.CEL_file)]
+rm(intronicReads)
+
+librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
+librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
+names(librarySize) <- as.character(PUTM$A.CEL_file)
+
+length <- as.numeric(geneswidth[,2])
+names(length) <-  as.character(geneswidth[,1])
+length <- length[as.character(rownames(expr))]
+stopifnot(identical(colnames(expr),names(librarySize)))
+stopifnot(identical(rownames(expr),names(length)))              
+
+library(easyRNASeq)
+RPKM.stdIntronic <- RPKM(as.matrix(expr), NULL, 
+                         lib.size=librarySize, 
+                         feature.size=length)
+
+
+int <- intersect(rownames(RPKM.stdIntronic),rownames(RPKM.std))
+
+d<-density(RPKM.stdIntronic[as.character(int),])
+which.max(apply(RPKM.stdIntronic[as.character(int),],1,mean))
+
+RPKM.stdIntronic["ENSG00000210176",]
+
+
+plot(d, main="Expression All common genes without filtering")
+polygon(d, col='skyblue') 
+polygon(density(exprExonic), col=scales::alpha('red',.5)) 
+legend("topright",c("expr Intronic","expr Exonic"),col=c('skyblue','red'),pch=15)
+rm(d)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+par(mar=c(3,3,3,1))
+boxplot(RPKM.std,RPKM.stdIntronic,names=c("exonic","intronic"),main="RPKM ENSG00000006555")
+
+
+
+RPKM.stdIntronic=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+
+
+
+
+
+
+
 
 

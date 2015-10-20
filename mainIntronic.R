@@ -136,7 +136,6 @@ write.table(data.frame(intronicRegions), file = paste0("data/general/intronicReg
 
 
 
-
 intronDef <- read.delim("data/general/intronicRegions.BED",header=F)
 colnames(intronDef) <- c("Chromosome.Name","Exon.Chr.Start..bp.","Exon.Chr.End..bp.","Ensembl.Gene.ID")
 
