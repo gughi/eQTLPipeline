@@ -1637,32 +1637,37 @@ RPKM.std <- RPKM(as.matrix(expr), NULL,
                  feature.size=length)
 
 
-load("data/general/genesWidthExonic.rda")
-
+load("data/general/geneswidthIntornic.rda")
 load("data/expr/rawCounts/genic/exprIntrons.rda")
 # load the sample info to get the IDs for each tissue
 load("data/general/sampleInfo.rda")
 
-
 intronicReads <- t(intronicReads)
 ## convert the genes that have NAs
 intronicReads[is.na(intronicReads)]=0
+table(is.na(intronicReads))
+## clean negative reads
+table(intronicReads[intronicReads<0])
+intronicReads[intronicReads<0]=0
+table(intronicReads[intronicReads<0])
+
 ## remove genes that not expressed in any gene
 intronicReads <- intronicReads[rowSums(intronicReads>0)>0,]
 cat("Processing PUTM \n")
 PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
 
+length <- as.numeric(geneswidth[,2])
+names(length) <-  as.character(geneswidth[,1])
+length <- length[!is.na(length)]
+
 # now we select the expression for the PUTM only samples
-expr <- intronicReads[,as.character(PUTM$A.CEL_file)]
+expr <- intronicReads[names(length),as.character(PUTM$A.CEL_file)]
 rm(intronicReads)
 
 librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
 librarySize <- librarySize[as.character(PUTM$A.CEL_file),]
 names(librarySize) <- as.character(PUTM$A.CEL_file)
 
-length <- as.numeric(geneswidth[,2])
-names(length) <-  as.character(geneswidth[,1])
-length <- length[as.character(rownames(expr))]
 stopifnot(identical(colnames(expr),names(librarySize)))
 stopifnot(identical(rownames(expr),names(length)))              
 
@@ -1671,41 +1676,57 @@ RPKM.stdIntronic <- RPKM(as.matrix(expr), NULL,
                          lib.size=librarySize, 
                          feature.size=length)
 
+## remove intronic genes that have 0 as length (probably genes composed by only exons)
+genesList <- rownames(RPKM.stdIntronic)
+genesList <- genesList[!is.na(genesList)]
+RPKM.stdIntronic <- RPKM.stdIntronic[as.character(genesList),]
+rm(genesList)
 
 int <- intersect(rownames(RPKM.stdIntronic),rownames(RPKM.std))
 
-d<-density(RPKM.stdIntronic[as.character(int),])
-which.max(apply(RPKM.stdIntronic[as.character(int),],1,mean))
-
-RPKM.stdIntronic["ENSG00000210176",]
-
-
-plot(d, main="Expression All common genes without filtering")
+d<-density(log(RPKM.stdIntronic[as.character(int),]))
+plot(d, main="log(RPKM) density for all the genes without filtering")
 polygon(d, col='skyblue') 
-polygon(density(exprExonic), col=scales::alpha('red',.5)) 
+polygon(density(log(RPKM.std[as.character(int),])), col=scales::alpha('red',.5)) 
+legend("topright",c("expr Intronic","expr Exonic"),col=c('skyblue','red'),pch=15)
+rm(d)
+
+
+RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
+RPKM.stdIntronic=RPKM.stdIntronic[rowSums(RPKM.stdIntronic>=0.1)>(ncol(RPKM.stdIntronic)-((ncol(RPKM.stdIntronic)*20)/100)),]
+
+
+int <- intersect(rownames(RPKM.stdIntronic),rownames(RPKM.std))
+
+d<-density(log(RPKM.stdIntronic[as.character(int),]))
+plot(d, main="log(RPKM) density for all the genes filtered")
+polygon(d, col='skyblue') 
+polygon(density(log(RPKM.std[as.character(int),])), col=scales::alpha('red',.5)) 
+legend("topright",c("expr Intronic","expr Exonic"),col=c('skyblue','red'),pch=15)
+rm(d)
+
+
+GCconExo <- read.delim("../Bioinformatics/ensemblRef/GCcontentExonic",sep=" ",row.names=1)
+load("data/general/GCcontentIntronic.rda")
+rownames(GCcontentByGene) <- GCcontentByGene[,1]
+GCcontentByGene <- GCcontentByGene[,-1]
+GCconInt <- GCcontentByGene
+rm(GCcontentByGene)
+
+GCconExo <- GCconExo[as.character(int),]
+names(GCconExo) <- as.character(int)
+GCconInt <- GCconInt[as.character(int)]
+
+d<-density(as.numeric(GCconInt))
+plot(d, main="GC content")
+polygon(d, col='skyblue') 
+polygon(density(as.numeric(GCconExo)), col=scales::alpha('red',.5)) 
 legend("topright",c("expr Intronic","expr Exonic"),col=c('skyblue','red'),pch=15)
 rm(d)
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-par(mar=c(3,3,3,1))
-boxplot(RPKM.std,RPKM.stdIntronic,names=c("exonic","intronic"),main="RPKM ENSG00000006555")
-
-
-
-RPKM.stdIntronic=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
 
 
 
