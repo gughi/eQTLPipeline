@@ -1313,8 +1313,8 @@ legend("topright",c("Intronic","Exonic"),col=c('skyblue','red'),pch=15)
 
 
 
-
-
+## plots for the SNP annotation
+{
 
 
 load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
@@ -1453,7 +1453,25 @@ barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
 
 
 
+par(mfrow=c(1,3))
+feature <- "NMD_transcript_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(tmp,las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",,sub = paste("chi-square test:",
+                                                             chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
 
+feature <- "NMD_transcript_variant"
+exonic <- table(speEx)[feature]
+intronic <- table(speIn)[feature]
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+        col=1:3,sub = paste("Total Exonic=",length(speEx),"Intronic",length(speIn)))
+
+}
 
 
 load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
@@ -1481,9 +1499,18 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","chromosome
 
 ##ENSG00000006283    CACNA1G 17  48638429  48704835 protein_coding
 
+par(mar=c(11,5,3,2))
+barplot(sort(table(geneNames$gene_biotype),decreasing = T),las=2)
 
-barplot(sort(table(geneNames$gene_biotype)),las=2)
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","chromosome_name","start_position","end_position","gene_biotype"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=rownames(exprExonic)[-which(rownames(exprExonic) %in% int)], mart=ensembl)
 
+
+
+par(mar=c(11,5,3,2))
+barplot(sort(table(geneNames$gene_biotype),decreasing = T),las=2)
 
 head(geneNames,20)
 

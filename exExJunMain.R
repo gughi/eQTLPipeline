@@ -442,7 +442,7 @@ PUTM <- sampleInfo[sampleInfo[, 6] == "PUTM",]
 SNIG <- sampleInfo[sampleInfo[, 6] == "SNIG",]
 
 plot(PCAres, main="PCA axis exon-exon juctions (PUTM + SNIG)")
-plot(PCAres$x[,1],PCAres$x[,2],main = "PC1 vs PC2 by tissue",xlab="PC1",ylab="PC2" )
+plot(PCAres$x[,1],PCAres$x[,2],main = "PC1 vs PC2 by tissue (exon-exon junctions)",xlab="PC1",ylab="PC2",ylim=c(-350,250),xlim=c(-500,850))
 
 points(PCAres$x[PUTM$A.CEL_file,1],PCAres$x[PUTM$A.CEL_file,2],col="red")
 points(PCAres$x[SNIG$A.CEL_file,1],PCAres$x[SNIG$A.CEL_file,2],col="blue")
@@ -451,37 +451,44 @@ legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissu
 rm(PUTM,SNIG,PCAres)
 
 
-  
-  
-
 
 load("data/general/sampleInfo.rda")
 
 BB <- read.csv("C:/Users/mguelfi/Dropbox/Work/SampleData.csv")
-
 BB <- BB[which(BB$SD.No %in% sampleInfo$U.SD_No),c("SD.No","Brain.Bank")]
-head(BB)
+BB <- unique(BB)
+rownames(BB) <- BB$SD.No
+BB$SD.No <- NULL
+sampleInfo <- cbind(sampleInfo,BB[sampleInfo$U.SD_No,])
+
 
 librarySize <- read.csv(file="data/general/librarySize.csv", row.names=1)
-
+covs <- sampleInfo
 rownames(covs) <- covs$A.CEL_file
 #convert the female and male info in numeric
 covs[covs=="M"]=0
 covs[covs=="F"]=1
-covs <- as.data.frame(apply(covs[,c(2:5,7:9)], 2, as.factor))
-covs[,c(1:4,7)] <- as.data.frame(apply(covs[,c(1:4,7)], 2, as.numeric))
+covs <- as.data.frame(apply(covs[,c(2:11)], 2, as.factor))
+covs[,c(1:4,9)] <- as.data.frame(apply(covs[,c(1:4,9)], 2, as.numeric))
 covs[,5] <- as.numeric(covs[,5])
 covs[,6] <- as.numeric(covs[,6])
+covs[,7] <- as.numeric(covs[,7])
+covs[,8] <- as.numeric(covs[,8])
+covs[,10] <- as.numeric(covs[,10])
 lanes <- read.csv("data/general/QCmetrics.csv",row.names=8)
 rownames(lanes) <- gsub("CEL","",rownames(lanes))
-covs <- cbind(covs,librarySize[as.character(rownames(covs))])
-covs <- cbind(covs,lanes[as.character(rownames(covs)),c(9,19,20,25)])
-colnames(covs) <- c("Age","PMI","RIN","Gender","CODE","OVation_Batch",
-                    "TotReadsNoAdapt","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
+covs <- cbind(covs,librarySize[as.character(rownames(covs)),])
+covs <- cbind(covs,lanes[as.character(rownames(covs)),c(10,20,21,26)])
+covs$A.CEL_file <- NULL
+colnames(covs) <- c("Age","PMI","RIN","Gender","Region","CODE","OVation_Batch",
+                    "TotReadsNoAdapt","BrainBank","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
+
+doSwamp(RPKM.cqn,covs=covs)
 
 
 
 
-doSwamp(head(RPKM.cqn,1000),covs=sampleInfo)
+
+
 
 

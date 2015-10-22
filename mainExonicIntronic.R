@@ -229,6 +229,33 @@
     
     load("data/expr/normalisedCounts/genic/ExonIntrons/RPKM.cqn.SNIG")
     
+    
+    ### PCA after normalisation ###
+    
+    load("data/expr/normalisedCounts/genic/ExonIntrons/RPKM.cqn.SNIG")
+    RPKM.cqn.SNIG <- RPKM.cqn
+    load("data/expr/normalisedCounts/genic/ExonIntrons/RPKM.cqn.PUTM")
+    RPKM.cqn.PUTM <- RPKM.cqn
+    
+    rm(RPKM.cqn)
+    
+    comJunc <- intersect(rownames(RPKM.cqn.SNIG),rownames(RPKM.cqn.PUTM))
+    length(comJunc)
+    RPKM.cqn <- cbind(RPKM.cqn.SNIG[as.character(comJunc),],RPKM.cqn.PUTM[as.character(comJunc),])
+    
+    PCAres<- prcomp(t(RPKM.cqn))
+    par(mfrow=c(1,1))
+    
+    plot(PCAres, main="PCA axes gene-exonic+intronic(PUTM + SNIG)")
+    plot(PCAres$x[,1],PCAres$x[,2],main = "PC1 vs PC2 by tissue (gene-exonic+intronic)",xlab="PC1",ylab="PC2",ylim=c(-350,250),xlim=c(-500,850))
+    
+    points(PCAres$x[PUTM$A.CEL_file,1],PCAres$x[PUTM$A.CEL_file,2],col="red")
+    points(PCAres$x[SNIG$A.CEL_file,1],PCAres$x[SNIG$A.CEL_file,2],col="blue")
+    legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
+    
+    rm(list=ls())
+    
+    
     ##doSwamp(RPKM.cqn,covs)
     
     PEERRNDPEER18 <- read.csv("testPEER/RNDMPEER18",row.names=1)
