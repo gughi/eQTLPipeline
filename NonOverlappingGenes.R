@@ -28,7 +28,7 @@ clusterExport(cl, c("overlapsAny"))
 registerDoParallel(cl)
 getDoParWorkers()
 start <- Sys.time()
-nonOveGenes <- foreach(i=1:length(GR[2,]),.combine=c,.verbose=F)%dopar%overlapsAny(GR[i,],GR[-i,],ignore.strand=TRUE)
+nonOveGenes <- foreach(i=1:length(GR),.combine=c,.verbose=F)%dopar%overlapsAny(GR[i,],GR[-i,],ignore.strand=TRUE)
 end <- Sys.time()
 end-start
 stopCluster(cl)
