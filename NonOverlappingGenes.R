@@ -33,6 +33,10 @@ end <- Sys.time()
 end-start
 stopCluster(cl)
 rm(cl,end,start)
+save(nonOveGenes,file="tmp.nonOveGenes.rda")
+nonOveGenes <- names(GR)[nonOveGenes]
+save(nonOveGenes,file="tmp2.nonOveGenes.rda")
+save(GR[nonOveGenes,],file="tmp2.nonOveGenes.rda")
 
 
 
