@@ -36,12 +36,6 @@ rm(cl,end,start)
 save(nonOveGenes,file="tmp.nonOveGenes.rda")
 nonOveGenes <- names(GR)[nonOveGenes]
 save(nonOveGenes,file="tmp2.nonOveGenes.rda")
-save(GR[nonOveGenes,],file="tmp2.nonOveGenes.rda")
-
-
-
-
-
-
-
+listNonOve <- GR[nonOveGenes,] 
+save(listNonOve,file="tmp2.nonOveGenes.rda")
 
