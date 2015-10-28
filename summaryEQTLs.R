@@ -1149,8 +1149,8 @@ geneExonic <- rownames(RPKM.cqn)
 load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
 geneIntronic <- rownames(RPKM.cqn)
 
-venn(list(PUTMExon=geneIntronic,
-          PUTMIntr=geneExonic))
+venn(list(PUTMExon=geneExonic,
+          PUTMIntr=geneIntronic))
 
 
 5254/(5254+13758+4465)
@@ -1753,12 +1753,312 @@ rm(d)
 
 
 
+## 26-10-15
+## Compariosn expression intronic-exonic
+load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
+geneExonic <- rownames(RPKM.cqn)
+load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
+geneIntronic <- rownames(RPKM.cqn)
+
+
+library(gplots)
+
+load("data/general/tmp2.nonOveGenes.rda")
+
+
+## we select genes that don't have genes that overlap
+geneIntronic <- geneIntronic[-which(geneIntronic %in% names(listNonOve))]
+
+venn(list(PUTMExon=geneExonic,
+          PUTMIntr=geneIntronic))
+
+
+library("biomaRt")
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+plotReadDepth(gene = "ENSG00000002919",ensembl=ensembl)
+
+
+## List for Juan
+geneList <- names(listNonOve)
+save(geneList,file = "listForJuan.rda")
+
+
+listGenesWithOverlap <- listNonOve 
+save(listGenesWithOverlap,file="data/general/genesWithOverlapGenes.rda")
+
+commonGenes <- intersect(geneIntronic,geneExonic)
+
+length(commonGenes)
+speIn<- geneIntronic[-which(geneIntronic %in% commonGenes)]
+
+## we investigate the position and biotype of this specific intronic expression
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id",
+                                "chromosome_name","start_position",
+                                "end_position","gene_biotype",
+                                "source","status"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=speIn, mart=ensembl)
+
+par(mar=c(9,5,3,2))
+barplot(sort(table(geneNames$gene_biotype),decreasing = T),las=2,main="Intronic specific genes biotype")
+
+barplot(sort(table(geneNames$chromosome_name),decreasing = T),las=2,main="Intronic specific genes chromosome")
+## we explore source and status
+barplot(sort(table(geneNames$status),decreasing = T),las=2,main="Intronic specific genes status")
+
+barplot(sort(table(geneNames$source),decreasing = T),las=2,main="Intronic specific genes source")
+
+
+## we explore the length of the gene
+length <- geneNames$end_position - geneNames$start_position
+hist(length,breaks = 50)
+
+
+plotReadDepth(gene = "ENSG00000069812",ensembl=ensembl)
+
+tmp <- geneNames[which(geneNames$gene_biotype %in% "protein_coding"),]
+tmp <- geneNames[which(geneNames$gene_biotype %in% "antisense"),]
+
+barplot(sort(table(tmp$status),decreasing = T),las=2,main="Intronic specific genes status")
+barplot(sort(table(tmp$source),decreasing = T),las=2,main="Intronic specific genes source")
+
+
+
+rm(tmp)
+
+## by status
+tmp <- sort(table(geneNames$gene_biotype),decreasing = T)
+tmp <- names(tmp)
+tableBioType <- t(table(geneNames$gene_biotype,geneNames$status))
+barplot(tableBioType[,tmp],
+        col=c("darkblue","red","yellow"),las=2,main="Intronic specific genes biotype",	legend = rownames(tableBioType))
+
+
+## by source
+tmp <- sort(table(geneNames$gene_biotype),decreasing = T)
+tmp <- names(tmp)
+tableBioType <- t(table(geneNames$gene_biotype,geneNames$source))
+barplot(tableBioType[,tmp],
+        col=c("darkblue","red","yellow"),las=2,main="Intronic specific genes biotype",	legend = rownames(tableBioType))
+
+
+## plot isoform biotype 
+tmp <- geneNames[which(geneNames$gene_biotype %in% "protein_coding"),]
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id",
+                                "chromosome_name","start_position",
+                                "end_position","gene_biotype",
+                                "transcript_biotype","source","status"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=tmp$ensembl_gene_id, mart=ensembl)
+
+
+
+tmp <- sort(table(geneNames$transcript_biotype),decreasing = T)
+tmp <- names(tmp)
+tableBioType <- t(table(geneNames$transcript_biotype,geneNames$status))
+barplot(tableBioType[,tmp],
+        col=c("darkblue","red","yellow"),las=2,main="Intronic specific isoform biotype",	legend = rownames(tableBioType))
+
+
+
+nrow(cbind(geneNames$transcript_biotype,geneNames$ensembl_gene_id))
+
+#############################################################################
+## we compare two version of ensembl annotation for the intronic-specific ###
+#############################################################################
+
+load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
+geneExonic <- rownames(RPKM.cqn)
+load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
+geneIntronic <- rownames(RPKM.cqn)
+
+library(gplots)
+
+load("data/general/tmp2.nonOveGenes.rda")
+
+
+## we select genes that don't have genes that overlap
+geneIntronic <- geneIntronic[-which(geneIntronic %in% names(listNonOve))]
+
+commonGenes <- intersect(geneIntronic,geneExonic)
+
+speIn<- geneIntronic[-which(geneIntronic %in% commonGenes)]
+
+
+library("biomaRt")
+ensemblv75 <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Feb2014.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+
+ensemblv72 <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+
+geneNamesv72 <- getBM(attributes=c("ensembl_gene_id","external_gene_id",
+                                "chromosome_name","start_position",
+                                "end_position","gene_biotype",
+                                "source","status","transcript_biotype"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=speIn, mart=ensemblv72)
+
+geneNamesv75 <- getBM(attributes=c("ensembl_gene_id","external_gene_id",
+                                   "chromosome_name","start_position",
+                                   "end_position","gene_biotype",
+                                   "source","status","transcript_biotype"),
+                      verbose = T,
+                      filters="ensembl_gene_id",
+                      values=speIn, mart=ensemblv75)
+
+nrow(geneNamesv75)
+nrow(geneNamesv72)
+
+v75 <- table(geneNamesv75$gene_biotype)
+v72 <- table(geneNamesv72$gene_biotype)
+tmp <- sort(v72,decreasing = T)
+tmp <- names(tmp)
+tab <- cbind(v72,v75)
+
+par(mar=c(9,5,3,2))
+barplot(t(tab[tmp,]),
+        col=c("darkblue","red"),las=2,main="Intronic specific gene biotype",	legend = colnames(tab),beside = T)
+
+
+feature <- "transcript_biotype"
+v75 <- table(geneNamesv75[,feature])
+
+v72 <- table(geneNamesv72[,feature])
+
+
+tmp <- sort(v72,decreasing = T)
+tmp <- names(tmp)
+tab <- cbind(v72,v75[tmp])
+colnames(tab) <- c("v72","v75")
+
+par(mar=c(16,5,3,2))
+barplot(t(tab[tmp,]),
+        col=c("darkblue","red"),las=2,main=paste0("Intronic specific ",feature),	legend = colnames(tab),beside = T)
+
+
+geneNamesv75[which(geneNamesv75$gene_biotype==geneNamesv75$transcript_biotype),]
 
 
 
 
 
+##########################################################################################
+## get the expression of the common genes when we filtered by the non overlapping genes ##
+##########################################################################################
 
+
+
+## Compariosn expression intronic-exonic
+load("data/expr/normalisedCounts/genic/geneExons/RPKM.cqn.PUTM")
+RPKMExonic <- RPKM.cqn
+geneExonic <- rownames(RPKM.cqn)
+load("data/expr/normalisedCounts/genic/geneIntronic/RPKM.cqn.PUTM")
+RPKMIntronic <- RPKM.cqn
+geneIntronic <- rownames(RPKM.cqn)
+rm(covs,PUTM,RPKM.cqn)
+
+load("data/general/tmp2.nonOveGenes.rda")
+
+## we select genes that don't have genes that overlap
+geneIntronic <- geneIntronic[-which(geneIntronic %in% names(listNonOve))]
+
+commonGenes <- intersect(geneIntronic,geneExonic)
+
+d<-density(RPKMIntronic[as.character(commonGenes),])
+plot(d, main="RPKM CQN density for all the genes without filtering")
+polygon(d, col='skyblue') 
+polygon(density(RPKMExonic[as.character(commonGenes),]), col=scales::alpha('red',.5)) 
+legend("topright",c("expr Intronic","expr Exonic"),col=c('skyblue','red'),pch=15)
+rm(d)
+
+
+### now we check the eQTLs 
+load("data/results/finaleQTLs/intronic.Ann.PUTM.rda")
+# filter by FDR 0.01
+eQTLPUTMI <- eQTLPUTM[which(as.numeric(eQTLPUTM[,7]) < 0.01),]
+
+load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+# filter by FDR 0.01
+eQTLPUTMEx <- eQTLPUTM[which(as.numeric(eQTLPUTM[,7]) < 0.01),]
+rm(eQTLPUTM)
+
+tmp <- intersect(geneIntronic,eQTLPUTMI$gene)
+
+eQTLEx <- eQTLPUTMEx[which(eQTLPUTMEx$gene %in% commonGenes),]
+##eQTLEx <- eQTLPUTMEx
+eQTLI <- eQTLPUTMI[which(eQTLPUTMI$gene %in% intersect(tmp,eQTLPUTMI$gene)),]
+eQTLI <- eQTLI[which(eQTLI$gene %in% commonGenes),]
+
+
+library(gplots)
+venn(list(PUTMEx=unique(eQTLEx$gene),PUTMI=unique(eQTLI$gene)))
+
+posSNP <- unlist(lapply(strsplit(as.character(eQTLEx$snps),":"),function(x){x[2]}))
+DisGeneStart <- eQTLEx$TSS - as.integer(posSNP)
+eQTLEx <- cbind(eQTLEx,DisGeneStart) 
+
+posSNP <- unlist(lapply(strsplit(as.character(eQTLI$snps),":"),function(x){x[2]}))
+DisGeneStart <- eQTLI$TSS - as.integer(posSNP)
+eQTLI <- cbind(eQTLI,DisGeneStart) 
+
+par(mfrow=c(1,1))
+hist(eQTLI$DisGeneStart,col='skyblue',border=F,main= "TSS Intronic vs Exonic",
+     sub=paste("Intronic:",length(eQTLI$DisGeneStart),"Exonic:",length(eQTLEx$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(eQTLI$DisGeneStart,eQTLEx$DisGeneStart)$p.value),freq=FALSE,breaks = 40, ylim=c(0,7e-06))
+hist(eQTLEx$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(eQTLI$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(eQTLEx$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("Intronic","Exonic"),col=c('skyblue','red'),pch=15)
+
+par(mar=c(9,3,1,1))
+barplot(sort(table(eQTLI$gene_biotype),decreasing=T),
+        col=c(1:length(table(eQTLI$gene_biotype))),las=2)
+
+
+common <-intersect(paste0(eQTLPUTMEx[,2]),
+                   paste0(eQTLI[,2]))
+
+
+## we plot a barplot for teh SNP annotation for teh exon Specific 
+speEx <- eQTLEx[-which(eQTLEx[,2] %in% common),]
+speIn <- eQTLI[-which(eQTLI[,2] %in% common),]
+
+hist(speIn$DisGeneStart,col='skyblue',border=F,main= "TSS Intronic vs Exonic",
+     sub=paste("Intronic:",length(speIn$DisGeneStart),"Exonic:",length(speEx$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(speIn$DisGeneStart,speEx$DisGeneStart)$p.value),freq=FALSE,breaks = 40, ylim=c(0,7e-06))
+hist(speEx$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(speIn$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(speEx$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("Intronic","Exonic"),col=c('skyblue','red'),pch=15)
+
+
+
+library("biomaRt")
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id",
+                                "chromosome_name","start_position",
+                                "end_position","transcript_biotype","gene_biotype",
+                                "source","status"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=eQTLI$gene, mart=ensembl)
+
+
+par(mar=c(9,3,1,1))
+barplot(sort(table(geneNames$transcript_biotype),decreasing=T),
+        col=c(1:length(table(geneNames$transcript_biotype))),las=2)
 
 
 

@@ -1,4 +1,4 @@
-plotReadDepth <- function(gene,gen = "hg19")
+plotReadDepth <- function(gene,gen = "hg19",ensembl)
 {
   ## load the library
   library(biomaRt)
@@ -9,9 +9,9 @@ plotReadDepth <- function(gene,gen = "hg19")
   ##gene <- "ENSG00000006555"
   
   filters <- c("chromosomal_region")
-  startStop <- getBM(attributes=c("chromosome_name","start_position","end_position"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
+  startStop <- getBM(attributes=c("chromosome_name","start_position","end_position","external_gene_id"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
   chr <- unique(startStop$chromosome) 
-  
+  gene <- startStop$external_gene_id
   chromoReg <- paste0(chr,":",startStop$start_position,":",startStop$end_position,":-1,",
                       chr,":",startStop$start_position,":",startStop$end_position,":1")
   
@@ -69,6 +69,6 @@ plotReadDepth <- function(gene,gen = "hg19")
   
   ## itrack <- IdeogramTrack(genome = gen, chromosome = chr)
   
-  plotTracks(list(gtrack, dtrack,grtrack,dtrack_heat),transcriptAnnotation = "gene")                     
+  plotTracks(list(gtrack, dtrack,grtrack,dtrack_heat),transcriptAnnotation = "symbol")                     
   
 }

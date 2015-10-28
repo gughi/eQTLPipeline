@@ -656,7 +656,10 @@
     venn(list(PUTM=unique(snpsPUTM),SNIG=unique(snpsSNIG)))
     
 
+
     
+    
+        
     
     
         
