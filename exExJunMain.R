@@ -451,7 +451,6 @@ legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissu
 rm(PUTM,SNIG,PCAres)
 
 
-
 load("data/general/sampleInfo.rda")
 
 BB <- read.csv("C:/Users/mguelfi/Dropbox/Work/SampleData.csv")
@@ -484,6 +483,9 @@ colnames(covs) <- c("Age","PMI","RIN","Gender","Region","CODE","OVation_Batch",
                     "TotReadsNoAdapt","BrainBank","LibrarySize","LanesBatch","uniqueMappedRead","FragLengthMean","ExonicRate")
 
 doSwamp(RPKM.cqn,covs=covs)
+
+
+
 
 
 
