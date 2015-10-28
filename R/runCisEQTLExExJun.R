@@ -1,4 +1,4 @@
-runCisEQTLGene <- function(i,resids,snpLocation,outputFolder,my.covTMP,fullResults,MySQL=FALSE)
+runCisEQTLExExJun <- function(i,resids,mapExon,snpLocation,outputFolder,my.covTMP,fullResults,MySQL=FALSE)
 {
   
   exExJunID  <- colnames(resids)[i]
@@ -44,7 +44,7 @@ runCisEQTLGene <- function(i,resids,snpLocation,outputFolder,my.covTMP,fullResul
   ## in case number of columns is equal to 1 we assign again the name of the column again
   if (ncol(my.expr0)==1)
   {
-    colnames(my.expr0) <- geneID
+    colnames(my.expr0) <- exExJunID
   }
   
   my.expr0 <- t(my.expr0)
@@ -63,8 +63,8 @@ runCisEQTLGene <- function(i,resids,snpLocation,outputFolder,my.covTMP,fullResul
   rm(my.expr0, my.markers0,my.cov0)
   
   ## outputfile
-  outputFile=paste0(outputFolder,geneID)
-  store <- Matrix_eQTL_main( my.markers, my.expr, my.cov,output_file_name = paste0(fullResults,geneID),pvOutputThreshold=1, useModel=modelLINEAR, errorCovariance=numeric(0), verbose=T )
+  outputFile=paste0(outputFolder,exExJunID)
+  store <- Matrix_eQTL_main( my.markers, my.expr, my.cov,output_file_name = paste0(fullResults,exExJunID),pvOutputThreshold=1, useModel=modelLINEAR, errorCovariance=numeric(0), verbose=T )
   
   ## we calculate the FDR without taking the min as the method used by Shabalin
   pval <- store$all$eqtls$pvalue
@@ -93,4 +93,3 @@ runCisEQTLGene <- function(i,resids,snpLocation,outputFolder,my.covTMP,fullResul
   
   rm(my.expr,my.markers,my.cov, markers.info,my.eQTLs,store,myFDR)
 }
-
