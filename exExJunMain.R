@@ -485,7 +485,10 @@ colnames(covs) <- c("Age","PMI","RIN","Gender","Region","CODE","OVation_Batch",
 doSwamp(RPKM.cqn,covs=covs)
 
 
-
+### Run the eQTL analysis
+writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
+        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExons.R")
+        ,numThreads=8)
 
 
 

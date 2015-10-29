@@ -55,25 +55,12 @@ fullResults <- "/home/seb/projectsR/eQTLPipeline/data/results/genic/exonExonJunc
 my.covTMP <- read.table.rows(paste0("/home/seb/plinkOutput/eigenvec"), keepRows=rownames(resids), sep=" ",header=F)
 
 Sys.time()
-
-foreach(i=1:1)%dopar%runCisEQTLExExJun(i=i,resids=resids,
+foreach(i=1:ncol(resids))%dopar%runCisEQTLExExJun(i=i,resids=resids,
                                                      mapExon=mapExon,
                                                      snpLocation=snpLocation,
                                                      outputFolder=outputFolder,
                                                      my.covTMP=my.covTMP,
                                                      fullResults=fullResults)
-
-
-foreach(i=1:1)%dopar%print(i)
-foreach(i=1:2)%dopar%print(i)
-
-runCisEQTLExExJun(i=4,resids=resids,
-                  mapExon=mapExon,
-                  snpLocation=snpLocation,
-                  outputFolder=outputFolder,
-                  my.covTMP=my.covTMP,
-                  fullResults=fullResults)
-
 Sys.time()
 stopCluster(cl)
 rm(cl)

@@ -2063,3 +2063,8 @@ barplot(sort(table(geneNames$transcript_biotype),decreasing=T),
 
 
 
+
+
+
+
+
