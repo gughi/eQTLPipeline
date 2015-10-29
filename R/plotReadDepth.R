@@ -78,8 +78,7 @@ plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA)
   
 }
 
-
-plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype=)
+plotsplicEQTL <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
 {
   ## load the library
   library(biomaRt)
@@ -135,6 +134,7 @@ plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype=)
   
   tail(data.frame(fullCovtmp))
   
+  
   grtrack <- GeneRegionTrack(defGen, genome = gen,
                              chromosome = chr, name = gene)
   gtrack <- GenomeAxisTrack()
@@ -143,16 +143,81 @@ plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype=)
   ##load(file="/home/seb/")
   
   ## we load the dat
-  meanCov <- apply(data.frame(fullCovtmp),1,mean)
+  
+  tmp <- round(as.numeric(markers$genotype))
+  ## we load 3expression based on teh genotype
+  IDsGen <- names(markers$genotype[which(tmp %in% "0")]) 
+  meanCov <- apply(data.frame(fullCovtmp[,IDsGen]),1,mean)
   dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
+  meanAll <- meanCov
   rm(meanCov)
   colnames(dat) <- c("chr","start","end","coverage")
-  data_g <- with(dat, GRanges(chr, IRanges(start, end), cov=coverage))
-  dtrack <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",name=gene,type="histogram")
-  dtrack_heat <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",name=gene,type="heatmap")
+  data_gRef <- with(dat, GRanges(chr, IRanges(start, end), cov=coverage))
+  rm(dat)
   
+  
+  ## we load 3expression based on teh genotype
+  IDsGen <- names(markers$genotype[which(tmp %in% "1")]) 
+  meanCov <- apply(data.frame(fullCovtmp[,IDsGen]),1,mean)
+  dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
+  meanAll <- cbind(meanAll,meanCov)
+  rm(meanCov)
+  colnames(dat) <- c("chr","start","end","coverage")
+  data_gHet <- with(dat, GRanges(chr, IRanges(start, end), cov=coverage))
+  rm(dat)
+  
+  ## we load 3expression based on teh genotype
+  IDsGen <- names(markers$genotype[which(tmp %in% "2")]) 
+  rm(tmp)
+  meanCov <- apply(data.frame(fullCovtmp[,IDsGen]),1,mean)
+  dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
+  meanAll <- cbind(meanAll,meanCov)
+  rm(meanCov)
+  colnames(dat) <- c("chr","start","end","coverage")
+  data_gAlt <- with(dat, GRanges(chr, IRanges(start, end), cov=coverage))
+  rm(dat)
+  
+  dtrackRef <- DataTrack(range=data_gRef,chromosome=paste0("chr",chr),genome="hg19",name=paste0(markers$info$Al1,markers$info$Al1),type="histogram",
+                         ylim=c(0,max(max(data_gHet$cov),max(data_gRef$cov),max(data_gAlt$cov),na.rm=T)))
+  dtrackHet <- DataTrack(range=data_gHet,chromosome=paste0("chr",chr),genome="hg19",name=paste0(markers$info$Al1,markers$info$Al2),type="histogram",
+                         ylim=c(0,max(max(data_gHet$cov),max(data_gRef$cov),max(data_gAlt$cov),na.rm=T)))
+  dtrackAlt <- DataTrack(range=data_gAlt,chromosome=paste0("chr",chr),genome="hg19",name=paste0(markers$info$Al2,markers$info$Al2),type="histogram",
+                         ylim=c(0,max(max(data_gHet$cov),max(data_gRef$cov),max(data_gAlt$cov),na.rm=T)))
+  
+  rm(data_gHet,data_gAlt,data_gRef)
   ## itrack <- IdeogramTrack(genome = gen, chromosome = chr)
+  class(dtrackRef)
+  tracks <- list(gtrack)
+  if(nrow(values(dtrackRef))>0)
+  {
+    tracks <- list(c(unlist(tracks),dtrackRef))
+  }
+  if(nrow(values(dtrackHet))>0)
+  {
+    tracks <- list(c(unlist(tracks),dtrackHet))
+  }
+  if(nrow(values(dtrackAlt))>0)
+  {
+    tracks <- list(c(unlist(tracks),dtrackAlt))
+  }
+  tracks <- list(c(unlist(tracks),grtrack))
+  plotTracks(unlist(tracks),transcriptAnnotation = "symbol")
   
-  plotTracks(list(gtrack, dtrack,grtrack,dtrack_heat),transcriptAnnotation = "symbol")                     
+  colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),paste0(markers$info$Al1,markers$info$Al2),paste0(markers$info$Al2,markers$info$Al2))
+  pvalstrack <- DataTrack(data=t(meanAll[,2:3]),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
+                          name = "Both",type=c("p"),groups=c("GA","AA"),col=c("black","red"))
+  
+  plotTracks(list(gtrack, pvalstrack,grtrack),transcriptAnnotation = "symbol",type="a")  
+  
+  ## The code below needs to improve
+#   colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),paste0(markers$info$Al1,markers$info$Al2),paste0(markers$info$Al2,markers$info$Al2))
+#   allInSameTrack <- DataTrack(data=t(meanAll),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
+#                               name = "All",type=c("p"),groups=c(paste0(markers$info$Al1,markers$info$Al1),
+#                                                                 paste0(markers$info$Al1,markers$info$Al2),
+#                                                                 paste0(markers$info$Al2,markers$info$Al2))
+#                               ,col=c("black","red","blue"))
+#   
+#   plotTracks(list(gtrack, allInSameTrack,grtrack),transcriptAnnotation = "symbol",type="a")  
+  
   
 }
