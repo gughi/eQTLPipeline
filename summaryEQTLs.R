@@ -2062,6 +2062,103 @@ barplot(sort(table(geneNames$transcript_biotype),decreasing=T),
 
 
 
+library(doParallel)
+library(foreach)
+
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(20)
+clusterExport(cl, c("annSinSNP","getBM"))
+
+registerDoParallel(cl)
+getDoParWorkers()
+
+start <- Sys.time()
+conseExSpe <- foreach(i=1:nrow(speEx),.combine=rbind,.verbose=F)%dopar%annSinSNP(speEx[i,1],ensembl)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+start <- Sys.time()
+conseInSpe <- foreach(i=1:nrow(speIn),.combine=rbind,.verbose=F)%dopar%annSinSNP(speIn[i,1],ensembl)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+
+end-start
+stopCluster(cl)
+rm(cl)
+
+speEx <- sapply(conseExSpe[,2],function(x){unlist(strsplit(x,";"))[1]})
+nOfNA <- length(which(speEx=="NA"))
+speEx <-speEx[-which(speEx=="NA")]
+par(mar=c(11,5,3,2))
+barplot(sort((table(speEx)/length(speEx))*100,decreasing = T),las=2,main=paste("Common SNPs annotated gene-exons (SNPs with non annotated",nOfNA,")" ),
+        col=1:length(table(speEx)),ylim=c(0,60),ylab="percentage")
+
+
+speIn <- sapply(conseInSpe[,2],function(x){unlist(strsplit(x,";"))[1]})
+nOfNA <- length(which(speIn=="NA"))
+speIn <-speIn[-which(speIn=="NA")]
+par(mar=c(11,5,3,2))
+barplot(sort((table(speIn)/length(speIn))*100,decreasing = T),las=2,main=paste("Common SNPs annotated gene-Intronic (SNPs with non annotated",nOfNA,")" ),
+        col=1:length(table(speIn)),ylim=c(0,60),ylab="percentage")
+
+par(mar=c(5,5,5,2))
+par(mfrow=c(1,2))
+feature <- "intron_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",)
+
+exonic <- table(speEx)[feature]
+intronic <- table(speIn)[feature]
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature),
+        col=1:3,ylab="counts",sub = paste("chi-square test:",
+                                          chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
+
+par(mar=c(5,5,5,2))
+par(mfrow=c(1,2))
+feature <- "downstream_gene_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",)
+
+exonic <- table(speEx)[feature]
+intronic <- table(speIn)[feature]
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature),
+        col=1:3,ylab="counts",sub = paste("chi-square test:",
+                                          chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
+
+
+par(mar=c(5,5,5,2))
+par(mfrow=c(1,2))
+feature <- "upstream_gene_variant"
+exonic <- (table(speEx)[feature]/length(speEx))*100
+intronic <- (table(speIn)[feature]/length(speIn))*100
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature ),
+        col=1:3,ylab="percentage",)
+
+exonic <- table(speEx)[feature]
+intronic <- table(speIn)[feature]
+tmp <- c(exonic,intronic)
+names(tmp) <- c("exonic","intronic")
+barplot(sort(tmp,decreasing = T),las=2,main=paste(feature),
+        col=1:3,ylab="counts",sub = paste("chi-square test:",
+                                          chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
+
+
+
 
 
 
