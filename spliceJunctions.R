@@ -1,12 +1,10 @@
 
 
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.SNIG")
 
-exonExonJun <- read.delim("data/expr/rawCounts/genic/allSamples.2norm.merged")
 exonAnn <- read.delim("data/general/exongrps.log",sep=" ",skip=5,header=F)
 head(exonExonJun[,1:5])
 head(exonAnn)
-
-
 
 
 library("biomaRt")
@@ -49,6 +47,12 @@ exonExonGene <- exonExonJun[which(exonExonJun$Chr == unique(geneAnn$chromosome)
                   & exonExonJun$TSS >= (min(geneAnn$start))
                   & exonExonJun$TSS <= (max(geneAnn$end))),]
 
+
+
+
+exonExonGene <- RPKM.cqn[which(exonExonJun$Chr == unique(geneAnn$chromosome) 
+                                  & exonExonJun$TSS >= (min(geneAnn$start))
+                                  & exonExonJun$TSS <= (max(geneAnn$end))),]
 
 
 
@@ -177,8 +181,39 @@ tt <- apply(fullCov$[exonAnnbyGene$V3[2]:exonAnnbyGene$V4[2],],1,mean)
 
 
 
+## For Daniah
+geneID <- "ENSG00000188906" 
+
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.SNIG")
+
+exonAnn <- read.delim("data/general/exongrps.log",sep=" ",skip=5,header=F)
+head(exonAnn)
 
 
+LRRK2ExExJunc <- exonAnn[grep(geneID,exonAnn$V6),]
+
+head(LRRK2ExExJunc)
+
+tmp <- expand.grid(LRRK2ExExJunc$V5,LRRK2ExExJunc$V5)
+tmp <- paste(tmp$Var1,tmp$Var2,sep="_")
+tmp <- intersect(rownames(RPKM.cqn),tmp)
+
+
+LRRK2Junc <- RPKM.cqn[tmp,]
+
+
+write.csv(LRRK2Junc,file="C:/Users/mguelfi/Desktop/Projects/daniah/exonExonJunc.csv")
+head(exonAnn)
+LRRK2ExExJunc <- LRRK2ExExJunc[,c(2:5)]
+colnames(LRRK2ExExJunc) <- c("chr","start","end","exonID")
+write.csv(LRRK2ExExJunc,file="C:/Users/mguelfi/Desktop/Projects/daniah/AnnLRRK2.csv")
+
+
+
+
+
+
+grep("1",head(rownames(RPKM.cqn)),fixed = T)
 
 
 
