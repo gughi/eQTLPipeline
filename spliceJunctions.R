@@ -209,11 +209,22 @@ colnames(LRRK2ExExJunc) <- c("chr","start","end","exonID")
 write.csv(LRRK2ExExJunc,file="C:/Users/mguelfi/Desktop/Projects/daniah/AnnLRRK2.csv")
 
 
+library(GenomicFeatures)
+> gff_file <- system.file("extdata", "GFF3_files", "a.gff3",
+                          +                         package="GenomicFeatures")
+txdb <- makeTranscriptDbFromGFF("/home/seb/forDaniah/LRRK2.gtf", format="gtf")
+
+tmp <- as.data.frame(exonsBy(txdb, by="gene"))
+tmp <- paste(tmp$seqnames,tmp$start,tmp$end,tmp$group_name,sep="\t")
 
 
+write.table(data.frame(tmp), file = "/home/seb/forDaniah/LRRK2.BED", row.names = F, 
+            col.names = F, quote = F)
+rm(tmp)
 
+cmd <- paste0("bedtools getfasta -fi /home/seb/reference/genome37.72.fa  -bed /home/seb/forDaniah/LRRK2.BED -fo /home/seb/forDaniah/sequences.out")
 
-grep("1",head(rownames(RPKM.cqn)),fixed = T)
+head(read.delim("/home/seb/forDaniah/sequences.out",header=F))
 
 
 
