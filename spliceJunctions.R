@@ -208,6 +208,7 @@ LRRK2ExExJunc <- LRRK2ExExJunc[,c(2:5)]
 colnames(LRRK2ExExJunc) <- c("chr","start","end","exonID")
 write.csv(LRRK2ExExJunc,file="C:/Users/mguelfi/Desktop/Projects/daniah/AnnLRRK2.csv")
 
+?cqn
 
 library(GenomicFeatures)
 > gff_file <- system.file("extdata", "GFF3_files", "a.gff3",
