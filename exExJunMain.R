@@ -496,53 +496,69 @@ eQTL.PUTM <- read.delim("data/results/finaleQTLs/eQTL.ExExJun.PUTM.txt",sep=" ")
 rm(map,expr)
 
 
-exExJun <- eQTL.PUTM$gene[i]
-
-for(i in 1:nrow(eQTL.PUTM))
-{
-
-  exExJun <- strsplit(as.character(exExJun),"_")
-  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][1]),"geneID"])
-  tmp1 <- unlist(strsplit(geneID,"_"))[1]
-  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][2]),"geneID"])
-  tmp2 <- unlist(strsplit(geneID,"_"))[1]
-  print(i)
-  if(!identical(tmp1,tmp2))
-  {
-    print(exExJun)
-  }
-  rm(tmp2,tmp1)
-    
-}
-sapply(head(eQTL.PUTM$gene),function(x) annoExExJun(x,mapExon))
-annoExExJun(eQTL.PUTM$gene[1],mapExon)
-
-annoExExJun <- function(exexJunID,mapExon)
-{
-  exExJun <- strsplit(as.character(exexJunID),"_")
-  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][1]),"geneID"])
-  tmp1 <- unlist(strsplit(geneID,"_"))[1]
-  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][2]),"geneID"])
-  tmp2 <- unlist(strsplit(geneID,"_"))[1]
-  stopifnot(identical(tmp1,tmp2))
-  if(!identical(tmp1,tmp2))
-  {
-    print(paste("error",exExJun,"they don't belong to the same gene"))
-  }
-  exon1 <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][1]),c("chr","start","end")])
-  exon2 <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][2]),c("chr","start","end")])
-  coor <- c(tmp1,exon1,exon2)
-  rm(tmp1,tmp2,exon1,exon2)
-  names(coor) <- c("geneID", "chrExon1","startExon1","endExon1","chrExon2","startExon2","endExon2")
-  coor <- as.data.frame(coor)
-  colnames(coor) <- as.character(exexJunID)
-  return(t(coor))
-}
+library(devtools)
+library(doParallel)
+library(foreach)
+load_all()
 
 
 
+cl <- makeCluster(20)
+clusterExport(cl,"annExExJun")
+registerDoParallel(cl)
+
+Sys.time()
+exExJunAnn <- foreach(i=1:nrow(eQTL.PUTM),.combine=rbind)%dopar%annExExJun(eQTL.PUTM$gene[i],mapExon)
+Sys.time()
+stopCluster(cl)
+rm(cl)
 
 
+head(eQTL.PUTM)
+identical(as.character(head(eQTL.PUTM$gene)),as.character(head(rownames(exExJunAnn))))
+eQTL.PUTM <- cbind(eQTL.PUTM,exExJunAnn)
+colnames(eQTL.PUTM)[2] <- "exExID"
+save(eQTL.PUTM,file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
+load("data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
+
+
+eQTL.SNIG <- read.delim("data/results/finaleQTLs/eQTL.ExExJun.SNIG.txt",sep=" ")
+cl <- makeCluster(20)
+clusterExport(cl,"annExExJun")
+registerDoParallel(cl)
+
+Sys.time()
+exExJunAnn <- foreach(i=1:nrow(eQTL.SNIG),.combine=rbind)%dopar%annExExJun(eQTL.SNIG$gene[i],mapExon)
+Sys.time()
+stopCluster(cl)
+rm(cl)
+
+identical(as.character(head(eQTL.SNIG$gene)),as.character(head(rownames(exExJunAnn))))
+eQTL.SNIG <- cbind(eQTL.SNIG,exExJunAnn)
+colnames(eQTL.SNIG)[2] <- "exExID"
+save(eQTL.SNIG,file="data/results/finaleQTLs/eQTL.ExExJun.SNIG.rda")
+load("data/results/finaleQTLs/eQTL.ExExJun.SNIG.rda")
+
+
+## we calculated exon-exon junctions that are in different genes
+length(grep(";",eQTL.SNIG$geneID))
+length(grep(";",eQTL.PUTM$geneID))
+
+par(mfrow=c(1,1))
+
+sumeQTL <- c(PUTM=as.numeric(nrow(eQTL.PUTM)),SNIG=as.numeric(nrow(eQTL.SNIG)),
+  PUTM5=as.numeric(nrow(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.05),])),
+  SNIG5=as.numeric(nrow(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.05),])),
+  PUTM1=as.numeric(nrow(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.01),])),
+  SNIG1=as.numeric(nrow(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.01),])))
+                                                       
+barplot(sumeQTL[c("PUTM","SNIG")],
+        sub=paste("total PUTM:",nrow(eQTL.PUTM),"total SNIG:",nrow(eQTL.SNIG)),
+        main="eQTL exon-exon junction levels",col='red',border=F,)
+
+barplot(sumeQTL[c("PUTM5","SNIG5")],col='orange',border=F,add=T,xaxt="n")
+barplot(sumeQTL[c("PUTM1","SNIG1")],col='darkgreen',border=F,add=T,xaxt="n")
+legend("topright",c("10%","5%","1%"),col=c('red','orange','darkgreen'),title="FDR",pch=15)
 
 
 
