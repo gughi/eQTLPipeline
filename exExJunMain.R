@@ -485,10 +485,64 @@ colnames(covs) <- c("Age","PMI","RIN","Gender","Region","CODE","OVation_Batch",
 doSwamp(RPKM.cqn,covs=covs)
 
 
-### Run the eQTL analysis
-writeSH(nameSH="runCisEQTL.sh",logName="runCisEQTL",
-        cmdScript=paste0("/home/guelfi/softwares/R-3.2.0/bin/R --vanilla --file=",getwd(),"/parRunCiseQTLExons.R")
-        ,numThreads=8)
+## ran the splice parRunCiseQTLExExJunc.R
+
+## ran the sentiExExJunc.R
+
+## Annotation need to be done now
+## load the exon exon junctions
+load("data/expr/rawCounts/genic/fullExExJun.rda")
+eQTL.PUTM <- read.delim("data/results/finaleQTLs/eQTL.ExExJun.PUTM.txt",sep=" ")
+rm(map,expr)
+
+
+exExJun <- eQTL.PUTM$gene[i]
+
+for(i in 1:nrow(eQTL.PUTM))
+{
+
+  exExJun <- strsplit(as.character(exExJun),"_")
+  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][1]),"geneID"])
+  tmp1 <- unlist(strsplit(geneID,"_"))[1]
+  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][2]),"geneID"])
+  tmp2 <- unlist(strsplit(geneID,"_"))[1]
+  print(i)
+  if(!identical(tmp1,tmp2))
+  {
+    print(exExJun)
+  }
+  rm(tmp2,tmp1)
+    
+}
+sapply(head(eQTL.PUTM$gene),function(x) annoExExJun(x,mapExon))
+annoExExJun(eQTL.PUTM$gene[1],mapExon)
+
+annoExExJun <- function(exexJunID,mapExon)
+{
+  exExJun <- strsplit(as.character(exexJunID),"_")
+  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][1]),"geneID"])
+  tmp1 <- unlist(strsplit(geneID,"_"))[1]
+  geneID <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][2]),"geneID"])
+  tmp2 <- unlist(strsplit(geneID,"_"))[1]
+  stopifnot(identical(tmp1,tmp2))
+  if(!identical(tmp1,tmp2))
+  {
+    print(paste("error",exExJun,"they don't belong to the same gene"))
+  }
+  exon1 <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][1]),c("chr","start","end")])
+  exon2 <- as.character(mapExon[mapExon$exonID %in% as.character(exExJun[[1]][2]),c("chr","start","end")])
+  coor <- c(tmp1,exon1,exon2)
+  rm(tmp1,tmp2,exon1,exon2)
+  names(coor) <- c("geneID", "chrExon1","startExon1","endExon1","chrExon2","startExon2","endExon2")
+  coor <- as.data.frame(coor)
+  colnames(coor) <- as.character(exexJunID)
+  return(t(coor))
+}
+
+
+
+
+
 
 
 
