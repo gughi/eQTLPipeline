@@ -35,6 +35,8 @@ ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.
 # ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Feb2014.archive.ensembl.org",
 #                       dataset="hsapiens_gene_ensembl")
 
+plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype)
+
 
 plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
 {

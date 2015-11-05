@@ -347,15 +347,15 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
   datPval <- GRanges(chr, IRanges(as.numeric(as.character(store$all$eqtls$gene))
                                   , as.numeric(as.character(store$all$eqtls$gene))), cov=-log10(store$all$eqtls$pvalue))
   
-  dtrackPval <- DataTrack(range=datPval,chromosome=paste0("chr",chr),genome="hg19",name="pvalues",type="gradient")                          
+  dtrackPval <- DataTrack(range=datPval,chromosome=paste0("chr",chr),genome="hg19",name="-log10(pvalues)",type="gradient")                          
   
   
   ## The code below needs to improve
   colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),paste0(markers$info$Al1,markers$info$Al2),paste0(markers$info$Al2,markers$info$Al2))
   allInSameTrack <- DataTrack(data=t(meanAll),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
-                              name = "All",type=c("p"),groups=c(paste0(markers$info$Al1,markers$info$Al1),
+                              name = "Stratified raw counts",type=c("l"),groups=c(paste0(markers$info$Al1,markers$info$Al1),
                                                                 paste0(markers$info$Al1,markers$info$Al2),
-                                                                paste0(markers$info$Al2,markers$info$Al2))
+                                                                paste0(markers$info$Al2,markers$info$Al2)),legend = TRUE
                               ,col=c("black","red","blue"))
   #   
   plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol")  
