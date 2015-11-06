@@ -514,9 +514,9 @@ stopCluster(cl)
 rm(cl)
 
 
-head(eQTL.PUTM)
 identical(as.character(head(eQTL.PUTM$gene)),as.character(head(rownames(exExJunAnn))))
 eQTL.PUTM <- cbind(eQTL.PUTM,exExJunAnn)
+head(eQTL.PUTM);head(exExJunAnn)
 colnames(eQTL.PUTM)[2] <- "exExID"
 save(eQTL.PUTM,file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
 load("data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
@@ -554,7 +554,7 @@ sumeQTL <- c(PUTM=as.numeric(nrow(eQTL.PUTM)),SNIG=as.numeric(nrow(eQTL.SNIG)),
                                                        
 barplot(sumeQTL[c("PUTM","SNIG")],
         sub=paste("total PUTM:",nrow(eQTL.PUTM),"total SNIG:",nrow(eQTL.SNIG)),
-        main="eQTL exon-exon junction levels",col='red',border=F,)
+        main="eQTL exon-exon junction",col='red',border=F,)
 
 barplot(sumeQTL[c("PUTM5","SNIG5")],col='orange',border=F,add=T,xaxt="n")
 barplot(sumeQTL[c("PUTM1","SNIG1")],col='darkgreen',border=F,add=T,xaxt="n")
@@ -562,8 +562,51 @@ legend("topright",c("10%","5%","1%"),col=c('red','orange','darkgreen'),title="FD
 
 
 
+## calculate it based on genes
+
+sumeQTL <- c(PUTM=as.numeric(length(unique(eQTL.PUTM$geneID))),SNIG=as.numeric(length(unique(eQTL.SNIG$geneID))),
+             PUTM5=as.numeric(length(unique(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.05),"geneID"]))),
+             SNIG5=as.numeric(length(unique(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.05),"geneID"]))),
+             PUTM1=as.numeric(length(unique(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.01),"geneID"]))),
+             SNIG1=as.numeric(length(unique(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.01),"geneID"]))))
+
+barplot(sumeQTL[c("PUTM","SNIG")],
+        sub=paste("total PUTM:",nrow(eQTL.PUTM),"total SNIG:",nrow(eQTL.SNIG)),
+        main="gene targeted by eQTL exon-exon junction",col='red',border=F,)
+
+barplot(sumeQTL[c("PUTM5","SNIG5")],col='orange',border=F,add=T,xaxt="n")
+barplot(sumeQTL[c("PUTM1","SNIG1")],col='darkgreen',border=F,add=T,xaxt="n")
+legend("topright",c("10%","5%","1%"),col=c('red','orange','darkgreen'),title="FDR",pch=15)
 
 
+eQTL.PUTM$differentGene <- FALSE
+eQTL.PUTM$differentGene[grep(";",eQTL.PUTM$geneID)] <- TRUE
+save(eQTL.PUTM,file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
+
+eQTL.SNIG$differentGene <- FALSE
+eQTL.SNIG$differentGene[grep(";",eQTL.SNIG$geneID)] <- TRUE
+save(eQTL.SNIG,file="data/results/finaleQTLs/eQTL.ExExJun.SNIG.rda")
+
+## check whether all the exon exon junctions have their pair exon in the same chr
+identical(eQTL.PUTM$chrExon1,eQTL.PUTM$chrExon2)
+## TRUE
+
+eQTL.PUTM$distanceExons <- eQTL.PUTM$startExon2 - eQTL.PUTM$endExon1 
+save(eQTL.PUTM,file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
+boxplot(eQTL.PUTM$distanceExons)
+
+### there is an exon-exon junction that are very far from each other (distance:120M)
+eQTL.PUTM[which(eQTL.PUTM$distanceExons>100000000),]
+## the exon-exon ID of this very long exon-exon junction is  305501_325239
+
+hist(eQTL.PUTM[-which(eQTL.PUTM$distanceExons>100000000),"distanceExons"],breaks=30)
+boxplot(eQTL.PUTM[-which(eQTL.PUTM$distanceExons>100000000),"distanceExons"])
+
+summary(eQTL.PUTM[-which(eQTL.PUTM$distanceExons>100000000),"distanceExons"])
+
+
+eQTL.SNIG$distanceExons <- eQTL.SNIG$startExon2 - eQTL.SNIG$endExon1 
+save(eQTL.SNIG,file="data/results/finaleQTLs/eQTL.ExExJun.SNIG.rda")
 
 
 
