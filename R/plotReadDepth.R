@@ -224,7 +224,7 @@ plotsplicEQTL <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
 
 
 
-plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
+plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=NULL)
 {
   ## load the library
   library(biomaRt)
@@ -357,8 +357,23 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
                                                                 paste0(markers$info$Al1,markers$info$Al2),
                                                                 paste0(markers$info$Al2,markers$info$Al2)),legend = TRUE
                               ,col=c("black","red","blue"))
-  #   
-  plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol")  
+  #
+  if(!is.null(highLight)){
+       ht <- HighlightTrack(trackList = list(allInSameTrack,grtrack), 
+                            start = highLight[,2], 
+                            width = (highLight[,3]-highLight[,2]),chromosome = as.numeric(highLight[,1]),
+                            col=scales::alpha(c(1:nrow(highLight)),.5),inBackground=TRUE,
+                            fill=scales::alpha(c(1:nrow(highLight)),.5))
+      
+      plotTracks(list(gtrack,dtrackPval,dtrackBetas,ht),transcriptAnnotation = "symbol")
+  
+  }else{
+    plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol")
+  }
+    
+  
+  
+  
   
   
 }

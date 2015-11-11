@@ -502,7 +502,6 @@ library(foreach)
 load_all()
 
 
-
 cl <- makeCluster(20)
 clusterExport(cl,"annExExJun")
 registerDoParallel(cl)
@@ -607,6 +606,204 @@ summary(eQTL.PUTM[-which(eQTL.PUTM$distanceExons>100000000),"distanceExons"])
 
 eQTL.SNIG$distanceExons <- eQTL.SNIG$startExon2 - eQTL.SNIG$endExon1 
 save(eQTL.SNIG,file="data/results/finaleQTLs/eQTL.ExExJun.SNIG.rda")
+
+numOfSameTranscript(eQTL.PUTM$snps[10],eQTL.PUTM$geneID[10],eQTL.PUTM)
+
+
+
+library(devtools)
+library(doParallel)
+library(foreach)
+load_all()
+
+
+cl <- makeCluster(20)
+clusterExport(cl,"numOfSameTranscript")
+registerDoParallel(cl)
+
+Sys.time()
+numOfTrans <- foreach(i=1:nrow(eQTL.PUTM),.combine=c)%dopar%numOfSameTranscript(eQTL.PUTM$snps[i],eQTL.PUTM$geneID[i],eQTL.PUTM)
+Sys.time()
+stopCluster(cl)
+rm(cl)
+
+
+stopifnot(identical(as.character(eQTL.PUTM$geneID),as.character(names(numOfTrans))))
+eQTL.PUTM <- cbind(eQTL.PUTM,numOfTrans)
+save(eQTL.PUTM,file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
+
+cl <- makeCluster(20)
+clusterExport(cl,"numOfSameTranscript")
+registerDoParallel(cl)
+
+Sys.time()
+numOfTrans <- foreach(i=1:nrow(eQTL.SNIG),.combine=c)%dopar%numOfSameTranscript(eQTL.SNIG$snps[i],eQTL.SNIG$geneID[i],eQTL.SNIG)
+Sys.time()
+stopCluster(cl)
+rm(cl)
+
+
+stopifnot(identical(as.character(eQTL.SNIG$geneID),as.character(names(numOfTrans))))
+eQTL.SNIG <- cbind(eQTL.SNIG,numOfTrans)
+
+
+
+table(eQTL.PUTM$numOfTrans)
+
+eQTL.PUTM[which(eQTL.PUTM$numOfTrans == 6),]
+
+
+
+gene <- "ENSG00000134202"
+snp <- "chr1:110282972"
+##
+
+load(paste0("/home/seb/eQTL/snps/byGene/",gene,".rda"))
+markers <- markers[snp,]
+
+
+load("data/general/sampleInfo.rda")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified =="PUTM"),]
+IDs <- gsub("/","_",PUTM$U.SD_No)
+tmp <- markers[,as.character(IDs)]
+names(tmp) <- as.character(PUTM$A.CEL_file)
+markers <- list(info=markers[,c(1:6)],genotype=tmp)
+rm(IDs,tmp)
+
+table(round(as.numeric(markers$genotype)))
+genotype=markers
+IDs=PUTM$A.CEL_file
+
+library(biomaRt)
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+
+# ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Feb2014.archive.ensembl.org",
+#                       dataset="hsapiens_gene_ensembl")
+
+plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype)
+
+
+
+
+library(devtools)
+library(doParallel)
+library(foreach)
+load_all()
+
+
+cl <- makeCluster(20)
+clusterExport(cl,"uniqueExon")
+registerDoParallel(cl)
+
+Sys.time()
+hasUniExo <- foreach(i=1:nrow(eQTL.PUTM),.combine=c)%dopar%uniqueExon(eQTL.PUTM$chrExon1[i],
+                                                                       eQTL.PUTM$startExon1[i],
+                                                                       eQTL.PUTM$endExon1[i],
+                                                                       eQTL.PUTM$startExon2[i],
+                                                                       eQTL.PUTM$endExon2[i],ensembl)
+Sys.time()
+stopCluster(cl)
+rm(cl)
+
+eQTL.PUTM <- cbind(eQTL.PUTM,hasUniExo)
+save(eQTL.PUTM,file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
+
+cl <- makeCluster(20)
+clusterExport(cl,"uniqueExon")
+registerDoParallel(cl)
+
+Sys.time()
+hasUniExo <- foreach(i=1:nrow(eQTL.SNIG),.combine=c)%dopar%uniqueExon(eQTL.SNIG$chrExon1[i],
+                                                                      eQTL.SNIG$startExon1[i],
+                                                                      eQTL.SNIG$endExon1[i],
+                                                                      eQTL.SNIG$startExon2[i],
+                                                                      eQTL.SNIG$endExon2[i],ensembl)
+Sys.time()
+stopCluster(cl)
+rm(cl)
+
+eQTL.SNIG <- cbind(eQTL.SNIG,hasUniExo)
+save(eQTL.SNIG,file="data/results/finaleQTLs/eQTL.ExExJun.SNIG.rda")
+
+
+
+
+gene <- "ENSG00000120675"
+snp <- "chr13:43598575"
+##
+
+load(paste0("/home/seb/eQTL/snps/byGene/",gene,".rda"))
+markers <- markers[snp,]
+
+
+load("data/general/sampleInfo.rda")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified =="PUTM"),]
+IDs <- gsub("/","_",PUTM$U.SD_No)
+tmp <- markers[,as.character(IDs)]
+names(tmp) <- as.character(PUTM$A.CEL_file)
+markers <- list(info=markers[,c(1:6)],genotype=tmp)
+rm(IDs,tmp)
+
+table(round(as.numeric(markers$genotype)))
+genotype=markers
+IDs=PUTM$A.CEL_file
+
+library(biomaRt)
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+
+# ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Feb2014.archive.ensembl.org",
+#                       dataset="hsapiens_gene_ensembl")
+
+plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype)
+
+
+library("biomaRt")
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","gene_biotype","description"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=eQTL.PUTM$geneID, mart=ensembl)
+
+
+
+rownames(geneNames)<- geneNames$ensembl_gene_id
+geneNames$ensembl_gene_id <- NULL
+
+
+eQTL.PUTM <- cbind(eQTL.PUTM,geneNames[as.character(eQTL.PUTM$geneID),])
+save(eQTL.PUTM,file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","gene_biotype","description"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=eQTL.SNIG$geneID, mart=ensembl)
+
+
+
+rownames(geneNames)<- geneNames$ensembl_gene_id
+geneNames$ensembl_gene_id <- NULL
+
+
+eQTL.SNIG <- cbind(eQTL.SNIG,geneNames[as.character(eQTL.SNIG$geneID),])
+save(eQTL.SNIG,file="data/results/finaleQTLs/eQTL.ExExJun.SNIG.rda")
+
+tmp<- eQTL.PUTM[which(eQTL.PUTM$gene_biotype %in% "protein_coding"),]
+
+tmp <- tmp[intersect(which(tmp$numOfTrans > 1),which(tmp$hasUniExo)),c("snps","geneID","transID","numOfTrans","hasUniExo")]
+
+tmp[which(tmp$geneID %in% "ENSG00000120675"),] 
+
+eQTL.PUTM[which(eQTL.PUTM$snps %in% "chr13:43598575"),c("chrExon1","startExon1","endExon2")] 
+
+plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype,
+             highLight=eQTL.PUTM[which(eQTL.PUTM$snps %in% "chr13:43598575"),c("chrExon1","startExon1","endExon2")])
 
 
 
