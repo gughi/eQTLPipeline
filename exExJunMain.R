@@ -386,7 +386,7 @@ cat("Saving the the RPKM CQN normalised in data/expr/normalisedCounts/RPKM.cqn.S
 <<<<<<< HEAD
 save(length,file="/home/seb/projectsR/eQTLPipeline/lengthExExJun.rda")
 =======
-SNIG$U.Region_simplified <- NULL
+  SNIG$U.Region_simplified <- NULL
 covs <- SNIG 
 rownames(covs) <- covs$A.CEL_file
 #convert the female and male info in numeric
@@ -546,11 +546,11 @@ length(grep(";",eQTL.PUTM$geneID))
 par(mfrow=c(1,1))
 
 sumeQTL <- c(PUTM=as.numeric(nrow(eQTL.PUTM)),SNIG=as.numeric(nrow(eQTL.SNIG)),
-  PUTM5=as.numeric(nrow(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.05),])),
-  SNIG5=as.numeric(nrow(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.05),])),
-  PUTM1=as.numeric(nrow(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.01),])),
-  SNIG1=as.numeric(nrow(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.01),])))
-                                                       
+             PUTM5=as.numeric(nrow(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.05),])),
+             SNIG5=as.numeric(nrow(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.05),])),
+             PUTM1=as.numeric(nrow(eQTL.PUTM[which(eQTL.PUTM$myFDR<0.01),])),
+             SNIG1=as.numeric(nrow(eQTL.SNIG[which(eQTL.SNIG$myFDR<0.01),])))
+
 barplot(sumeQTL[c("PUTM","SNIG")],
         sub=paste("total PUTM:",nrow(eQTL.PUTM),"total SNIG:",nrow(eQTL.SNIG)),
         main="eQTL exon-exon junction",col='red',border=F,)
@@ -699,10 +699,10 @@ registerDoParallel(cl)
 
 Sys.time()
 hasUniExo <- foreach(i=1:nrow(eQTL.PUTM),.combine=c)%dopar%uniqueExon(eQTL.PUTM$chrExon1[i],
-                                                                       eQTL.PUTM$startExon1[i],
-                                                                       eQTL.PUTM$endExon1[i],
-                                                                       eQTL.PUTM$startExon2[i],
-                                                                       eQTL.PUTM$endExon2[i],ensembl)
+                                                                      eQTL.PUTM$startExon1[i],
+                                                                      eQTL.PUTM$endExon1[i],
+                                                                      eQTL.PUTM$startExon2[i],
+                                                                      eQTL.PUTM$endExon2[i],ensembl)
 Sys.time()
 stopCluster(cl)
 rm(cl)

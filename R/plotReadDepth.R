@@ -39,7 +39,7 @@ plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA)
   colnames(defGen) <- c("chromosome","start","end","width","strand",
                         "feature","gene","exon","transcript","symbol")  
   
-
+  
   load(paste0("data/expr/rawCounts/intergenic/fullCoverage/fullCoverageChr",chr,".rda"))
   
   ## we load the data for the example
@@ -210,14 +210,14 @@ plotsplicEQTL <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
   plotTracks(list(gtrack, pvalstrack,grtrack),transcriptAnnotation = "symbol",type="a")  
   
   ## The code below needs to improve
-#   colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),paste0(markers$info$Al1,markers$info$Al2),paste0(markers$info$Al2,markers$info$Al2))
-#   allInSameTrack <- DataTrack(data=t(meanAll),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
-#                               name = "All",type=c("p"),groups=c(paste0(markers$info$Al1,markers$info$Al1),
-#                                                                 paste0(markers$info$Al1,markers$info$Al2),
-#                                                                 paste0(markers$info$Al2,markers$info$Al2))
-#                               ,col=c("black","red","blue"))
-#   
-#   plotTracks(list(gtrack, allInSameTrack,grtrack),transcriptAnnotation = "symbol",type="a")  
+  #   colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),paste0(markers$info$Al1,markers$info$Al2),paste0(markers$info$Al2,markers$info$Al2))
+  #   allInSameTrack <- DataTrack(data=t(meanAll),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
+  #                               name = "All",type=c("p"),groups=c(paste0(markers$info$Al1,markers$info$Al1),
+  #                                                                 paste0(markers$info$Al1,markers$info$Al2),
+  #                                                                 paste0(markers$info$Al2,markers$info$Al2))
+  #                               ,col=c("black","red","blue"))
+  #   
+  #   plotTracks(list(gtrack, allInSameTrack,grtrack),transcriptAnnotation = "symbol",type="a")  
   
   
 }
@@ -355,43 +355,43 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),paste0(markers$info$Al1,markers$info$Al2),paste0(markers$info$Al2,markers$info$Al2))
   allInSameTrack <- DataTrack(data=t(meanAll),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
                               name = "Stratified raw counts",type=c("l"),groups=c(paste0(markers$info$Al1,markers$info$Al1),
-                                                                paste0(markers$info$Al1,markers$info$Al2),
-                                                                paste0(markers$info$Al2,markers$info$Al2)),legend = TRUE
+                                                                                  paste0(markers$info$Al1,markers$info$Al2),
+                                                                                  paste0(markers$info$Al2,markers$info$Al2)),legend = TRUE
                               ,col=c("black","red","blue"))
   #
   if(!is.null(highLight)){
-#        ht <- HighlightTrack(trackList = list(allInSameTrack,grtrack), 
-#                             start = highLight[,2], 
-#                             width = (highLight[,3]-highLight[,2]),chromosome = as.numeric(highLight[,1]),
-#                             col=scales::alpha(c(1:nrow(highLight)),.5),inBackground=TRUE,
-#                             fill=scales::alpha(c(1:nrow(highLight)),.5))
-#     
-  
-## This code highlight the exon exon junctions 
+    #        ht <- HighlightTrack(trackList = list(allInSameTrack,grtrack), 
+    #                             start = highLight[,2], 
+    #                             width = (highLight[,3]-highLight[,2]),chromosome = as.numeric(highLight[,1]),
+    #                             col=scales::alpha(c(1:nrow(highLight)),.5),inBackground=TRUE,
+    #                             fill=scales::alpha(c(1:nrow(highLight)),.5))
+    #     
     
-      
-      highLight <- rbind(highLight[,c("chrExon1","startExon1","endExon1","exExID")],
-                         setNames( highLight[,c("chrExon1","startExon2","endExon2","exExID")],
-                                   c("chrExon1","startExon1","endExon1","exExID")))
-      
-      highLight$width <- highLight[,3]-highLight[,2] 
-      highLight$symbol <- gene 
-      highLight$strand <- "*"
-      highLight <- highLight[,c("chrExon1","startExon1","endExon1","strand","width","exExID","symbol")]    
-      colnames(highLight) <- c("chromosome","start","end","strand","width","transcript", "symbol")
-            
-      
-      exExJuntrack <- GeneRegionTrack(highLight, genome = gen,
-                               chromosome = chr, name = "exon-exon junction",col="red",fill="red")
-      
-      
-      plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack,exExJuntrack),transcriptAnnotation = "transcript")
-  
+    ## This code highlight the exon exon junctions 
+    
+    
+    highLight <- rbind(highLight[,c("chrExon1","startExon1","endExon1","exExID")],
+                       setNames( highLight[,c("chrExon1","startExon2","endExon2","exExID")],
+                                 c("chrExon1","startExon1","endExon1","exExID")))
+    
+    highLight$width <- highLight[,3]-highLight[,2] 
+    highLight$symbol <- gene 
+    highLight$strand <- "*"
+    highLight <- highLight[,c("chrExon1","startExon1","endExon1","strand","width","exExID","symbol")]    
+    colnames(highLight) <- c("chromosome","start","end","strand","width","transcript", "symbol")
+    
+    
+    exExJuntrack <- GeneRegionTrack(highLight, genome = gen,
+                                    chromosome = chr, name = "exon-exon junction",col="red",fill="red")
+    
+    
+    plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack,exExJuntrack),transcriptAnnotation = "transcript")
+    
   }else{
     plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol")
   }
-    
-
+  
+  
 }
 
 
