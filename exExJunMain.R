@@ -808,3 +808,6 @@ plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype,
 
 head(eQTL.PUTM)
 
+
+
+

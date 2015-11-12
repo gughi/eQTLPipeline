@@ -395,3 +395,6 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
 }
 
 
+
+
+
