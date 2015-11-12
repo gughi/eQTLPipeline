@@ -288,6 +288,7 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   
   ##load(file="/home/seb/")
   
+  
   ## we load the dat
   
   
@@ -359,23 +360,38 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
                               ,col=c("black","red","blue"))
   #
   if(!is.null(highLight)){
-       ht <- HighlightTrack(trackList = list(allInSameTrack,grtrack), 
-                            start = highLight[,2], 
-                            width = (highLight[,3]-highLight[,2]),chromosome = as.numeric(highLight[,1]),
-                            col=scales::alpha(c(1:nrow(highLight)),.5),inBackground=TRUE,
-                            fill=scales::alpha(c(1:nrow(highLight)),.5))
+#        ht <- HighlightTrack(trackList = list(allInSameTrack,grtrack), 
+#                             start = highLight[,2], 
+#                             width = (highLight[,3]-highLight[,2]),chromosome = as.numeric(highLight[,1]),
+#                             col=scales::alpha(c(1:nrow(highLight)),.5),inBackground=TRUE,
+#                             fill=scales::alpha(c(1:nrow(highLight)),.5))
+#     
+  
+## This code highlight the exon exon junctions 
+    
       
-      plotTracks(list(gtrack,dtrackPval,dtrackBetas,ht),transcriptAnnotation = "symbol")
+      highLight <- rbind(highLight[,c("chrExon1","startExon1","endExon1","exExID")],
+                         setNames( highLight[,c("chrExon1","startExon2","endExon2","exExID")],
+                                   c("chrExon1","startExon1","endExon1","exExID")))
+      
+      highLight$width <- highLight[,3]-highLight[,2] 
+      highLight$symbol <- gene 
+      highLight$strand <- "*"
+      highLight <- highLight[,c("chrExon1","startExon1","endExon1","strand","width","exExID","symbol")]    
+      colnames(highLight) <- c("chromosome","start","end","strand","width","transcript", "symbol")
+            
+      
+      exExJuntrack <- GeneRegionTrack(highLight, genome = gen,
+                               chromosome = chr, name = "exon-exon junction",col="red",fill="red")
+      
+      
+      plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack,exExJuntrack),transcriptAnnotation = "transcript")
   
   }else{
     plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol")
   }
     
-  
-  
-  
-  
-  
+
 }
 
 

@@ -803,7 +803,8 @@ tmp[which(tmp$geneID %in% "ENSG00000120675"),]
 eQTL.PUTM[which(eQTL.PUTM$snps %in% "chr13:43598575"),c("chrExon1","startExon1","endExon2")] 
 
 plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype,
-             highLight=eQTL.PUTM[which(eQTL.PUTM$snps %in% "chr13:43598575"),c("chrExon1","startExon1","endExon2")])
+             highLight=eQTL.PUTM[which(eQTL.PUTM$snps %in% "chr13:43598575"),
+                                 c("chrExon1","startExon1","endExon1","startExon2","endExon2","exExID")])
 
-
+head(eQTL.PUTM)
 
