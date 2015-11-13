@@ -1,11 +1,8 @@
 ## For Jana
 load("data/expr/rawCounts/genic/fullExExJun.rda")
 gene <- read.delim("data/general/NP4.6c.raw.n.bed")
-mapExon[16,6]
-
 
 gene <- unique(gene$LOCUS)
-
 
 library(biomaRt)
 
@@ -33,17 +30,21 @@ mapExonNeuro <- mapExon[which(tmp %in% geneNames[,1]),]
 # potExExJun <- expand.grid(mapExonNeuro$exonID,mapExonNeuro$exonID)
 # potExExJun <- paste(potExExJun[,1],potExExJun[,2],sep = "_")
 
-idx <- intersect(which(expr$Exon1ID %in% mapExonNeuro$exonID),which(expr$Exon2ID %in% mapExonNeuro$exonID))
+idx <- unique(which(expr$Exon1ID %in% mapExonNeuro$exonID),which(expr$Exon2ID %in% mapExonNeuro$exonID))
 exprExExJun <- expr[idx,]
 
-mapExExNeuroGenes <- mapExonNeuro
+mapExExNeuroGenes <- mapExon[which(as.character(mapExon$exonID) %in% unique(c(as.character(exprExExJun$Exon1ID),as.character(exprExExJun$Exon2ID)))),]
 exprExExNeuroGenes <- exprExExJun
 save(exprExExNeuroGenes,mapExExNeuroGenes,file="data/expr/rawCounts/genic/exExJunNeuroGenes.rda")
 
 
-trans1 <- mapExon[which(as.character(mapExon$exonID) %in% as.character(exprExExNeuroGenes$Exon1ID)),"transID"]
-trans2 <- mapExExNeuroGenes[which(mapExExNeuroGenes$exonID %in% exprExExNeuroGenes$Exon2ID),"transID"]
+intersect(as.character(mapExon$exonID),as.character(exprExExNeuroGenes$Exon1ID))
+trans1 <- mapExon[which(as.character(mapExon$exonID) %in% as.character(exprExExNeuroGenes$Exon1ID)),c("exonID","transID")]
+trans2 <- mapExExNeuroGenes[which(as.character(mapExExNeuroGenes$exonID) %in% as.character(exprExExNeuroGenes$Exon2ID)),c("exonID","transID")]
 
+
+trans1 <- trans1[as.character(exprExExNeuroGenes$Exon1ID),"transID"]
+trans2 <- trans2[as.character(exprExExNeuroGenes$Exon2ID),"transID"]
 
 trans1 <- unlist(lapply(strsplit(as.character(trans1),"_")
                      ,function(x){c(x[2])}))
@@ -51,16 +52,8 @@ trans1 <- unlist(lapply(strsplit(as.character(trans1),"_")
 trans2 <- unlist(lapply(strsplit(as.character(trans2),"_")
                         ,function(x){c(x[2])}))
 
-length(trans1)
 exprExExNeuroGenes$potNove <- trans1==trans2
-
-
-getAllExExJun <- function(gene,mapExon)
-{
-  mapExon[grep(as.character(gene),mapExon$geneID),]
-  
-}
-
+save(exprExExNeuroGenes,mapExExNeuroGenes,file="data/expr/rawCounts/genic/exExJunNeuroGenes.rda")
 
 
 
