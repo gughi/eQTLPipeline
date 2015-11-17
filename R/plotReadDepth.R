@@ -59,7 +59,7 @@ plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA)
   grtrack <- GeneRegionTrack(defGen, genome = gen,
                              chromosome = chr, name = gene)
   gtrack <- GenomeAxisTrack()
-  itrack <- IdeogramTrack(genome = "hg19", chromosome = chr)
+  ##itrack <- IdeogramTrack(genome = "hg19", chromosome = chr)
   
   ##load(file="/home/seb/")
   

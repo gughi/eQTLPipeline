@@ -9,7 +9,6 @@ library(biomaRt)
 ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
                    dataset="hsapiens_gene_ensembl")
 
-
 head(listAttributes(ensembl))
 grep("name",head(listFilters(ensembl),300))
 
