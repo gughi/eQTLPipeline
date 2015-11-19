@@ -1,6 +1,6 @@
-novelTransRegion <- function(geneInfo,ensembl)
+novelTransRegion <- function(geneInfo,ensembl,threshold=1-0,tissue="PUTM")
 {
-  load(paste0("data/expr/rawCounts/intergenic/transcribedRegions/PUTM/chr",geneInfo[3],".rda"))
+  load(paste0("data/expr/rawCounts/intergenic/transcribedRegions/",tissue,"/chr",geneInfo[3],".rda"))
   rm(annotatedRegions,filteredCov,intergenicRegions,coverageIntergenic)
   library(GenomicRanges)
   library(biomaRt)
@@ -25,7 +25,8 @@ novelTransRegion <- function(geneInfo,ensembl)
                                   IRanges(as.numeric(geneInfo[4]), as.numeric(geneInfo[5]))))
   rm(expressedRegions)
   return(c(gene=geneInfo[1],
-          totalCovered=length(tmp[which(tmp$value>10),]),
-          coveredNoAnn=table(countOverlaps(tmp[which(tmp$value>10),], exonDef)==0)["TRUE"]))
+          totalCovered=length(tmp),
+          coveredNoAnn=table(countOverlaps(tmp[which(tmp$value>threshold),], exonDef)==0)["TRUE"],
+          totalExons=length(reduce(exonDef))))
   
 }

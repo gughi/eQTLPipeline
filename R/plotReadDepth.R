@@ -1,5 +1,4 @@
 
-
 plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA)
 {
   ## load the library

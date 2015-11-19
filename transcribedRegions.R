@@ -1,5 +1,6 @@
 ## in this script we will get the 
-load("data/expr/rawCounts/genic/fullExExJun.rda")
+## load("data/expr/rawCounts/genic/fullExExJun.rda")
+
 gene <- read.delim("data/general/NP4.6c.raw.n.bed")
 
 gene <- unique(gene$LOCUS)
@@ -21,17 +22,22 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","chromosome
 geneNames <- geneNames[-which(geneNames$gene_biotype %in% "LRG_gene"),]
 
 geneNames <- geneNames[order(geneNames$chromosome_name),]
-
-
 load("data/general/overlappingGenes.rda")
 
-neuroNonOveGen <- geneNames[-which(geneNames[,1] %in% rownames(as.data.frame(listNonOve))),]
+neuroNonOveGen <- geneNames
+## remove the non automosal and the patch genes, don't have the coverage on them
+neuroNonOveGen <- neuroNonOveGen[-c(147:158),]
+
+# neuroNonOveGen <- geneNames[-which(geneNames[,1] %in% rownames(as.data.frame(listNonOve))),]
+# neuroNonOveGen <- neuroNonOveGen[order(neuroNonOveGen$chromosome_name),]
+
 
 library("devtools")
 load_all()
 
 library(doParallel)
 library(foreach)
+library(GenomicRanges)
 
 detectCores()
 ## [1] 24
@@ -42,19 +48,89 @@ registerDoParallel(cl)
 getDoParWorkers()
 
 ## remove gene that comes from the patch HG987_PATCH - gene KCNJ12
-neuroNonOveGen <- neuroNonOveGen[c(-58-),]
+## neuroNonOveGen <- neuroNonOveGen[c(-58),]
 
-neuroNonOveGen <- neuroNonOveGen[c(-59,-61,-62,63),]
+
+# neuroNonOveGen <- neuroNonOveGen[-c(58,59,60,61,62),]
 
 start <- Sys.time()
-novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl)
+novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,"PUTM")
 ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
 end <- Sys.time()
 end-start
 stopCluster(cl)
 rm(cl)
 
-sum(unlist(novelRegions[,3]),na.rm=T)
+neuroGenes <- getBM(attributes=c("ensembl_gene_id","external_gene_id","gene_biotype","source","status"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=novelRegions[,1], mart=ensembl)
+
+rownames(novelRegions) <- novelRegions[,1]
+novelRegions <- novelRegions[,-1]
+rownames(neuroGenes) <- neuroGenes[,1]
+neuroGenes <- neuroGenes[,-1]
+neuroGenes <- neuroGenes[rownames(novelRegions),]
+identical(rownames(neuroNonOveGen),rownames(neuroGenes))
+neuroGenes <- cbind(novelRegions,neuroGenes)
+
+neuroGenes$overlapGene <- FALSE
+neuroGenes$overlapGene[which(rownames(neuroGenes) %in% rownames(as.data.frame(listNonOve)))] <- TRUE
+save(neuroGenes,file="data/results/novelIntragenicRegions.PUTM.rda")
+
+### SNIG
+rm(neuroGenes,novelRegions)
+
+start <- Sys.time()
+novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,"SNIG")
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+rm(cl)
+
+neuroGenes <- getBM(attributes=c("ensembl_gene_id","external_gene_id","gene_biotype","source","status"),
+                    verbose = T,
+                    filters="ensembl_gene_id",
+                    values=novelRegions[,1], mart=ensembl)
+
+rownames(novelRegions) <- novelRegions[,1]
+novelRegions <- novelRegions[,-1]
+rownames(neuroGenes) <- neuroGenes[,1]
+neuroGenes <- neuroGenes[,-1]
+neuroGenes <- neuroGenes[rownames(novelRegions),]
+identical(rownames(neuroNonOveGen),rownames(neuroGenes))
+neuroGenes <- cbind(novelRegions,neuroGenes)
+
+neuroGenes$overlapGene <- FALSE
+neuroGenes$overlapGene[which(rownames(neuroGenes) %in% rownames(as.data.frame(listNonOve)))] <- TRUE
+save(neuroGenes,file="data/results/novelIntragenicRegions.SNIG.rda")
+
+
+neuroGenes[which(neuroGenes$external_gene_id %in% "APP"),]
+## we now try to see whether we could predict new regions checking in a recent version of ensembl
+
+
+cl <- makeCluster(5)
+clusterExport(cl, c("novelTransRegion","getBM","subsetByOverlaps"))
+registerDoParallel(cl)
+getDoParWorkers()
+
+ensemblv75 <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Feb2014.archive.ensembl.org",
+                      dataset="hsapiens_gene_ensembl")
+
+start <- Sys.time()
+novelRegionsv75 <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensemblv75)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+
+sum(unlist(novelRegionsv75[,3]),na.rm=T)
+
+
+stopCluster(cl)
+rm(cl)
+
 
 
 
@@ -82,6 +158,11 @@ table(countOverlaps(tmp[which(tmp$value>10),], exonDef)==0)
 
 plotReadDepth(gene=neuroNonOveGen[4,1],ensembl=ensembl,IDs=IDs)
 
+load_all()
+plotReadDepth(gene="ENSG00000186868",ensembl=ensembl,IDs=NA)
+
+
+head(novelRegions,20)
 
 
 
