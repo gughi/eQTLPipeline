@@ -808,7 +808,9 @@ plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype,
 
 head(eQTL.PUTM)
 
+load("data/results/finaleQTLs/eQTL.ExExJun.PUTM.rda")
 
+load_all()
 
 gene <- "ENSG00000205534"
 snp <- "chr16:30340870"
@@ -838,7 +840,6 @@ ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.
 plotLoceQTLs(gene = gene,ensembl = ensembl,IDs = IDs,genotype = genotype,
              highLight=eQTL.PUTM[intersect(which(eQTL.PUTM$snps %in% snp),which(eQTL.PUTM$geneID %in% gene)),
                                  c("chrExon1","startExon1","endExon1","startExon2","endExon2","exExID")])
-
 
 
 

@@ -291,9 +291,9 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   ## we load the dat
   
   
-  tmp <- round(as.numeric(markers$genotype))
+  tmp <- round(as.numeric(genotype$genotype))
   ## we load 3expression based on teh genotype
-  IDsGen <- names(markers$genotype[which(tmp %in% "0")]) 
+  IDsGen <- names(genotype$genotype[which(tmp %in% "0")]) 
   meanCov <- apply(data.frame(fullCovtmp[,IDsGen]),1,mean)
   dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
   meanAll <- meanCov
@@ -304,7 +304,7 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   
   
   ## we load 3expression based on teh genotype
-  IDsGen <- names(markers$genotype[which(tmp %in% "1")]) 
+  IDsGen <- names(genotype$genotype[which(tmp %in% "1")]) 
   meanCov <- apply(data.frame(fullCovtmp[,IDsGen]),1,mean)
   dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
   meanAll <- cbind(meanAll,meanCov)
@@ -314,7 +314,7 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   rm(dat)
   
   ## we load 3expression based on teh genotype
-  IDsGen <- names(markers$genotype[which(tmp %in% "2")]) 
+  IDsGen <- names(genotype$genotype[which(tmp %in% "2")]) 
   rm(tmp)
   meanCov <- apply(data.frame(fullCovtmp[,IDsGen]),1,mean)
   dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
@@ -325,9 +325,9 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   rm(dat)
   
   
-  colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),
-                         paste0(markers$info$Al1,markers$info$Al2),
-                         paste0(markers$info$Al2,markers$info$Al2))
+  colnames(meanAll) <- c(paste0(genotype$info$Al1,genotype$info$Al1),
+                         paste0(genotype$info$Al1,genotype$info$Al2),
+                         paste0(genotype$info$Al2,genotype$info$Al2))
   
   
   library(MatrixEQTL)
@@ -351,11 +351,11 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   
   
   ## The code below needs to improve
-  colnames(meanAll) <- c(paste0(markers$info$Al1,markers$info$Al1),paste0(markers$info$Al1,markers$info$Al2),paste0(markers$info$Al2,markers$info$Al2))
+  colnames(meanAll) <- c(paste0(genotype$info$Al1,genotype$info$Al1),paste0(genotype$info$Al1,genotype$info$Al2),paste0(genotype$info$Al2,genotype$info$Al2))
   allInSameTrack <- DataTrack(data=t(meanAll),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
-                              name = "Stratified raw counts",type=c("l"),groups=c(paste0(markers$info$Al1,markers$info$Al1),
-                                                                                  paste0(markers$info$Al1,markers$info$Al2),
-                                                                                  paste0(markers$info$Al2,markers$info$Al2)),legend = TRUE
+                              name = "Stratified raw counts",type=c("l"),groups=c(paste0(genotype$info$Al1,genotype$info$Al1),
+                                                                                  paste0(genotype$info$Al1,genotype$info$Al2),
+                                                                                  paste0(genotype$info$Al2,genotype$info$Al2)),legend = TRUE
                               ,col=c("black","red","blue"))
   #
   if(!is.null(highLight)){

@@ -1,4 +1,4 @@
-novelTransRegion <- function(geneInfo,ensembl,threshold=1-0,tissue="PUTM")
+novelTransRegion <- function(geneInfo,ensembl,threshold=10,tissue="PUTM")
 {
   load(paste0("data/expr/rawCounts/intergenic/transcribedRegions/",tissue,"/chr",geneInfo[3],".rda"))
   rm(annotatedRegions,filteredCov,intergenicRegions,coverageIntergenic)

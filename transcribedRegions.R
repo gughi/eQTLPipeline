@@ -32,6 +32,7 @@ neuroNonOveGen <- neuroNonOveGen[-c(147:158),]
 # neuroNonOveGen <- neuroNonOveGen[order(neuroNonOveGen$chromosome_name),]
 
 
+
 library("devtools")
 load_all()
 
@@ -82,7 +83,7 @@ save(neuroGenes,file="data/results/novelIntragenicRegions.PUTM.rda")
 rm(neuroGenes,novelRegions)
 
 start <- Sys.time()
-novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,"SNIG")
+novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,tissue="SNIG")
 ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
 end <- Sys.time()
 end-start
@@ -105,6 +106,7 @@ neuroGenes <- cbind(novelRegions,neuroGenes)
 neuroGenes$overlapGene <- FALSE
 neuroGenes$overlapGene[which(rownames(neuroGenes) %in% rownames(as.data.frame(listNonOve)))] <- TRUE
 save(neuroGenes,file="data/results/novelIntragenicRegions.SNIG.rda")
+
 
 
 neuroGenes[which(neuroGenes$external_gene_id %in% "APP"),]
@@ -159,8 +161,19 @@ table(countOverlaps(tmp[which(tmp$value>10),], exonDef)==0)
 plotReadDepth(gene=neuroNonOveGen[4,1],ensembl=ensembl,IDs=IDs)
 
 load_all()
-plotReadDepth(gene="ENSG00000186868",ensembl=ensembl,IDs=NA)
 
+load("data/general/sampleInfo.rda")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified =="PUTM"),]
+IDs=PUTM$A.CEL_file
+
+
+plotReadDepth(gene="ENSG00000186868",ensembl=ensembl,IDs=IDs)
+
+load("data/general/sampleInfo.rda")
+SNIG <- sampleInfo[which(sampleInfo$U.Region_simplified =="SNIG"),]
+IDs=SNIG$A.CEL_file
+
+plotReadDepth(gene="ENSG00000186868",ensembl=ensembl,IDs=IDs)
 
 head(novelRegions,20)
 
