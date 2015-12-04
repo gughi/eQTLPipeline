@@ -31,6 +31,7 @@ neuroNonOveGen <- neuroNonOveGen[-c(147:158),]
 # neuroNonOveGen <- geneNames[-which(geneNames[,1] %in% rownames(as.data.frame(listNonOve))),]
 # neuroNonOveGen <- neuroNonOveGen[order(neuroNonOveGen$chromosome_name),]
 
+novelTransRegion(neuroNonOveGen[3,],ensembl,10,"PUTM")
 
 
 library("devtools")
@@ -54,8 +55,10 @@ getDoParWorkers()
 
 # neuroNonOveGen <- neuroNonOveGen[-c(58,59,60,61,62),]
 
+
+
 start <- Sys.time()
-novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,"PUTM")
+novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,"PUTM")
 ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
 end <- Sys.time()
 end-start
@@ -176,7 +179,4 @@ IDs=SNIG$A.CEL_file
 plotReadDepth(gene="ENSG00000186868",ensembl=ensembl,IDs=IDs)
 
 head(novelRegions,20)
-
-
-
 

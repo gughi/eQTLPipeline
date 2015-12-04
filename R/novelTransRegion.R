@@ -1,3 +1,5 @@
+
+## This functions identify the novel transcribed regions in intragenic
 novelTransRegion <- function(geneInfo,ensembl,threshold=10,tissue="PUTM")
 {
   load(paste0("data/expr/rawCounts/intergenic/transcribedRegions/",tissue,"/chr",geneInfo[3],".rda"))
@@ -17,16 +19,22 @@ novelTransRegion <- function(geneInfo,ensembl,threshold=10,tissue="PUTM")
                    filters="ensembl_gene_id",
                    values=geneInfo[1], mart=ensembl)
   
-
+  
   exonDef <- GRanges(paste0("chr",exonDef[,2]), IRanges(exonDef[,4], exonDef[,5]))
   ## select the transcribed regions identified in the data
   tmp <- subsetByOverlaps(expressedRegions[[1]]$regions,
                           GRanges(paste0("chr",geneInfo[3]),
                                   IRanges(as.numeric(geneInfo[4]), as.numeric(geneInfo[5]))))
-  rm(expressedRegions)
-  return(c(gene=geneInfo[1],
+  
+  
+  tmp2 <- countOverlaps(tmp[which(tmp$value>threshold),], exonDef)==0
+  tmp2 <- tmp2[which(tmp2 %in% TRUE)]
+    
+  ##rm(expressedRegions)
+  return(list(gene=geneInfo[1],
           totalCovered=length(tmp),
           coveredNoAnn=table(countOverlaps(tmp[which(tmp$value>threshold),], exonDef)==0)["TRUE"],
+          expressedRegions[[1]]$regions[names(tmp2)],
           totalExons=length(reduce(exonDef))))
   
 }
