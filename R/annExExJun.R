@@ -29,7 +29,8 @@ annExExJun <- function(exexJunID,mapExon)
   names(coor) <- c("geneID","transID", "chrExon1","startExon1","endExon1","chrExon2","startExon2","endExon2")
   coor <- as.data.frame(coor)
   rownames(coor) <- as.character(exexJunID)
-  return(coor)
+  return(coor)  
+
 }
 
 ## the function below returns the number of the ex-ex junctions from the same Gene targeted by the same SNP 

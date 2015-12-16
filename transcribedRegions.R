@@ -65,10 +65,12 @@ end-start
 stopCluster(cl)
 rm(cl)
 
+
 neuroGenes <- getBM(attributes=c("ensembl_gene_id","external_gene_id","gene_biotype","source","status"),
                    verbose = T,
                    filters="ensembl_gene_id",
-                   values=novelRegions[,1], mart=ensembl)
+                   values=unlist(lapply(novelRegions,function(x){return(x$gene)})), mart=ensembl)
+
 
 rownames(novelRegions) <- novelRegions[,1]
 novelRegions <- novelRegions[,-1]

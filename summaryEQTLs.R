@@ -2158,10 +2158,210 @@ barplot(sort(tmp,decreasing = T),las=2,main=paste(feature),
                                           chisq.test(c(table(speEx)[feature],table(speIn)[feature]))$p.value))
 
 
+## Below we look at the overlap between the genic eQTLs.
+
+load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
+
+my.eQTLs   <- read.delim(file="data/results/finaleQTLs/exons.unsentinalised.PUTM.txt",  as.is=T, header=T)
+tmp <- strsplit(my.eQTLs$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+##head(df)
+rownames(df) <- NULL
+my.eQTLs.PUTM <- df
+colnames(my.eQTLs.PUTM) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(my.eQTLs,df)
+
+my.eQTLs   <- read.delim(file="data/results/finaleQTLs/exons.unsentinalised.SNIG.txt",  as.is=T, header=T)
+tmp <- strsplit(my.eQTLs$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+##head(df)
+rownames(df) <- NULL
+my.eQTLs.SNIG <- df
+colnames(my.eQTLs.SNIG) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+
+save(my.eQTLs.PUTM,my.eQTLs.SNIG,file="data/results/finaleQTLs/exons.unsentinalised.rda")
+
+## 5% FDR
+tmpExons <- my.eQTLs.PUTM[which(my.eQTLs.PUTM[,7] < 0.05),]
+tmpGeneExons <- eQTLPUTMExun[which(eQTLPUTMExun[,7] < 0.05),]
+
+genesPUTM <- unlist(lapply(strsplit(as.character(tmpExons[,2]),":"),function(x){x[1]}))
+genesPUTM <- unlist(sapply(strsplit(as.character(genesPUTM),"+",fixed=T),function(x){x[1]}))
+
+intersect <- (intersect(paste(tmpExons[,1],genesPUTM),paste(tmpGeneExons[,1],tmpGeneExons[,2])))
+
+geneInt <- unlist(lapply(strsplit(as.character(intersect)," "),function(x){x[2]}))
+
+length(unique(geneInt))
+## 561
+rm(intersect,tmpExons,tmpGeneExons,genesPUTM,geneInt)
+
+
+tmpExons <- my.eQTLs.SNIG[which(my.eQTLs.SNIG[,7] < 0.05),]
+tmpGeneExons <- eQTLSNIGExun[which(eQTLSNIGExun[,7] < 0.05),]
+
+genesSNIG <- unlist(lapply(strsplit(as.character(tmpExons[,2]),":"),function(x){x[1]}))
+genesSNIG <- unlist(sapply(strsplit(as.character(genesSNIG),"+",fixed=T),function(x){x[1]}))
+
+intersect <- (intersect(paste(tmpExons[,1],genesSNIG),paste(tmpGeneExons[,1],tmpGeneExons[,2])))
+
+geneInt <- unlist(lapply(strsplit(as.character(intersect)," "),function(x){x[2]}))
+
+length(unique(geneInt))
+## 220
+rm(intersect,tmpExons,tmpGeneExons,genesSNIG,geneInt)
+
+## gene exonic+ intronic
+
+my.eQTLs   <- read.delim(file="data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.PUTM.txt",  as.is=T, header=T)
+tmp <- strsplit(my.eQTLs$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+##head(df)
+rownames(df) <- NULL
+my.eQTLs.PUTM <- df
+colnames(my.eQTLs.PUTM) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(my.eQTLs,df)
+
+my.eQTLs   <- read.delim(file="data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.SNIG.txt",  as.is=T, header=T)
+tmp <- strsplit(my.eQTLs$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+##head(df)
+rownames(df) <- NULL
+my.eQTLs.SNIG <- df
+colnames(my.eQTLs.SNIG) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(my.eQTLs,df)
+
+save(my.eQTLs.PUTM,my.eQTLs.SNIG,file="data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.rda")
+load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
+
+tmpGenExonsIntron <- my.eQTLs.PUTM[which(my.eQTLs.PUTM[,7] < 0.05),]
+tmpGeneExons <- eQTLPUTMExun[which(eQTLPUTMExun[,7] < 0.05),]
+
+intersect <- (intersect(paste(tmpGenExonsIntron[,1],tmpGenExonsIntron),paste(tmpGeneExons[,1],tmpGeneExons[,2])))
+geneInt <- unlist(lapply(strsplit(as.character(intersect)," "),function(x){x[2]}))
+length(unique(geneInt))
+## 546
+
+tmpGenExonsIntron <- my.eQTLs.SNIG[which(my.eQTLs.SNIG[,7] < 0.05),]
+tmpGeneExons <- eQTLSNIGExun[which(eQTLSNIGExun[,7] < 0.05),]
+
+intersect <- (intersect(paste(tmpGenExonsIntron[,1],tmpGenExonsIntron),paste(tmpGeneExons[,1],tmpGeneExons[,2])))
+geneInt <- unlist(lapply(strsplit(as.character(intersect)," "),function(x){x[2]}))
+length(unique(geneInt))
+
+
+rm(intersect,tmpExons,tmpGeneExons,tmpGenExonsIntron,geneInt)
+
+
+
+load(file="data/results/finaleQTLs/eQTLExonIntrons.unsentinalised.rda")
+my.eQTLs.PUTM.exIn <- my.eQTLs.PUTM
+my.eQTLs.SNIG.exIn <- my.eQTLs.SNIG
+
+load(file="data/results/finaleQTLs/exons.unsentinalised.rda")
+
+
+tmpExons <- my.eQTLs.SNIG[which(my.eQTLs.SNIG[,7] < 0.05),]
+tmpGeneExons <- my.eQTLs.SNIG.exIn[which(my.eQTLs.SNIG.exIn[,7] < 0.05),]
+
+genesSNIG <- unlist(lapply(strsplit(as.character(tmpExons[,2]),":"),function(x){x[1]}))
+genesSNIG <- unlist(sapply(strsplit(as.character(genesSNIG),"+",fixed=T),function(x){x[1]}))
+
+intersect <- (intersect(paste(tmpExons[,1],genesSNIG),paste(tmpGeneExons[,1],tmpGeneExons[,2])))
+
+geneInt <- unlist(lapply(strsplit(as.character(intersect)," "),function(x){x[2]}))
+
+length(unique(geneInt))
+## 169
+rm(intersect,tmpExons,tmpGeneExons,genesSNIG,geneInt)
+
+
+tmpExons <- my.eQTLs.PUTM[which(my.eQTLs.PUTM[,7] < 0.05),]
+tmpGeneExons <- my.eQTLs.PUTM.exIn[which(my.eQTLs.PUTM.exIn[,7] < 0.05),]
+
+genesPUTM <- unlist(lapply(strsplit(as.character(tmpExons[,2]),":"),function(x){x[1]}))
+genesPUTM <- unlist(sapply(strsplit(as.character(genesPUTM),"+",fixed=T),function(x){x[1]}))
+
+intersect <- (intersect(paste(tmpExons[,1],genesPUTM),paste(tmpGeneExons[,1],tmpGeneExons[,2])))
+
+geneInt <- unlist(lapply(strsplit(as.character(intersect)," "),function(x){x[2]}))
+
+length(unique(geneInt))
+## 452
+rm(intersect,tmpExons,tmpGeneExons,genesPUTM,geneInt)
+
+
+## exon-exon Junction
+
+my.eQTLs   <- read.delim(file="data/results/finaleQTLs/eQTL.ExExJun.PUTM.unsentinalised.txt",  as.is=T, header=T)
+tmp <- strsplit(my.eQTLs$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+##head(df)
+rownames(df) <- NULL
+my.eQTLs.PUTM <- df
+colnames(my.eQTLs.PUTM) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(my.eQTLs,df)
+
+
+my.eQTLs   <- read.delim(file="data/results/finaleQTLs/eQTL.ExExJun.SNIG.unsentinalised.txt",  as.is=T, header=T)
+tmp <- strsplit(my.eQTLs$SNP," ")
+df <- ldply(list(tmp), data.frame)
+rm(tmp)
+df <- t(df)
+##head(df)
+rownames(df) <- NULL
+my.eQTLs.SNIG <- df
+colnames(my.eQTLs.SNIG) <- c("snps","gene","statistic","pvalue","FDR","beta","myFDR")
+rm(my.eQTLs,df)
+
+save(my.eQTLs.PUTM,my.eQTLs.SNIG,file="data/results/finaleQTLs/exExJun.unsentinalised.rda")
+
+
+## Annotation need to be done now
+## load the exon exon junctions
+load("data/results/finaleQTLs/exExJun.unsentinalised.rda")
+load("data/expr/rawCounts/genic/fullExExJun.rda")
+rm(map,expr)
+
+library(devtools)
+library(doParallel)
+library(foreach)
+load_all()
+
+##PUTM
+cl <- makeCluster(20)
+clusterExport(cl,"annExExJun")
+registerDoParallel(cl)
 
 
 
 
+Sys.time()
+exExJunAnn <- foreach(i=1:nrow(my.eQTLs.PUTM),.combine=rbind)%dopar%annExExJun(my.eQTLs.PUTM[i,2],mapExon)
+Sys.time()
+stopCluster(cl)
+rm(cl)
+save(exExJunAnn,file="data/general/annotationExExJun.PUTM.rda")
 
+## SNIG
+cl <- makeCluster(20)
+clusterExport(cl,"annExExJun")
+registerDoParallel(cl)
 
+Sys.time()
+exExJunAnn <- foreach(i=1:nrow(my.eQTLs.SNIG),.combine=rbind)%dopar%annExExJun(my.eQTLs.SNIG[i,2],mapExon)
+Sys.time()
+stopCluster(cl)
+rm(cl)
+save(exExJunAnn,file="data/general/annotationExExJun.SNIG.rda")
 
