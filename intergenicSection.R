@@ -30,7 +30,6 @@ rm(SNIG,RPKM.cqn,covs)
 eQTLSNIG <- cbind(eQTLSNIG,starStopReg[as.character(eQTLSNIG[,2]),])
 rm(starStopReg)
 
-
 tmpRegiosPUTM <- GRanges(defReg.PUTM$chr, IRanges(defReg.PUTM$start, defReg.PUTM$end),)
 tmpRegiosSNIG <- GRanges(defReg.SNIG$chr, IRanges(defReg.SNIG$start, defReg.SNIG$end))
 names(tmpRegiosPUTM) <- rownames(defReg.PUTM)
