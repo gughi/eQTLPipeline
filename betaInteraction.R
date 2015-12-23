@@ -457,9 +457,6 @@ qq.plot(x=res$p.interaction,main="beta interaction test SNIG")
 
 
 load("data/results/betaInteractionExIn.PUTM.rda")
-qq.plot(p.adjust(res$p.interaction,method="fdr",n=674))
-
-p.adjust(res$p.interaction,method="fdr"
 fold.threshold <- 2
 p.val.threshold <- 1e-05
 
@@ -598,14 +595,98 @@ tmp1[which(tmp1$fold.change > 2),]
               y=-log10(res[idx,"FDRInter"]),
               labels=paste(res[idx,c("ge.gene")]),pos=2)
          
-          res[202,]          
+
                   
-                  
 
 
 
 
 
+## below we try to divide the differences between exonic and intronic eQTLs
+load("data/results/betaInteractionExIn.PUTM.rda")
+fold.threshold <- 2
+p.val.threshold <- 1e-05
 
+for(j in 1:nrow(res)){
+  
+  #print(expr.data.1[,gene])
+  #   t.tests[[gene]] <- t.test(expr.data.1[,colnames(expr.data.1) %in% gene],expr.data.2[,colnames(expr.data.2) %in% gene])    
+  #   p.vals[[gene]] <- -log10(t.tests[[gene]]$p.value)
+  #print(t.tests[[gene]]$p.value)
+  beta.e <- res[j,"ge.beta"]
+  beta.i <- res[j,"gi.beta"]
+  res[j,"fold.change"] <- beta.i/beta.e
+  if(res[j,"fold.change"] < 1){
+    res[j,"fold.change"] <- -1/res[j,"fold.change"]
+  }
+  if(abs(res[j,"fold.change"]) > fold.threshold & res[j,"p.interaction"] < p.val.threshold){
+    res[j,"colors"] <- "red"  
+  }else
+    res[j,"colors"] <- "black"	
+  res$p.interaction
+  rm(beta.e,beta.i)  
+  
+}
+
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=res$ge.gene, mart=ensembl)
+
+res$TSS <- sapply(res$ge.gene, function(x){getTSS(x,geneNames)})
+
+posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
+DisGeneStart <- res$TSS - as.integer(posSNP)
+res$DisGeneStart <- DisGeneStart
+rm(DisGeneStart,posSNP)
+
+res <- res[-which(sign(res$ge.beta) != sign(res$gi.beta)),]
+plot(res$fold.change,-log(res$p.interaction),t="p",col=res$colors,
+     #     main=plot.title,
+     xlab="Fold change",ylab="-log10(p.val)",bg=colors,pch=21,cex=1)
+
+## select significant and positive fold change greater than 2
+idx <- which(res$p.interaction <1e-5 & res$fold.change > 2)             
+positive <- res[idx,]  
+res <- res[-idx,]
+
+
+
+## select significant and positive fold change lesser than -2
+idx <- which(res$p.interaction <1e-5 & res$fold.change < -2)             
+negative <- res[idx,]  
+res <- res[-idx,]
+
+
+
+hist(negative$DisGeneStart,breaks=30)
+hist(positive$DisGeneStart,breaks=30)
+hist(res$DisGeneStart,breaks=30)
+
+par(mfrow=c(1,1))
+hist(negative$DisGeneStart,col='skyblue',border=F,main= "TSS Intronic vs Exonic",
+     sub=paste("Intronic:",length(negative$DisGeneStart),"Exonic:",length(positive$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,positive$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(positive$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(positive$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("Exonic","Intronic"),col=c('skyblue','red'),pch=15)
+
+
+
+par(mfrow=c(1,1))
+hist(c(negative$DisGeneStart,positive$DisGeneStart),col='skyblue',border=F,main= "TSS Significant vs non-significant",
+     sub=paste("Significant beta interaction:",length(c(negative$DisGeneStart,positive$DisGeneStart)),
+               "non significant beta interaction:",length(res$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(c(negative$DisGeneStart,positive$DisGeneStart),res$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(res$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(c(negative$DisGeneStart,positive$DisGeneStart), adjust = 2), col = "skyblue")
+lines(density(res$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("significant","non significant"),col=c('skyblue','red'),pch=15)
 
   
+
