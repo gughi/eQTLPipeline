@@ -113,17 +113,20 @@ plotTracks(list(dtrack_heat,gtrack,dtrack,grtrack,pvalstrack), from = start,
 ## eQT
 par(mfrow=c(1,2))
 
-gene <- "ENSG00000204625"
-snp <- "chr6:29915975:CA_C"
+gene <- "ENSG00000004799"
+snp <- "chr7:94644541"
 ##snp <- "chr6:29955809"
-dosageFile <- "/home/ramasamya/genotyped/imputed_v3/imputed.dosage"
-infoFile <- "/home/ramasamya/genotyped/imputed_v3/imputed.info"
+# dosageFile <- "/home/ramasamya/genotyped/imputed_v3/imputed.dosage"
+# infoFile <- "/home/ramasamya/genotyped/imputed_v3/imputed.info"
 
-#exprFile <- "data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda"
-exprFile <- "data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda"
+dosageFile <- "/home/adai/genotyped/imputed_v3/imputed.dosage"
+infoFile <- "/home/adai/genotyped/imputed_v3/imputed.info"
+
+exprFile <- "data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda"
+#exprFile <- "data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda"
 
 load("data/general/sampleInfo.rda")
-eigenFile <- "/home/guelfi/plinkOutput/eigenvec"
+eigenFile <- "/home/seb/plinkOutput/eigenvec"
 title <- paste0("Gene Intronic ","(",snp,")")
 
 snp <- gsub("chr", "", snp)
@@ -153,7 +156,7 @@ identical(names(PUTMtmp),colnames(my.cov0))
 
 plot(round(PUTMsnp),PUTMtmp,xaxt="n",ylab="expression",xlab="PUTM", main=title)
 abline(glm(PUTMtmp ~ PUTMsnp+ my.cov0[1,]+my.cov0[2,]+my.cov0[3,]),col="red")
-fit <- coef( summary(glm( PUTMtmp ~ PUTMsnp+ my.cov0[1,]+my.cov0[2,]+my.cov0[3,]) ))
+fit <- coef( summary(glm( PUTMtmp ~ PUTMsnp + my.cov0[1,]+my.cov0[2,]+my.cov0[3,]) ))
 
 mtext(paste("pval",fit["PUTMsnp", "Pr(>|t|)"]) , side=1, at=1, cex=0.6, font=2, line=2 )  ## add tissue and pvals
 
