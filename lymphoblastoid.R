@@ -201,8 +201,7 @@ load("data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda")
 GTEx <- GTEx[which(GTEx$gene %in% as.character(colnames(resids))),]
 
 
-# cmd <- "cut -f1 -d ' ' /home/adai/genotyped/imputed_v3/imputed.info"
-cmd <- "cut -f1 -d ' ' /Volumes/NONAME/imputed/imputed.dosage"
+cmd <- "cut -f1 -d ' ' /home/adai/genotyped/imputed_v3/imputed.info"
 snpsBrain <- read.delim(pipe(cmd))
 rm(cmd)
 
