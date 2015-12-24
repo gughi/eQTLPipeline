@@ -685,6 +685,10 @@ legend("topright",c("significant","non significant"),col=c('skyblue','red'),pch=
 ## We categories the eQTLs in the beta interaction ###
 ######################################################
 
+############
+### PUTM ### 
+############
+{
 load("data/results/betaInteractionExIn.PUTM.rda")
 qq.plot(p.adjust(res$p.interaction,method="fdr",n=674))
 
@@ -715,7 +719,7 @@ res <- res[-which(sign(res$ge.beta) != sign(res$gi.beta)),]
 ##res <- res[- which(res$fold.change >100),]
 plot(res$fold.change,-log10(res$FDRInter),t="p",col=res$colors,
      #     main=plot.title,
-     xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR",bg=colors,pch=21,cex=1)
+     xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM)",bg=colors,pch=21,cex=1)
 legend("topright",c("'positive'","'negative'","non significant"),col=c('red','blue','black'),pch=15)
 ##     cex=2*mm^2)
 
@@ -746,7 +750,7 @@ res <- res[-idx,]
 
 
 par(mfrow=c(1,1))
-hist(positive$DisGeneStart,col='skyblue',border=F,main= "TSS 'postitive' vs non-significant",
+hist(positive$DisGeneStart,col='skyblue',border=F,main= "TSS 'postitive' vs non-significant (PUTM)",
      sub=paste("Significant beta interaction:",length(positive$DisGeneStart),
                "non significant beta interaction:",length(res$DisGeneStart)),
      xlab=paste("KS pvalue:",ks.test(positive$DisGeneStart,res$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
@@ -756,8 +760,8 @@ lines(density(res$DisGeneStart, adjust = 2), col = "red")
 legend("topright",c("'positive'","non significant"),col=c('skyblue','red'),pch=15)
 
 
-par(mfrow=c(1,1))
-hist(c(negative$DisGeneStart),col='skyblue',border=F,main= "TSS 'postitive' vs non-significant",
+par(mar=c(6,3,3,2))
+hist(c(negative$DisGeneStart),col='skyblue',border=F,main= "TSS 'negative' vs non-significant (PUTM)",
      sub=paste("Significant beta interaction:",length(negative$DisGeneStart),
                "non significant beta interaction:",length(res$DisGeneStart)),
      xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,res$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
@@ -767,10 +771,258 @@ lines(density(res$DisGeneStart, adjust = 2), col = "red")
 legend("topright",c("'negative'","non significant"),col=c('skyblue','red'),pch=15)
 
 
+rm(idx,p.val.threshold)
+
+negative$category <- "negative"
+positive$category <- "positive"
+res$category <- "nonSignif"
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","strand","gene_biotype"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=c(as.character(res$ge.gene),
+                            as.character(positive$ge.gene),
+                            as.character(negative$ge.gene)), mart=ensembl)
+
+rownames(geneNames) <- geneNames$ensembl_gene_id
+
+positive$geneSymbol <- geneNames[as.character(positive$ge.gene),"external_gene_id"]
+positive$gene_biotype <- geneNames[as.character(positive$ge.gene),"gene_biotype"]
+
+negative$geneSymbol <- geneNames[as.character(negative$ge.gene),"external_gene_id"]
+negative$gene_biotype <- geneNames[as.character(negative$ge.gene),"gene_biotype"]
+
+res$geneSymbol <- geneNames[as.character(res$ge.gene),"external_gene_id"]
+res$gene_biotype <- geneNames[as.character(res$ge.gene),"gene_biotype"]
 
 
 
+par(mar=c(11,5,3,2))
+barplot(sort(table(negative$gene_biotype),decreasing=T)/length(negative$gene_biotype),
+        col='skyblue',border=F,main= "biotype  'negative' VS 'postitive' (PUTM)",
+        las=2,ylim=c(0,1))
+barplot(sort(table(positive$gene_biotype),decreasing=T)/length(positive$gene_biotype),
+        col=scales::alpha('red',.5),border=F,add=T,
+        las=2)
+legend("topright",c("'negative'","'positive'"),col=c('skyblue','red'),pch=15)
+
+finalTable <- rbind(res[,c("ge.SNP","ge.gene", "geneSymbol","gene_biotype",
+          "ge.FDR","gi.FDR","FDRInter","ge.beta","gi.beta","fold.change","category")],
+      positive[,c("ge.SNP","ge.gene", "geneSymbol","gene_biotype",
+             "ge.FDR","gi.FDR","FDRInter","ge.beta","gi.beta","fold.change","category")],
+      negative[,c("ge.SNP","ge.gene", "geneSymbol","gene_biotype",
+             "ge.FDR","gi.FDR","FDRInter","ge.beta","gi.beta","fold.change","category")])
+
+library(doParallel)
+library(foreach)
+
+library(biomaRt)
+ensembl <- useMart(biomart="ENSEMBL_MART_SNP", host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_snp")
 
 
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(20)
+clusterExport(cl, c("annSinSNP","getBM"))
+
+registerDoParallel(cl)
+getDoParWorkers()
+start <- Sys.time()
+conse <- foreach(i=1:nrow(finalTable),.combine=rbind,.verbose=F)%dopar%annSinSNP(finalTable[i,1],ensembl)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+rm(cl,end,start)
+colnames(conse) <- c("rsID","consequence")
+finalTable$rs <- conse[,1]
+
+write.csv(finalTable,file="data/results/finalTableBetaInteraction.PUTM.csv")
+}
+
+############
+### SNIG ### 
+############
+
+{
+######################################################
+## We categories the eQTLs in the beta interaction ###
+######################################################
+
+load("data/results/betaInteractionExIn.SNIG.rda")
+
+res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=398)
+fold.threshold <- 2
+p.val.threshold <- 0.05
+
+for(j in 1:nrow(res)){
   
+  beta.e <- res[j,"ge.beta"]
+  beta.i <- res[j,"gi.beta"]
+  res[j,"fold.change"] <- beta.i/beta.e
+  if(res[j,"fold.change"] < 1){
+    res[j,"fold.change"] <- -1/res[j,"fold.change"]
+  }
+  
+  if(res[j,"fold.change"] > fold.threshold & res[j,"FDRInter"] < p.val.threshold){
+    res[j,"colors"] <- "red"
+  }
+  else if(res[j,"fold.change"] < -fold.threshold & res[j,"FDRInter"] < p.val.threshold){
+    res[j,"colors"] <- "blue"  
+  }else
+    res[j,"colors"] <- "black"  
+  res$p.interaction
+}
+
+
+
+
+par(mar=c(4, 4, 4, 4))
+res <- res[-which(sign(res$ge.beta) != sign(res$gi.beta)),]
+
+##res <- res[- which(res$fold.change >100),]
+## to visualise the volcano plot properly we remove outliers point with fold change less then -30 ( found only two points)
+plot(res[-which(res$fold.change < -30),"fold.change"],
+         -log10(res[-which(res$fold.change < -30),"FDRInter"]),t="p",
+          col=res[-which(res$fold.change < -30),"colors"],
+     #     main=plot.title,
+     xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR (SNIG)",bg=colors,pch=21,cex=1)
+legend("topright",c("'positive'","'negative'","non significant"),col=c('red','blue','black'),pch=15)
+##     cex=2*mm^2)
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=res$ge.gene, mart=ensembl)
+
+
+res$TSS <- sapply(res$ge.gene, function(x){getTSS(x,geneNames)})
+posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
+DisGeneStart <- res$TSS - as.integer(posSNP)
+res$DisGeneStart <- DisGeneStart
+rm(DisGeneStart,posSNP,beta.e,beta.i,j)
+
+## select significant and positive fold change greater than 2
+idx <- which(res$FDRInter < p.val.threshold & res$fold.change > fold.threshold)             
+positive <- res[idx,]  
+res <- res[-idx,]
+
+## select significant and positive fold change lesser than -2
+idx <- which(res$FDRInter < p.val.threshold & res$fold.change < -fold.threshold)             
+negative <- res[idx,]  
+res <- res[-idx,]
+
+
+par(mfrow=c(1,1))
+hist(positive$DisGeneStart,col='skyblue',border=F,main= "TSS 'postitive' vs non-significant (SNIG)",
+     sub=paste("Significant beta interaction:",length(positive$DisGeneStart),
+               "non significant beta interaction:",length(res$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(positive$DisGeneStart,res$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(res$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(positive$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(res$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("'positive'","non significant"),col=c('skyblue','red'),pch=15)
+
+par(mar=c(6,3,3,2))
+hist(c(negative$DisGeneStart),col='skyblue',border=F,main= "TSS 'negative' vs non-significant (SNIG)",
+     sub=paste("Significant beta interaction:",length(negative$DisGeneStart),
+               "non significant beta interaction:",length(res$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,res$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(res$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(res$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("'negative'","non significant"),col=c('skyblue','red'),pch=15)
+
+rm(idx,p.val.threshold)
+
+negative$category <- "negative"
+positive$category <- "positive"
+res$category <- "nonSignif"
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","strand","gene_biotype"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=c(as.character(res$ge.gene),
+                            as.character(positive$ge.gene),
+                            as.character(negative$ge.gene)), mart=ensembl)
+
+rownames(geneNames) <- geneNames$ensembl_gene_id
+
+positive$geneSymbol <- geneNames[as.character(positive$ge.gene),"external_gene_id"]
+positive$gene_biotype <- geneNames[as.character(positive$ge.gene),"gene_biotype"]
+
+negative$geneSymbol <- geneNames[as.character(negative$ge.gene),"external_gene_id"]
+negative$gene_biotype <- geneNames[as.character(negative$ge.gene),"gene_biotype"]
+
+res$geneSymbol <- geneNames[as.character(res$ge.gene),"external_gene_id"]
+res$gene_biotype <- geneNames[as.character(res$ge.gene),"gene_biotype"]
+
+
+
+par(mar=c(11,5,3,2))
+barplot(sort(table(negative$gene_biotype),decreasing=T)/length(negative$gene_biotype),
+        col='skyblue',border=F,main= "biotype  'negative' VS 'postitive' (SNIG)",
+        las=2,ylim=c(0,1),ylab=)
+
+tmpTab <- table(positive$gene_biotype)
+tmpTab <- c(tmpTab["protein_coding"],
+            lincRNA=0,
+            tmpTab["pseudogene"])
+barplot(tmpTab/length(positive$gene_biotype),
+        col=scales::alpha('red',.5),border=F,add=T,
+        las=2)
+legend("topright",c("'negative'","'positive'"),col=c('skyblue','red'),pch=15)
+
+finalTable <- rbind(res[,c("ge.SNP","ge.gene", "geneSymbol","gene_biotype",
+                           "ge.FDR","gi.FDR","FDRInter","ge.beta","gi.beta","fold.change","category")],
+                    positive[,c("ge.SNP","ge.gene", "geneSymbol","gene_biotype",
+                                "ge.FDR","gi.FDR","FDRInter","ge.beta","gi.beta","fold.change","category")],
+                    negative[,c("ge.SNP","ge.gene", "geneSymbol","gene_biotype",
+                                "ge.FDR","gi.FDR","FDRInter","ge.beta","gi.beta","fold.change","category")])
+
+library(doParallel)
+library(foreach)
+
+library(biomaRt)
+ensembl <- useMart(biomart="ENSEMBL_MART_SNP", host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_snp")
+
+
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(20)
+clusterExport(cl, c("annSinSNP","getBM"))
+
+registerDoParallel(cl)
+getDoParWorkers()
+start <- Sys.time()
+conse <- foreach(i=1:nrow(finalTable),.combine=rbind,.verbose=F)%dopar%annSinSNP(finalTable[i,1],ensembl)
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+rm(cl,end,start)
+colnames(conse) <- c("rsID","consequence")
+finalTable$rs <- conse[,1]
+
+write.csv(finalTable,file="data/results/finalTableBetaInteraction.SNIG.csv")
+
+}
+
+
+
+
+
 
