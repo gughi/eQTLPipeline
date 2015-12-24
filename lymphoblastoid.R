@@ -114,6 +114,8 @@ venn(list(SubstantiaNigra=paste(eQTLGeneExonic$snps,eQTLGeneExonic$genes,sign(as
 
 
 
+
+
 load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
 
 eQTLPUTMExun <- eQTLPUTMExun[which(eQTLPUTMExun[,7] < 0.05),]      
@@ -167,6 +169,71 @@ venn(list(UKBEC=paste(eQTLGeneExonic$snps,eQTLGeneExonic$genes,sign(as.numeric(e
 tmp <- intersect(paste(eQTLGeneExonic$snps,eQTLGeneExonic$genes,sep="_"),paste(GTEx$snp,GTEx$gene,sep="_"))
 
 length(unique(sapply(strsplit(as.character(tmp), split="_",fixed=T ), function(x) x[2] )))
+
+
+
+
+
+
+
+load("data/results/finaleQTLs/geneExonic.unsentinalised.rda")
+
+eQTLPUTMExun <- eQTLPUTMExun[which(eQTLPUTMExun[,7] < 0.05),]      
+eQTLSNIGExun <- eQTLSNIGExun[which(eQTLSNIGExun[,7] < 0.05),]     
+
+chrPos.chr <- gsub("chr","",sapply(strsplit(as.character(eQTLPUTMExun[,1]), split=":",fixed=T ), function(x) x[1] ))
+chrPos.pos <- sapply(strsplit(as.character(eQTLPUTMExun[,1]), split=":",fixed=T ), function(x) x[2] )  
+eQTLGeneExonic <- data.frame(paste(chrPos.chr,chrPos.pos,sep=":"))
+eQTLGeneExonic$genes <- eQTLPUTMExun[,2]
+eQTLGeneExonic$beta <- eQTLPUTMExun[,6]  
+colnames(eQTLGeneExonic)[1] <- "snps"
+rm(chrPos.chr,chrPos.pos)
+
+GTEx <- read.delim("data/general/GTEx/Brain_Hippocampus_Analysis.snpgenes")
+
+gene <- unlist(sapply(strsplit(as.character(GTEx$gene), split=".",fixed=T ), function(x) x[1] ))
+
+GTEx$gene <- gene
+GTEx$snp <- paste(GTEx$snp_chrom,GTEx$snp_pos,sep=":")
+
+load("data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda")
+
+GTEx <- GTEx[which(GTEx$gene %in% as.character(colnames(resids))),]
+
+
+# cmd <- "cut -f1 -d ' ' /home/adai/genotyped/imputed_v3/imputed.info"
+cmd <- "cut -f1 -d ' ' /Volumes/NONAME/imputed/imputed.dosage"
+snpsBrain <- read.delim(pipe(cmd))
+rm(cmd)
+
+GTEx <- GTEx[which(GTEx$snp %in% snpsBrain[,1]),]
+
+library(gplots)
+venn(list(UKBEC=paste(eQTLGeneExonic$snps,eQTLGeneExonic$genes,sep="_"),
+          GTEx=paste(GTEx$snp,GTEx$gene,sep="_")))
+
+
+cmd <- "cut -f1 /home/seb/projectsR/eQTLPipeline/data/general/GTEx/Brain_Putamen_basal_ganglia_Analysis.expr.txt | cut -d '.' -f1"
+GTExGenes <- read.delim(pipe(cmd),header=T)
+
+
+eQTLGeneExonic <- eQTLGeneExonic[which(eQTLGeneExonic$genes %in% GTExGenes$Id),]
+
+venn(list(UKBEC=paste(eQTLGeneExonic$snps,eQTLGeneExonic$genes,sep="_"),
+          GTEx=paste(GTEx$snp,GTEx$gene,sep="_")))
+
+venn(list(UKBEC=paste(eQTLGeneExonic$snps,eQTLGeneExonic$genes,sign(as.numeric(eQTLGeneExonic$beta)),sep="_"),
+          GTEx=paste(GTEx$snp,GTEx$gene,sign(as.numeric(GTEx$beta)),sep="_")))
+
+tmp <- intersect(paste(eQTLGeneExonic$snps,eQTLGeneExonic$genes,sep="_"),paste(GTEx$snp,GTEx$gene,sep="_"))
+
+length(unique(sapply(strsplit(as.character(tmp), split="_",fixed=T ), function(x) x[2] )))
+
+
+
+
+
+
 
 
 
