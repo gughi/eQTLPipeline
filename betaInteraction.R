@@ -114,11 +114,6 @@ write.csv(res,file="data/results/betaInteractionExIn5FDR.PUTM.csv")
 ## qqplot
 qq.plot(x=res$p.interaction,main="beta interaction test PUTM")
 
-
-
-
-
-
 load_all()
 library(lme4)
 
@@ -689,7 +684,7 @@ legend("topright",c("significant","non significant"),col=c('skyblue','red'),pch=
 ### PUTM ### 
 ############
 {
-load("data/results/betaInteractionExIn.PUTM.rda")
+load("data/results/betaInteraction/betaInteractionExIn.PUTM.rda")
 qq.plot(p.adjust(res$p.interaction,method="fdr",n=674))
 
 res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=674)
@@ -770,6 +765,17 @@ lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
 lines(density(res$DisGeneStart, adjust = 2), col = "red")
 legend("topright",c("'negative'","non significant"),col=c('skyblue','red'),pch=15)
 
+par(mar=c(6,3,3,2))
+hist(c(negative$DisGeneStart),col='skyblue',border=F,main= "TSS  'negative' vs 'postive' (PUTM)",
+     sub=paste("negative beta interaction:",length(negative$DisGeneStart),
+               "positive beta interaction:",length(positive$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,positive$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(positive$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(res$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("'negative'","non significant"),col=c('skyblue','red'),pch=15)
+
+
 
 rm(idx,p.val.threshold)
 
@@ -843,6 +849,29 @@ colnames(conse) <- c("rsID","consequence")
 finalTable$rs <- conse[,1]
 
 write.csv(finalTable,file="data/results/finalTableBetaInteraction.PUTM.csv")
+
+## compare the three different categories.
+finalTab <- read.csv("data/results/finalTableBetaInteraction.PUTM.csv")
+
+par(mar=c(11,5,3,2))
+nonsig <- finalTab[which(finalTab$category %in% "nonSignif"),
+                   c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+nonsig <- unique(nonsig[,2:5])
+positive <- finalTab[which(finalTab$category %in% "positive"),
+                   c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+positive <- unique(positive[,2:5])
+negative <- finalTab[which(finalTab$category %in% "negative"),
+                     c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+negative <- unique(negative[,2:5])
+
+counts <- rbind(nonsig=sort(table(nonsig$gene_biotype),decreasing=T)/length(nonsig$gene_biotype),
+                positive=sort(table(positive$gene_biotype),decreasing=T)/length(positive$gene_biotype),
+                negative=sort(table(negative$gene_biotype),decreasing=T)/length(negative$gene_biotype))
+
+barplot(counts, main="Biotype PUTM",
+        col=1:3,
+        legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,1))
+
 }
 
 ############
@@ -1019,10 +1048,74 @@ finalTable$rs <- conse[,1]
 
 write.csv(finalTable,file="data/results/finalTableBetaInteraction.SNIG.csv")
 
+
+finalTab <- read.csv("data/results/finalTableBetaInteraction.SNIG.csv")
+
+par(mar=c(11,5,3,2))
+nonsig <- finalTab[which(finalTab$category %in% "nonSignif"),
+                   c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+nonsig <- unique(nonsig[,2:5])
+positive <- finalTab[which(finalTab$category %in% "positive"),
+                     c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+positive <- unique(positive[,2:5])
+negative <- finalTab[which(finalTab$category %in% "negative"),
+                     c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+negative <- unique(negative[,2:5])
+
+counts <- rbind(nonsig=sort(table(nonsig$gene_biotype),decreasing=T)/length(nonsig$gene_biotype),
+                positive=sort(table(positive$gene_biotype),decreasing=T)/length(positive$gene_biotype),
+                negative=sort(table(negative$gene_biotype),decreasing=T)/length(negative$gene_biotype))
+
+barplot(counts, main="Biotype SNIG",
+        col=1:3,
+        legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,1))
+
+
+
 }
 
+###################
+### SNIG + PUTM ### 
+###################
 
+{
+load("data/results/betaInteraction/betaInteractionExIn.PUTM.rda")
+tmp <-res 
+load("data/results/betaInteraction/betaInteractionExIn.SNIG.rda")
+res <- rbind(res,tmp)
+rm(tmp)
+## qq.plot(p.adjust(res$p.interaction,method="fdr",n=nrow(res)))
 
+res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=nrow(res))
+fold.threshold <- 2
+p.val.threshold <- 0.05
 
+for(j in 1:nrow(res)){
+  
+  beta.e <- res[j,"ge.beta"]
+  beta.i <- res[j,"gi.beta"]
+  res[j,"fold.change"] <- beta.i/beta.e
+  if(res[j,"fold.change"] < 1){
+    res[j,"fold.change"] <- -1/res[j,"fold.change"]
+  }
+  
+  if(res[j,"fold.change"] > fold.threshold & res[j,"FDRInter"] < p.val.threshold){
+    res[j,"colors"] <- "red"
+  }
+  else if(res[j,"fold.change"] < -fold.threshold & res[j,"FDRInter"] < p.val.threshold){
+    res[j,"colors"] <- "blue"  
+  }else
+    res[j,"colors"] <- "black"  
+  res$p.interaction
+}
+par(mar=c(4, 4, 4, 4))
+res <- res[-which(sign(res$ge.beta) != sign(res$gi.beta)),]
+res <- res[-which(res$fold.change < -40),]
+plot(res$fold.change,-log10(res$FDRInter),t="p",col=res$colors,
+     #     main=plot.title,
+     xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",bg=colors,pch=21,cex=1)
+legend("topright",c("'positive'","'negative'","non significant"),col=c('red','blue','black'),pch=15)
+##     cex=2*mm^2)
 
+}
 
