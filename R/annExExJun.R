@@ -85,7 +85,22 @@ uniqueExon <- function(chr,exon1Start,exon1End,exon2Start,exon2End,ensembl)
   
 }
 
-
+## return the exonrank for the transcript give a chr, start and stop position
+## used for annotate the exon exon junctions
+getRank <- function(chr,start,end,rankTab)
+{  
+  GR <- GRanges(seqnames = Rle(rankTab$chromosome_name),
+                ranges = IRanges(start=rankTab$exon_chrom_start,
+                                 end = rankTab$exon_chrom_end),
+                rank=rankTab$rank)
+  
+  exGR <- GRanges(seqnames = Rle(chr),
+                  ranges = IRanges(start=start,
+                                   end = end))
+  
+  res <- subsetByOverlaps(GR,exGR)
+  return(paste(res$rank,sep=","))
+}
 
 
 

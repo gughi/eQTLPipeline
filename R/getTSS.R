@@ -10,3 +10,14 @@ getTSS <- function(gene, annotation){
  }    
   
 }
+
+getTES <- function(gene, annotation){
+  
+  tmp <- annotation[which(annotation$ensembl_gene_id %in% gene),] 
+  if(tmp$strand <0){
+    return(tmp$start_position)
+  }else{
+    return(tmp$end_position)
+  }    
+  
+}

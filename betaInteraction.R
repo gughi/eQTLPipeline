@@ -477,13 +477,6 @@ for(j in 1:nrow(res)){
   
 }
 
-plot.title = paste0("Vulcano plot, all TFs, ",
-                    tissue[1],"(left) modules vs. ",tissues[2]," tissue, fold th=",
-                    fold.threshold, " and -log10(pval) th=",p.val.threshold)
-pdf(paste0(plot.path,"/vulcano_all.",tissue,".pdf"),width=14,height=10)
-legend.text = c("High fold and signif. p val","Nothing relevant")
-
-
 
 par(mar=c(4, 4, 4, 4))
 res <- res[-which(sign(res$ge.beta) != sign(res$gi.beta)),]
@@ -685,7 +678,8 @@ legend("topright",c("significant","non significant"),col=c('skyblue','red'),pch=
 ############
 {
 load("data/results/betaInteraction/betaInteractionExIn.PUTM.rda")
-qq.plot(p.adjust(res$p.interaction,method="fdr",n=674))
+qq.plot(p.adjust(res$p.interaction,method="fdr",n=674),main="beta interaction test FDR values(PUTM)")
+qq.plot(res$p.interaction,main="beta interaction test p-values(PUTM)")
 
 res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=674)
 fold.threshold <- 2
@@ -883,7 +877,10 @@ barplot(counts, main="Biotype PUTM",
 ## We categories the eQTLs in the beta interaction ###
 ######################################################
 
-load("data/results/betaInteractionExIn.SNIG.rda")
+load("data/results/betaInteraction/betaInteractionExIn.SNIG.rda")
+qq.plot(p.adjust(res$p.interaction,method="fdr",n=674),main="beta interaction test FDR values(SNIG)")
+qq.plot(res$p.interaction,main="beta interaction test p-values(SNIG)")
+
 
 res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=398)
 fold.threshold <- 2
@@ -1084,7 +1081,8 @@ tmp <-res
 load("data/results/betaInteraction/betaInteractionExIn.SNIG.rda")
 res <- rbind(res,tmp)
 rm(tmp)
-## qq.plot(p.adjust(res$p.interaction,method="fdr",n=nrow(res)))
+qq.plot(p.adjust(res$p.interaction,method="fdr",n=nrow(res)),main="beta interaction test FDR values(SNIG+PUTM)")
+qq.plot(res$p.interaction,main="beta interaction test p-values(SNIG+PUTM)")
 
 res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=nrow(res))
 fold.threshold <- 2
@@ -1116,6 +1114,192 @@ plot(res$fold.change,-log10(res$FDRInter),t="p",col=res$colors,
      xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",bg=colors,pch=21,cex=1)
 legend("topright",c("'positive'","'negative'","non significant"),col=c('red','blue','black'),pch=15)
 ##     cex=2*mm^2)
+plot(res$fold.change,-log10(res$FDRInter),t="p",col=res$colors,
+     #     main=plot.title,
+     xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR",bg=colors,pch=21,cex=1)
+
+## plot an example of negative 
+idx <- which(res$FDRInter <1e-15 & res$fold.change < -5)             
+text(x=res[idx,"fold.change"],
+     y=-log10(res[idx,"FDRInter"]),
+     labels=paste(res[idx,c("ge.gene")]),pos=2,col="blue")
+
+plot(res$fold.change,-log10(res$FDRInter),t="p",col=res$colors,
+     #     main=plot.title,
+     xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR",bg=colors,pch=21,cex=1)
+## positive example
+text(x=res[which(res$FDRInter <0.05 & res$fold.change >20),"fold.change"],
+     y=-log10(res[which(res$FDRInter <0.05 & res$fold.change >20),"FDRInter"]),
+     labels=paste(res[which(res$FDRInter <0.05 & res$fold.change >20),c("ge.gene")]),pos=2,col="red")
+
+
+plot(res$fold.change,-log10(res$FDRInter),t="p",col=res$colors,
+     #     main=plot.title,
+     xlab="Fold change",ylab="-log10(FDR)",main="Volcano plot FDR",bg=colors,pch=21,cex=1)
+idx <- which(res$FDRInter <1e-8 & res$fold.change < -0 & res$colors =="black"  )             
+text(x=res[idx,"fold.change"],
+     y=-log10(res[idx,"FDRInter"]),
+     labels=paste(res[idx,c("ge.gene")]),pos=2,col="black")
+
+rm(beta.e,beta.i,fold.threshold,j,p.val.threshold,idx)
+
+
+
+
+res <- read.csv("data/results/finalTableBetaInteraction.SNIG.csv")
+
+## get TSS and TES
+# res <- read.csv("data/results/finalTableBetaInteraction.PUTM.csv")
+# tmp <-res 
+# res <- read.csv("data/results/finalTableBetaInteraction.SNIG.csv")
+# res <- rbind(res,tmp)
+# rm(tmp)
+
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=res$ge.gene, mart=ensembl)
+
+res$TSS <- sapply(res$ge.gene, function(x){getTSS(x,geneNames)})
+
+posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
+DisGeneStart <- res$TSS - as.integer(posSNP)
+res$DisGeneStart <- DisGeneStart
+rm(DisGeneStart,posSNP)
+
+nonsig <- res[which(res$category %in% "nonSignif"),
+                   c("ge.SNP","ge.gene","gene_biotype","DisGeneStart")]
+positive <- res[which(res$category %in% "positive"),
+                     c("ge.SNP","ge.gene","gene_biotype","DisGeneStart")]
+negative <- res[which(res$category %in% "negative"),
+                     c("ge.SNP","ge.gene","gene_biotype","DisGeneStart")]
+
+par(mar=c(6,5,3,2))
+hist(c(negative$DisGeneStart),col='skyblue',border=F,main= "Distance TSS 'negative' vs non-significant (PUTM+SNIG)",
+     sub=paste("Significant beta interaction:",length(negative$DisGeneStart),
+               "non significant beta interaction:",length(res$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,res$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(res$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(res$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("'negative'","non significant"),col=c('skyblue','red'),pch=15)
+
+hist(c(positive$DisGeneStart),col='skyblue',border=F,main= "Distance TSS 'positive' vs non-significant (PUTM+SNIG)",
+     sub=paste("Significant beta interaction:",length(positive$DisGeneStart),
+               "non significant beta interaction:",length(res$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(positive$DisGeneStart,res$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(res$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(positive$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(res$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("'positive'","non significant"),col=c('skyblue','red'),pch=15)
+
+rm(negative,positive,nonsig)
+
+
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=res$ge.gene, mart=ensembl)
+
+res$TES <- sapply(res$ge.gene, function(x){getTES(x,geneNames)})
+head(res)
+
+posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
+DisGeneEnd <- res$TES - as.integer(posSNP)
+res$DisGeneEnd <- DisGeneEnd
+rm(DisGeneEnd,posSNP)
+
+nonsig <- res[which(res$category %in% "nonSignif"),
+              c("ge.SNP","ge.gene","gene_biotype","DisGeneEnd")]
+positive <- res[which(res$category %in% "positive"),
+                c("ge.SNP","ge.gene","gene_biotype","DisGeneEnd")]
+negative <- res[which(res$category %in% "negative"),
+                c("ge.SNP","ge.gene","gene_biotype","DisGeneEnd")]
+
+par(mar=c(6,5,3,2))
+hist(c(negative$DisGeneEnd),col='skyblue',border=F,main= "Distance TES 'negative' vs non-significant (PUTM+SNIG)",
+     sub=paste("Significant beta interaction:",length(negative$DisGeneEnd),
+               "non significant beta interaction:",length(res$DisGeneEnd)),
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneEnd,res$DisGeneEnd)$p.value),freq=FALSE,breaks = 40)
+hist(res$DisGeneEnd,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(negative$DisGeneEnd, adjust = 2), col = "skyblue")
+lines(density(res$DisGeneEnd, adjust = 2),col = "red")
+legend("topright",c("'negative'","non significant"),col=c('skyblue','red'),pch=15)
+
+hist(c(positive$DisGeneEnd),col='skyblue',border=F,main= "Distance TES 'positive' vs non-significant (PUTM+SNIG)",
+     sub=paste("Significant beta interaction:",length(positive$DisGeneEnd),
+               "non significant beta interaction:",length(res$DisGeneEnd)),
+     xlab=paste("KS pvalue:",ks.test(positive$DisGeneEnd,res$DisGeneEnd)$p.value),freq=FALSE,breaks = 40)
+hist(res$DisGeneEnd,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(positive$DisGeneEnd, adjust = 2), col = "skyblue",freq=FALSE)
+lines(density(res$DisGeneEnd, adjust = 2), col = "red")
+legend("topright",c("'positive'","non significant"),col=c('skyblue','red'),pch=15)
+
+rm(geneNames,negative,positive,nonsig,DisGeneEnd,ensembl)
+#### biotype
+
+par(mar=c(11,5,3,2))
+nonsig <- res[which(as.character(res$category) %in% "nonSignif"),
+                   c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+nonsig <- unique(nonsig[,2:5])
+positive <- res[which(as.character(res$category) %in% "positive"),
+                     c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+positive <- unique(positive[,2:5])
+negative <- res[which(as.character(res$category) %in% "negative"),
+                     c("ge.SNP","ge.gene","gene_biotype","ge.FDR","gi.FDR")]
+negative <- unique(negative[,2:5])
+
+
+
+counts <- rbind(nonsig=sort(table(nonsig$gene_biotype),decreasing=T)/length(nonsig$gene_biotype),
+                positive=sort(table(positive$gene_biotype),decreasing=T)/length(positive$gene_biotype),
+                negative=sort(table(negative$gene_biotype),decreasing=T)/length(negative$gene_biotype))
+
+counts
+table(negative$gene_biotype)
+barplot(counts, main="Biotype PUTM+SNIG",
+        col=1:3,
+        legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,1))
+
+variantAnnoNega <- read.delim("data/results/VEP/PUTM_negative.txt")
+variantAnnoPos <- read.delim("data/results/VEP/PUTM_positive.txt")
+variantAnnoNonSig <- read.delim("data/results/VEP/PUTM_nonSignificant.txt")
+
+variantAnnoNega <- rbind(variantAnnoNega,read.delim("data/results/VEP/SNIG_negative.txt"))
+variantAnnoPos <- rbind(variantAnnoPos,read.delim("data/results/VEP/SNIG_positive.txt"))
+variantAnnoNonSig <- rbind(variantAnnoNonSig,read.delim("data/results/VEP/SNIG_nonSignificant.txt"))
+
+
+consNeg <- unlist(lapply(strsplit(as.character(variantAnnoNega$Consequence),","),function(x){x[1]}))
+consPos <- unlist(lapply(strsplit(as.character(variantAnnoPos$Consequence),","),function(x){x[1]}))
+consNonSig <- unlist(lapply(strsplit(as.character(variantAnnoNonSig$Consequence),","),function(x){x[1]}))
+
+rm(variantAnnoNega,variantAnnoNonSig,variantAnnoPos)
+nam <- names(sort(table(consNonSig),decreasing=T)/length(consNonSig))
+
+nonsig <- sort(table(consNonSig),decreasing=T)/length(consNonSig)
+positive <- sort(table(consPos),decreasing=T)/length(consPos)
+negative <- table(consNeg)/length(consNeg)
+
+
+counts <- rbind(nonsig=nonsig[nam],
+                positive=positive[nam],
+                negative=negative[nam])
+
+
+par(mar=c(15,5,3,2))
+barplot(counts, main="Variant Consequences",
+        col=1:3,
+        legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,0.6))
+
 
 }
 
