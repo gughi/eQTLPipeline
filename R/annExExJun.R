@@ -89,6 +89,7 @@ uniqueExon <- function(chr,exon1Start,exon1End,exon2Start,exon2End,ensembl)
 ## used for annotate the exon exon junctions
 getRank <- function(chr,start,end,rankTab)
 {  
+  if(nrow(rankTab)==0){return(NA)}
   GR <- GRanges(seqnames = Rle(rankTab$chromosome_name),
                 ranges = IRanges(start=rankTab$exon_chrom_start,
                                  end = rankTab$exon_chrom_end),
