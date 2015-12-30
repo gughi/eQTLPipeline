@@ -81,9 +81,6 @@ lines(density(exprNonEQTL.int, adjust = 2), col = "red",lwd=3)
 legend("topright",c("eQTL","non-eQTL"),col=c('skyblue','red'),pch=15)
 
 
-
-
-
 load("data/general/sampleInfo.rda")
 
 PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]
@@ -103,6 +100,8 @@ lines(density(exprEQTL.int, adjust = 2), col = "skyblue",lwd=3)
 lines(density(exprNonEQTL.int, adjust = 2), col = "red",lwd=3)
 legend("topright",c("eQTL","non-eQTL"),col=c('skyblue','red'),pch=15)
 
+
+
 ## SNIG
 
 exprEQTL.int <- mergedIntergenic[as.character(idxEQTL[,4]),as.character(SNIG$A.CEL_file)]
@@ -115,8 +114,17 @@ lines(density(exprEQTL.int, adjust = 2), col = "skyblue",lwd=3)
 lines(density(exprNonEQTL.int, adjust = 2), col = "red",lwd=3)
 legend("topright",c("eQTL","non-eQTL"),col=c('skyblue','red'),pch=15)
 
+## forJuan
 
+# have to pass Juan the expression of the intergenic regions that have been regulated
+# so that Juan can correlate them with his eigen modules in this case PUTM and SNIG together 
+# at the bottom PUTM and SNIG separated
 
+# exprEQTL.int <- mergedIntergenic[as.character(idxEQTL[,4]),]
+# exprNonEQTL.int <- mergedIntergenic[-which(rownames(mergedIntergenic) %in% as.character(idxEQTL[,4])),]
+# defIntReg <- defReg.PUTM 
+# 
+# save(exprEQTL.int,exprNonEQTL.int,defIntReg,file="tmp/eQTLNonEQTLIntergenicRegionsToJB.rda")
 
 
 
@@ -211,4 +219,37 @@ points(PCAres$x[PUTM$A.CEL_file,1],PCAres$x[PUTM$A.CEL_file,2],col="red")
 points(PCAres$x[SNIG$A.CEL_file,1],PCAres$x[SNIG$A.CEL_file,2],col="blue")
 legend("bottomleft", c("PUTM", "SNIG"), pch = 1,col=c("red","blue"),title="tissue")    
 rm(exprEQTL.int,exprNonEQTL.int,mergedIntergenic,RPKM.cqn.PUTM,RPKM.cqn.SNIG,PCAres)
+
+
+
+#
+# For Juan
+load("data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
+
+## 5%FDR
+eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.05),1:7]
+head(eQTLPUTM)
+
+load("data/expr/normalisedCounts/intergenic/RPKM.cqn.PUTM")
+defReg.PUTM <- starStopReg
+
+exprEQTL.int <- RPKM.cqn[as.character(eQTLPUTM$gene),]
+exprNonEQTL.int <- RPKM.cqn[-which(as.character(rownames(RPKM.cqn)) %in% as.character(eQTLPUTM$gene)),]
+
+save(exprEQTL.int,exprNonEQTL.int,defReg.PUTM,file="tmp/eQTLNonEQTLIntergenicRegionsToJB.PUTM.rda")
+
+
+load("data/results/finaleQTLs/intergenic.Ann.SNIG.rda")
+
+## 5%FDR
+eQTLSNIG <- eQTLSNIG[which(eQTLSNIG$myFDR<0.05),1:7]
+head(eQTLSNIG)
+
+load("data/expr/normalisedCounts/intergenic/RPKM.cqn.SNIG")
+defReg.SNIG <- starStopReg
+
+exprEQTL.int <- RPKM.cqn[as.character(eQTLSNIG$gene),]
+exprNonEQTL.int <- RPKM.cqn[-which(as.character(rownames(RPKM.cqn)) %in% as.character(eQTLSNIG$gene)),]
+
+save(exprEQTL.int,exprNonEQTL.int,defReg.SNIG,file="tmp/eQTLNonEQTLIntergenicRegionsToJB.SNIG.rda")
 
