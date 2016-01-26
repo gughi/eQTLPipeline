@@ -1303,3 +1303,48 @@ barplot(counts, main="Variant Consequences",
 
 }
 
+## 26/1/2016
+
+## follow Mike's suggestions: do the vulcano plot but instead of doing it with fold change do it with the betas in this way:
+
+##1) Plot using a delta as follows (rather than fold-change):
+##  If beta(exonic) is positive:
+##  Delta = beta(exonic) - beta(intronic)
+## If beta(exonic) is negative:
+##   Delta = beta(intronic) - beta(exonic)
+
+## This will mean that point on the right-hand-side of the plot are when beta(exonic) is "more extreme" (further from zero) than beta(intronic), and conversely for left-hand-side.
+
+
+load("data/results/betaInteraction/betaInteractionExIn.PUTM.rda")
+tmp <-res 
+load("data/results/betaInteraction/betaInteractionExIn.SNIG.rda")
+res <- rbind(res,tmp)
+rm(tmp)
+
+res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=nrow(res))
+## calculated delta 
+
+for(j in 1:nrow(res)){
+  
+
+  if(res[j,"ge.beta"] >= 0){
+    res[j,"delta"] <- res[j,"ge.beta"] - res[j,"gi.beta"]
+  }
+  else
+  {
+    res[j,"delta"] <- res[j,"gi.beta"] - res[j,"ge.beta"]  
+  }
+}
+
+
+par(mar=c(4, 4, 4, 4))
+plot(res$delta,-log10(res$FDRInter),t="p",
+     #     main=plot.title,
+     xlab="delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",pch=21,cex=1)
+##     cex=2*mm^2)
+
+
+  
+
+
