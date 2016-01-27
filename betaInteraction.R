@@ -1346,5 +1346,50 @@ plot(res$delta,-log10(res$FDRInter),t="p",
 
 
   
+variantAnnoNega <- read.delim("data/results/VEP/PUTM_negative.txt")
+variantAnnoPos <- read.delim("data/results/VEP/PUTM_positive.txt")
+variantAnnoNonSig <- read.delim("data/results/VEP/PUTM_nonSignificant.txt")
+
+variantAnnoNega <- rbind(variantAnnoNega,read.delim("data/results/VEP/SNIG_negative.txt"))
+variantAnnoPos <- rbind(variantAnnoPos,read.delim("data/results/VEP/SNIG_positive.txt"))
+variantAnnoNonSig <- rbind(variantAnnoNonSig,read.delim("data/results/VEP/SNIG_nonSignificant.txt"))
+
+
+consNeg <- unlist(lapply(strsplit(as.character(variantAnnoNega$Consequence),","),function(x){x[1]}))
+consPos <- unlist(lapply(strsplit(as.character(variantAnnoPos$Consequence),","),function(x){x[1]}))
+consNonSig <- unlist(lapply(strsplit(as.character(variantAnnoNonSig$Consequence),","),function(x){x[1]}))
+
+rm(variantAnnoNega,variantAnnoNonSig,variantAnnoPos)
+nam <- names(sort(table(consNonSig),decreasing=T)/length(consNonSig))
+
+nonsig <- sort(table(consNonSig),decreasing=T)
+positive <- sort(table(consPos),decreasing=T)
+negative <- table(consNeg)
+
+
+counts <- rbind(nonsig=nonsig[nam],
+                positive=positive[nam],
+                negative=negative[nam])
+
+## Percentages
+# nonsig <- sort(table(consNonSig),decreasing=T)/length(consNonSig)
+# positive <- sort(table(consPos),decreasing=T)/length(consPos)
+# negative <- table(consNeg)/length(consNeg)
+
+# counts <- rbind(nonsig=nonsig[nam],
+#                 positive=positive[nam],
+#                 negative=negative[nam])
+
+ref <- "intron_variant"
+
+counts[is.na(counts)]=0
+ftable(t(counts))
+counts <- t(counts) 
+
+for(j in 1:nrow(res)){
+  
+  counts[,4]<-1
+  
+}
 
 
