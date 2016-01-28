@@ -166,9 +166,28 @@ mtext( side=1, paste0(info["Al1"], info["Al1"]), at=(2), cex=0.6, line=-0.25 )
 
 
 
+## SP1 fro Juan
 
 
+gene <- "ENSG00000004799"
+snp <- "chr7:94644541"
+##snp <- "chr6:29955809"
+# dosageFile <- "/home/ramasamya/genotyped/imputed_v3/imputed.dosage"
+# infoFile <- "/home/ramasamya/genotyped/imputed_v3/imputed.info"
 
+dosageFile <- "/home/adai/genotyped/imputed_v3/imputed.dosage"
+infoFile <- "/home/adai/genotyped/imputed_v3/imputed.info"
+
+exprFile <- "data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda"
+#exprFile <- "data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda"
+
+load("data/general/sampleInfo.rda")
+eigenFile <- "/home/seb/plinkOutput/eigenvec"
+title <- paste0("Gene Intronic ","(",snp,")")
+
+snp <- gsub("chr", "", snp)
+snps  <- unlist( read.table.rows(paste0(dosageFile), keepRows=snp, sep=" ") )
+info  <- read.table.rows(infoFile, keepRows=snp, sep=" ", colClasses="character")
 
 
 

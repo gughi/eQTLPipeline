@@ -1371,6 +1371,7 @@ counts <- rbind(nonsig=nonsig[nam],
                 positive=positive[nam],
                 negative=negative[nam])
 
+
 ## Percentages
 # nonsig <- sort(table(consNonSig),decreasing=T)/length(consNonSig)
 # positive <- sort(table(consPos),decreasing=T)/length(consPos)
@@ -1383,12 +1384,14 @@ counts <- rbind(nonsig=nonsig[nam],
 ref <- "intron_variant"
 
 counts[is.na(counts)]=0
+counts <- rbind(counts,total=apply(counts,2,sum))
 ftable(t(counts))
-counts <- t(counts) 
+##counts <- t(counts) 
 
-for(j in 1:nrow(res)){
+
+for(j in 1:ncol(counts)-1){
   
-  counts[,4]<-1
+  chisq.test(counts[,4],counts[,i])
   
 }
 
