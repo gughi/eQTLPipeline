@@ -1336,7 +1336,25 @@ for(j in 1:nrow(res)){
     res[j,"delta"] <- res[j,"gi.beta"] - res[j,"ge.beta"]  
   }
 }
+par(mar=c(4, 4, 4, 4))
+plot(res$delta,-log10(res$FDRInter),t="p",
+     #     main=plot.title,
+     xlab="delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",pch=21,cex=1)
 
+
+## adding the one condition more for when the betas have oppositive signs
+
+for(j in 1:nrow(res)){
+  
+  if(sign(res[j,"ge.beta"])!=sign(res[j,"gi.beta"])){
+    res[j,"delta"] <- abs(res[j,"ge.beta"]) - abs(res[j,"gi.beta"])
+  }else if(res[j,"ge.beta"] >= 0){
+    res[j,"delta"] <- res[j,"ge.beta"] - res[j,"gi.beta"]
+  }else
+  {
+    res[j,"delta"] <- res[j,"gi.beta"] - res[j,"ge.beta"]  
+  }
+}
 
 par(mar=c(4, 4, 4, 4))
 plot(res$delta,-log10(res$FDRInter),t="p",
@@ -1344,8 +1362,13 @@ plot(res$delta,-log10(res$FDRInter),t="p",
      xlab="delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",pch=21,cex=1)
 ##     cex=2*mm^2)
 
+## For windows
+## install.packages("R.utils")
+library(R.utils)
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)$pathname
+setwd(dirname(path))
+rm(path)
 
-  
 variantAnnoNega <- read.delim("data/results/VEP/PUTM_negative.txt")
 variantAnnoPos <- read.delim("data/results/VEP/PUTM_positive.txt")
 variantAnnoNonSig <- read.delim("data/results/VEP/PUTM_nonSignificant.txt")
@@ -1381,18 +1404,53 @@ counts <- rbind(nonsig=nonsig[nam],
 #                 positive=positive[nam],
 #                 negative=negative[nam])
 
-ref <- "intron_variant"
-
 counts[is.na(counts)]=0
 counts <- rbind(counts,total=apply(counts,2,sum))
+counts <- cbind(counts,total=apply(counts,1,sum))
 ftable(t(counts))
 ##counts <- t(counts) 
 
 
-for(j in 1:ncol(counts)-1){
+## we test the groups we have defined as non-sig,positive and negative
+pval <- NULL
+for(i in 1:(nrow(counts)-1)){
   
-  chisq.test(counts[,4],counts[,i])
+  pval[i] <- chisq.test(counts[4,1:ncol(counts)-1],counts[i,1:ncol(counts)-1])$p.value
   
 }
+
+rm(pval,i)
+
+## with intronic as reference
+pval <- NULL
+for(i in 2:(ncol(counts)-1)){
+  
+  pval[i] <- chisq.test(counts[1:nrow(counts)-1,1],counts[1:(nrow(counts)-1),i])$p.value
+  
+}
+
+rm(pval,i)
+
+pval <- NULL
+for(i in 1:(ncol(counts)-1)){
+  
+  pval[i] <- chisq.test(counts[1:nrow(counts)-1,13],counts[1:(nrow(counts)-1),i])$p.value
+  
+}
+
+
+
+  
+
+
+head(res$delta)
+
+which(sign(res$ge.beta)!=sign(res$gi.beta))
+
+
+res[which(sign(res$ge.beta)!=sign(res$gi.beta)),]
+
+
+
 
 
