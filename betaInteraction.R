@@ -1199,8 +1199,6 @@ legend("topright",c("'positive'","non significant"),col=c('skyblue','red'),pch=1
 
 rm(negative,positive,nonsig)
 
-
-
 ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
                    dataset="hsapiens_gene_ensembl")
 
@@ -1342,25 +1340,7 @@ plot(res$delta,-log10(res$FDRInter),t="p",
      xlab="delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",pch=21,cex=1)
 
 
-## adding the one condition more for when the betas have oppositive signs
-
-for(j in 1:nrow(res)){
-  
-  if(sign(res[j,"ge.beta"])!=sign(res[j,"gi.beta"])){
-    res[j,"delta"] <- abs(res[j,"ge.beta"]) - abs(res[j,"gi.beta"])
-  }else if(res[j,"ge.beta"] >= 0){
-    res[j,"delta"] <- res[j,"ge.beta"] - res[j,"gi.beta"]
-  }else
-  {
-    res[j,"delta"] <- res[j,"gi.beta"] - res[j,"ge.beta"]  
-  }
-}
-
-par(mar=c(4, 4, 4, 4))
-plot(res$delta,-log10(res$FDRInter),t="p",
-     #     main=plot.title,
-     xlab="delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",pch=21,cex=1)
-##     cex=2*mm^2)
+#     cex=2*mm^2)
 
 ## For windows
 ## install.packages("R.utils")
@@ -1442,15 +1422,128 @@ for(i in 1:(ncol(counts)-1)){
 
   
 
+## re-do contingency table using the deltas to divide the groups instead of using the 
+## fold-change
 
-head(res$delta)
+{
 
-which(sign(res$ge.beta)!=sign(res$gi.beta))
+  library(R.utils)
+  path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+  setwd(dirname(path$networkPathname))
+  rm(path)
+  
+  load("data/results/betaInteraction/betaInteractionExIn.PUTM.rda")
+  tmp <-res 
+  load("data/results/betaInteraction/betaInteractionExIn.SNIG.rda")
+  res <- rbind(res,tmp)
+  rm(tmp)
+  
+  res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=nrow(res))
+  
+  ## adding the one condition more for when the betas have oppositive signs
+  
+  for(j in 1:nrow(res)){
+    
+    if(sign(res[j,"ge.beta"])!=sign(res[j,"gi.beta"])){
+      res[j,"delta"] <- abs(res[j,"ge.beta"]) - abs(res[j,"gi.beta"])
+    }else if(res[j,"ge.beta"] >= 0){
+      res[j,"delta"] <- res[j,"ge.beta"] - res[j,"gi.beta"]
+    }else
+    {
+      res[j,"delta"] <- res[j,"gi.beta"] - res[j,"ge.beta"]  
+    }
+  }
+  
+  par(mar=c(4, 4, 4, 4))
+  plot(res$delta,-log10(res$FDRInter),t="p",
+       #     main=plot.title,
+       xlab="delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",pch=21,cex=1)
 
+  ##
+  fdr.threshold <- 0.05
+  
+  for(j in 1:nrow(res)){
+    
+    if(res[j,"delta"] >= 0 & res[j,"FDRInter"] < fdr.threshold){
+      res[j,"colors"] <- "red"
+    }
+    else if(res[j,"delta"] < 0 & res[j,"FDRInter"] < fdr.threshold){
+      res[j,"colors"] <- "blue"  
+    }else
+      res[j,"colors"] <- "black"  
+    res$p.interaction
+  }
+  
+  plot(res$delta,-log10(res$FDRInter),t="p",col=res$colors,
+       #     main=plot.title,
+       xlab="Delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",bg=colors,pch=21,cex=1)
+  legend("topright",c("'positive'","'negative'","non significant"),col=c('red','blue','black'),pch=15)
+  rm(ensembl,j)
+  
+  library(biomaRt)
+  ## annotation of biotype
+  ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                     dataset="hsapiens_gene_ensembl")
+  
+  geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","strand","gene_biotype"),
+                     verbose = T,
+                     filters="ensembl_gene_id",
+                     values=c(as.character(res$ge.gene)), mart=ensembl)
+  
+  
+  
+  rm(ensembl)
+  
+  rownames(geneNames) <- geneNames$ensembl_gene_id
+  
+  res <- cbind(res,geneNames[as.character(res$ge.gene),c("external_gene_id","gene_biotype")])
+  
+## to load the libraries
+  library(devtools)
+  setwd("C:/Users/mguelfi/projectsR/eQTLPipeline/")
+  load_all()
+  path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+  setwd(dirname(path$networkPathname))
+  rm(path)
+  
+  ## get the right TES look at the strand too
+  res$TES <- sapply(res$ge.gene, function(x){getTES(x,geneNames)})
 
-res[which(sign(res$ge.beta)!=sign(res$gi.beta)),]
-
-
-
+  ## get the distance position to the TES
+  posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
+  DisGeneEnd <- res$TES - as.integer(posSNP)
+  res$DisGeneEnd <- DisGeneEnd
+  rm(DisGeneEnd,posSNP)
+  
+  ## we now get the 
+  library(doParallel)
+  library(foreach)
+  ensembl <- useMart(biomart="ENSEMBL_MART_SNP", host="Jun2013.archive.ensembl.org",
+                     dataset="hsapiens_snp")
+  
+  
+  detectCores()
+  ## [1] 24
+  # create the cluster with the functions needed to run
+  cl <- makeCluster(6)
+  clusterExport(cl, c("annSinSNP","getBM"))
+  registerDoParallel(cl)
+  getDoParWorkers()
+  start <- Sys.time()
+  conse <- foreach(i=1:nrow(res),.combine=rbind,.verbose=F)%dopar%annSinSNP(res$ge.SNP,ensembl)
+  ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+  end <- Sys.time()
+  end-start
+  stopCluster(cl)
+  rm(cl,end,start)
+  colnames(conse) <- c("rsID","consequence")
+  finalTable$rs <- conse[,1]
+  
+  write.csv(finalTable,file="data/results/finalTableBetaInteraction.PUTM.csv")
+  
+  
+  
+  
+}
 
 
