@@ -253,3 +253,89 @@ exprNonEQTL.int <- RPKM.cqn[-which(as.character(rownames(RPKM.cqn)) %in% as.char
 
 save(exprEQTL.int,exprNonEQTL.int,defReg.SNIG,file="tmp/eQTLNonEQTLIntergenicRegionsToJB.SNIG.rda")
 
+
+
+
+
+## We want to asses the length distribution of the intron length in brain-expressed genes to determine the cutoff 
+## to use when creating the transcriptome file to then quantify the exon-exon junctions
+
+library(R.utils)
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+setwd(dirname(path$networkPathname))
+rm(path)
+
+## we first obtain the Ensembl IDs for the brain expressed genes
+gene <- read.delim("data/general/NP4.6c.raw.n.bed")
+
+gene <- unique(gene$LOCUS)
+
+library(biomaRt)
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+head(listAttributes(ensembl))
+grep("name",head(listFilters(ensembl),300))
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","chromosome_name","start_position","end_position","gene_biotype"),
+                   verbose = T,
+                   filters="hgnc_symbol",
+                   values=gene, mart=ensembl)
+
+## remove all the LRG genes
+geneNames <- geneNames[-which(geneNames$gene_biotype %in% "LRG_gene"),]
+
+geneNames <- geneNames[order(geneNames$chromosome_name),]
+
+save(geneNames, file="data/general/neuroGenesEns.rda")
+
+## get the intronic stuff
+
+intronsBrain <- read.delim("data/general/intronicRegions.BED",header=F)
+
+## check how many genes are present
+length(unique(geneNames$ensembl_gene_id))
+
+length(intersect(intronsBrain$V4,geneNames$ensembl_gene_id))
+## 153 out of 158
+
+
+intronsBrain <- intronsBrain[which(as.character(intronsBrain$V4) %in% unique(as.character(geneNames$ensembl_gene_id))),]
+
+intronsBrain <- intronsBrain[-which(is.na(intronsBrain$V3 - intronsBrain$V2)),]
+
+hist((intronsBrain$V3 - intronsBrain$V2),main="Frequency of the introns length in brain-expressed gene",breaks=40,xlab="length")
+
+tail(sort(intronsBrain$V3 - intronsBrain$V2),20)
+
+hist((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<5000)],
+     main=paste("Frequency of the introns length in brain-expressed gene <200bp, total inttrons:",
+                length((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<5000)])),breaks=40,xlab="length")
+
+
+summary((intronsBrain$V3 - intronsBrain$V2))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

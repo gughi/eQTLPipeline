@@ -61,9 +61,9 @@ registerDoParallel(cl)
 getDoParWorkers()
 start <- Sys.time()
 distance <- foreach(i=1:nrow(eQTLPUTM),.combine=rbind,.verbose=F)%dopar%distanceNearest(GRanges(seqnames = Rle(gsub("chr","",eQTLPUTM[i,"chr"])),
-                                                                                           ranges = IRanges(start=eQTLPUTM[i,"start"],
-                                                                                                            end = eQTLPUTM[i,"end"],
-                                                                                                            names = genesMap[i,"gene"])),GR)
+                                                                                                ranges = IRanges(start=eQTLPUTM[i,"start"],
+                                                                                                                 end = eQTLPUTM[i,"end"],
+                                                                                                                 names = eQTLPUTM[i,"gene"])),GR)
 end <- Sys.time()
 end-start
 stopCluster(cl)
@@ -131,7 +131,7 @@ correla <- NULL
 for (i in 1:nrow(eQTLPUTM))
 {
   correla[i] <-  cor(as.numeric(exprIntergenic[as.character(eQTLPUTM$regionID[i]),as.character(PUTM$A.CEL_file)]),
-              as.numeric(exprSQ[as.character(eQTLPUTM$gene[i]),as.character(PUTM$A.CEL_file)]))
+                     as.numeric(exprSQ[as.character(eQTLPUTM$gene[i]),as.character(PUTM$A.CEL_file)]))
   
 }
 
@@ -203,6 +203,175 @@ barplot(as.numeric(eQTLPUTMTmp[which(eQTLPUTMTmp$gene %in% eQTLPUTM$gene),]))
 length(unique(as.character(eQTLPUTMTmp$gene)))
 
 
+
+
+## now we look correlation to exons
+
+library(R.utils)
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+setwd(dirname(path$networkPathname))
+rm(path)
+
+getwd()
+
+load("data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
+
+## 5%FDR
+eQTLPUTM <- eQTLPUTM[which(eQTLPUTM$myFDR<0.05),1:7]
+head(eQTLPUTM)
+
+load("data/expr/normalisedCounts/intergenic/RPKM.cqn.PUTM")
+RPKM.cqn.PUTM <- RPKM.cqn
+defReg.PUTM <- starStopReg
+rm(PUTM,RPKM.cqn,covs)
+
+eQTLPUTM <- cbind(eQTLPUTM,starStopReg[as.character(eQTLPUTM[,2]),])
+
+
+library(GenomicRanges)
+
+## we definde the transcriptome wiht exons
+
+flattenedfile <- "data/general/Homo_sapiens.ExonLevel.GRCh37.72.gff"
+aggregates <- read.delim(flattenedfile, stringsAsFactors = FALSE, header = FALSE)
+colnames(aggregates) <- c("chr", "source", "class", "start", 
+                          "end", "ex", "strand", "ex2", "attr")
+aggregates$strand <- gsub("\\.", "*", aggregates$strand)
+aggregates <- aggregates[which(aggregates$class == "exonic_part"),] 
+aggregates$attr <- gsub("\"|=|;", "", aggregates$attr)
+aggregates$gene_id <- sub(".*gene_id\\s(\\S+).*", "\\1", aggregates$attr)
+transcripts <- gsub(".*transcripts\\s(\\S+).*", "\\1", aggregates$attr)
+transcripts <- strsplit(transcripts, "\\+")
+exonids <- gsub(".*exonic_part_number\\s(\\S+).*", "\\1",aggregates$attr)
+exoninfo <- GRanges(as.character(aggregates$chr), 
+                    IRanges(start = aggregates$start, 
+                            end = aggregates$end), strand = aggregates$strand)
+names(exoninfo) <- paste(aggregates$gene_id, exonids,sep = ":E")
+rm(flattenedfile,exonids)
+
+distanceNearest <- function(GRQuery,GR){
+  
+  x <- countOverlaps(GRQuery,GR,ignore.strand=T)
+  idx <- nearest(GRQuery,GR,ignore.strand=T)
+  dis <- distanceToNearest(GRQuery,GR,ignore.strand=T)
+  nearGene <- names(GR[idx,])
+  stra <- as.character(strand(exoninfo[idx,]))
+  return(c(distance=as.data.frame(dis)$distance,gene=nearGene,overlap=x,strand=stra))
+}
+
+library(doParallel)
+library(foreach)
+
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(4)
+clusterExport(cl, c("overlapsAny","countOverlaps","distanceToNearest","GRanges","IRanges","Rle","nearest","strand"))
+registerDoParallel(cl)
+getDoParWorkers()
+start <- Sys.time()
+distance <- foreach(i=1:nrow(eQTLPUTM),.combine=rbind,.verbose=F)%dopar%distanceNearest(GRanges(seqnames = Rle(gsub("chr","",eQTLPUTM[i,"chr"])),
+                                                                                                ranges = IRanges(start=eQTLPUTM[i,"start"],
+                                                                                                                 end = eQTLPUTM[i,"end"],
+                                                                                                                 names = eQTLPUTM[i,"gene"])),exoninfo)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+table(distance[,1]>"0")
+rm(cl,GR,end,start)
+
+eQTLPUTM <- cbind(eQTLPUTM,distance)
+colnames(eQTLPUTM)[2] <- "regionID"
+
+load("data/expr/rawCounts/genic/exons.rda")
+rm(RPKM.cqn.PUTM)
+load("data/expr/rawCounts/intergenic/exprIntergenic.PUTM.rda")
+
+
+load("data/general/sampleInfo.rda")
+## we select only samples from PUTM
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified=="PUTM"),]  
+
+correla <- NULL
+for (i in 1:nrow(eQTLPUTM))
+{
+  correla[i] <-  cor(as.numeric(exprIntergenic[as.character(eQTLPUTM$regionID[i]),as.character(PUTM$A.CEL_file)]),
+                     as.numeric(countsTable[as.character(eQTLPUTM$gene[i]),as.character(PUTM$A.CEL_file)]))
+  
+}
+
+eQTLPUTM <- cbind(eQTLPUTM,corre=correla)
+
+eQTLPUTMTmp <- eQTLPUTM[order(eQTLPUTM$distance),]
+
+## removing regions that have correlation equal to 0 to visualisation perposes 
+eQTLPUTMTmp <- eQTLPUTMTmp[-which(is.na(eQTLPUTMTmp$corre)),]
+
+plot(as.numeric(as.character(eQTLPUTMTmp$distance)),eQTLPUTMTmp$corre^2,las=2, main="correlation and distances (intergenic vs exons quantification)",
+     xlab="distance",ylab="r^2")
+
+hist(as.numeric(distance[which(as.numeric(distance[,1])>0),1]),breaks=40, main="histogram of distance btw intergenic and nearest exon", 
+     xlab=" distance in bp")
+
+hist(as.numeric(distance[which(as.numeric(distance[,1])>0 & as.numeric(distance[,1])<10000),1]),breaks=40, main="histogram of distance btw intergenic and nearest exon", 
+     xlab=" distance in bp")
+
+
+cor(as.numeric(as.character(eQTLPUTMTmp$distance)),eQTLPUTMTmp$corre)
+
+
+plot(as.numeric(as.character(eQTLPUTMTmp$distance)),eQTLPUTMTmp$corre^2,las=2, main="correlation and distances (intergenic vs exons quantification) by starnd",
+      xlab="distance",ylab="r^2")
+points(as.character(eQTLPUTMTmp[which(as.character(eQTLPUTMTmp$strand) == "+"),"distance"]),
+       (eQTLPUTMTmp[which(as.character(eQTLPUTMTmp$strand) =="+"),"corre"]^2),col="red")
+
+points(as.character(eQTLPUTMTmp[which(as.character(eQTLPUTMTmp$strand) == "-"),"distance"]),
+       (eQTLPUTMTmp[which(as.character(eQTLPUTMTmp$strand) =="-"),"corre"]^2),col="blue")
+
+legend(x = "topright",legend =c("Forward","Reverse"), fill=c("red","blue"),)
+
+
+
+
+head(eQTLPUTMTmp)
+
+genes <- unlist(lapply(strsplit(as.character(eQTLPUTMTmp$gene),":"),function(x){x[1]}))
+#genes <- unlist(sapply(strsplit(as.character(genes),"+",fixed=T),function(x){x[1]}))
+
+load("data/results/finaleQTLs/exons.PUTM.txt")
+length(unique(eQTLPUTMTmp$gene))
+
+head(eQTLPUTMExons)
+
+eQTLPUTMExons <- read.delim("data/results/finaleQTLs/exons.PUTM.txt",sep=" ")
+
+
+
+library("gplots")
+## look overlap from the exons
+venn(list(PUTMInter=as.character(unique(eQTLPUTMTmp$gene)),
+          PUTMEx=as.character(unique(eQTLPUTMExons$gene))))
+
+genesFromExons <- unlist(lapply(strsplit(as.character(eQTLPUTMExons$gene),":"),function(x){x[1]}))
+
+# look at the overlap from any exon in the gene
+venn(list(PUTMInter=unique(genes),
+          PUTMEx=unique(genesFromExons)))
+
+
+
+
+genes <- unlist(sapply(strsplit(as.character(genes),"+",fixed=T),function(x){x}))
+genesFromExons <- unlist(sapply(strsplit(as.character(genesFromExons),"+",fixed=T),function(x){x}))
+
+venn(list(PUTMInter=unique(genes),
+          PUTMEx=unique(genesFromExons)))
+
+load("data/results/finaleQTLs/exons.unsentinalised.rda")
+
+## we look at overlap snp+gene and snp+intergenic region 
+venn(list(PUTMInter=paste0(eQTLPUTMTmp$snps,eQTLPUTMTmp$gene),
+          PUTMEx=paste0(my.eQTLs.PUTM[,1],my.eQTLs.PUTM[,2])))
 
 
 
