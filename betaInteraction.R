@@ -1516,6 +1516,21 @@ for(i in 1:(ncol(counts)-1)){
   rm(DisGeneEnd,posSNP)
   
   ## we now get the 
+  load("data/general/chrpos2rsid_UKBEC.rda")
+  save(chrpos2rsid,file="data/general/chrpos2rsid_UKBEC.rda")
+  
+  tmp<- sapply(paste0("^",gsub("chr","",as.character(res$ge.SNP)),"$"),function(y) grep(y,x=as.character(chrpos2rsid$SNP)))
+  
+  tmp <- chrpos2rsid[tmp,]
+  res$rsID <- tmp$rsid  
+  
+  save(res,file="data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
+
+
+  head(res[which(is.na(res$rsID)),])
+  
+  annSinSNP(res$ge.SNP,ensembl)
+  
   library(doParallel)
   library(foreach)
   ensembl <- useMart(biomart="ENSEMBL_MART_SNP", host="Jun2013.archive.ensembl.org",
@@ -1525,7 +1540,7 @@ for(i in 1:(ncol(counts)-1)){
   detectCores()
   ## [1] 24
   # create the cluster with the functions needed to run
-  cl <- makeCluster(6)
+  cl <- makeCluster(4)
   clusterExport(cl, c("annSinSNP","getBM"))
   registerDoParallel(cl)
   getDoParWorkers()
