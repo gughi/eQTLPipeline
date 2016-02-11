@@ -1524,12 +1524,10 @@ for(i in 1:(ncol(counts)-1)){
   tmp <- chrpos2rsid[tmp,]
   res$rsID <- tmp$rsid  
   
-  save(res,file="data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
+  save(res,file="data/results/betaInteraction/betaInteractionExIn.rda")
+  load("data/results/finaleQTLs/intergenic.Ann.PUTM.rda")
 
-
-  head(res[which(is.na(res$rsID)),])
-  
-  annSinSNP(res$ge.SNP,ensembl)
+  ## We obtain the rs number for indels 
   
   library(doParallel)
   library(foreach)
@@ -1537,24 +1535,66 @@ for(i in 1:(ncol(counts)-1)){
                      dataset="hsapiens_snp")
   
   
-  detectCores()
+  detectCores() 
   ## [1] 24
   # create the cluster with the functions needed to run
-  cl <- makeCluster(4)
+  cl <- makeCluster(20)
   clusterExport(cl, c("annSinSNP","getBM"))
   registerDoParallel(cl)
   getDoParWorkers()
   start <- Sys.time()
-  conse <- foreach(i=1:nrow(res),.combine=rbind,.verbose=F)%dopar%annSinSNP(res$ge.SNP,ensembl)
+  conse <- foreach(i=1:length(res[which(is.na(res$rsID)),"ge.SNP"]),.combine=rbind,.verbose=F)%dopar%annSinSNP(res[which(is.na(res$rsID)),"ge.SNP"][i],ensembl)
   ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
   end <- Sys.time()
   end-start
   stopCluster(cl)
-  rm(cl,end,start)
-  colnames(conse) <- c("rsID","consequence")
-  finalTable$rs <- conse[,1]
+
+  conse <- cbind(as.character(res[which(is.na(res$rsID)),"ge.SNP"]),conse)
   
-  write.csv(finalTable,file="data/results/finalTableBetaInteraction.PUTM.csv")
+  res$rsID <- as.character(res$rsID)
+  
+  res[which(as.character(res$ge.SNP) %in% as.character(conse[,1])),"rsID"] <- as.character(conse[,2])
+  
+  head(res[which(as.character(res$ge.SNP) %in% as.character(conse[,1])),])
+  
+  
+  save(res,file="data/results/betaInteraction/betaInteractionExIn.rda")
+  
+  ## we select now the different categories exonic intronic
+  
+  write.table(unlist(lapply(strsplit(as.character(res[which(as.character(res$colors) %in% "red"),"rsID"]),";"),function(x){x})),
+              file="data/results/VEP/positive.delta.txt",col.names=F,row.names=F)
+  write.table(unlist(lapply(strsplit(as.character(res[which(as.character(res$colors) %in% "blue"),"rsID"]),";"),function(x){x})),
+              file="data/results/VEP/negative.delta.txt",col.names=F,row.names=F)
+  write.table(unlist(lapply(strsplit(as.character(res[which(as.character(res$colors) %in% "black"),"rsID"]),";"),function(x){x})),
+              file="data/results/VEP/nonSig.delta.txt",col.names=F,row.naes=F)
+  
+  variantAnnoNega <- read.delim("data/results/VEP/negative.delta.output.txt")
+  variantAnnoPos <- read.delim("data/results/VEP/positive.delta.output.txt")
+  variantAnnoNonSig <- read.delim("data/results/VEP/nonSig.delta.output.txt")
+  
+  consNeg <- unlist(lapply(strsplit(as.character(variantAnnoNega$Consequence),","),function(x){x[1]}))
+  consPos <- unlist(lapply(strsplit(as.character(variantAnnoPos$Consequence),","),function(x){x[1]}))
+  consNonSig <- unlist(lapply(strsplit(as.character(variantAnnoNonSig$Consequence),","),function(x){x[1]}))
+  
+  rm(variantAnnoNega,variantAnnoNonSig,variantAnnoPos)
+  nam <- names(sort(table(consNonSig),decreasing=T)/length(consNonSig))
+    
+  nonsig <- sort(table(consNonSig),decreasing=T)/length(consNonSig)
+  positive <- sort(table(consPos),decreasing=T)/length(consPos)
+  negative <- table(consNeg)/length(consNeg)
+  
+  counts <- rbind(nonsig=nonsig[nam],
+                  positive=positive[nam],
+                  negative=negative[nam])
+  
+  
+  par(mar=c(15,5,3,2))
+  barplot(counts, main="Variant Consequences",
+          col=1:3,
+          legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,0.6))
+  
+  
   
   
   
