@@ -1569,9 +1569,42 @@ for(i in 1:(ncol(counts)-1)){
   write.table(unlist(lapply(strsplit(as.character(res[which(as.character(res$colors) %in% "black"),"rsID"]),";"),function(x){x})),
               file="data/results/VEP/nonSig.delta.txt",col.names=F,row.naes=F)
   
+  load(file="data/results/betaInteraction/betaInteractionExIn.rda")
+  
   variantAnnoNega <- read.delim("data/results/VEP/negative.delta.output.txt")
   variantAnnoPos <- read.delim("data/results/VEP/positive.delta.output.txt")
   variantAnnoNonSig <- read.delim("data/results/VEP/nonSig.delta.output.txt")
+  
+  rsID <- lapply(strsplit(as.character(res$rsID),";"),function(x){x})
+  
+  rsIDENSG <- NULL
+  for (i in 1:nrow(eQTLPUTM))
+  {
+      
+    rsIDENSG <-  
+    
+    
+  }
+  
+  
+  
+  
+  head(paste0(res$rsID,res$ge.gene))
+  
+  variantAnnoNonSig <- variantAnnoNonSig[which(paste0(variantAnnoNonSig$X.Uploaded_variation,variantAnnoNonSig$Gene) %in% paste0(res$rsID,res$ge.gene)),]
+  ## remove duplicates
+  variantAnnoNonSig <- unique(variantAnnoNonSig)
+  
+  ## get only the first consequence
+  idx <- match(x = paste0(res$rsID,res$ge.gene), paste0(variantAnnoNonSig$X.Uploaded_variation,variantAnnoNonSig$Gene))
+  
+  idx<- idx[!is.na(idx)]
+  
+  variantAnnoNonSig <- variantAnnoNonSig[idx,]
+  
+  
+  
+  
   
   consNeg <- unlist(lapply(strsplit(as.character(variantAnnoNega$Consequence),","),function(x){x[1]}))
   consPos <- unlist(lapply(strsplit(as.character(variantAnnoPos$Consequence),","),function(x){x[1]}))
