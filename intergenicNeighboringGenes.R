@@ -375,6 +375,133 @@ venn(list(PUTMInter=paste0(eQTLPUTMTmp$snps,eQTLPUTMTmp$gene),
 
 
 
+## we now look at distance for all the intergenic regions
+
+library(R.utils)
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+setwd(dirname(path$networkPathname))
+rm(path)
+
+load("data/expr/normalisedCounts/intergenic/RPKM.cqn.PUTM")
+rm(RPKM.cqn,covs,PUTM)
+
+summary(starStopReg$width)
+
+hist(starStopReg$width,main="length transcribed regions identified in PUTM")
+
+library(GenomicRanges)
+
+distanceNearest <- function(GRQuery,GR){
+  
+  x <- countOverlaps(GRQuery,GR,ignore.strand=T)
+  idx <- nearest(GRQuery,GR,ignore.strand=T)
+  dis <- distanceToNearest(GRQuery,GR,ignore.strand=T)
+  nearGene <- names(GR[idx,])
+  return(c(distance=as.data.frame(dis)$distance,gene=nearGene,overlap=x))
+}
+
+
+genesMap <- read.delim("data/general/ensemblGenes.txt")
+
+head(genesMap)
+
+## define the genomic regions
+GR <- GRanges(seqnames = Rle(genesMap$Chromosome.Name),
+              ranges = IRanges(start=genesMap$Gene.Start..bp.,
+                               end = genesMap$Gene.End..bp.,
+                               names = genesMap$Ensembl.Gene.ID))
+
+
+library(doParallel)
+library(foreach)
+
+
+distanceNearest(GRanges(seqnames = Rle(gsub("chr","",as.character(starStopReg$chr[1]))),
+                        ranges = IRanges(start=starStopReg$start[1],
+                                         end =starStopReg$end[1]),
+                        names=rownames(starStopReg)[1]),GR)
+
+
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(6)
+clusterExport(cl, c("overlapsAny","countOverlaps","distanceToNearest","GRanges","IRanges","Rle","nearest","strand"))
+registerDoParallel(cl)
+getDoParWorkers()
+start <- Sys.time()
+distance <- foreach(i=1:nrow(starStopReg),.combine=rbind,.verbose=F)%dopar%distanceNearest(GRanges(seqnames = Rle(gsub("chr","",as.character(starStopReg$chr[i]))),
+                                                                                                ranges = IRanges(start=starStopReg$start[i],
+                                                                                                                 end =starStopReg$end[i]),
+                                                                                                names=rownames(starStopReg)[i]),GR)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+table(distance[,1]>"0")
+rm(cl,GR,end,start)
+
+
+regInformation <- cbind(starStopReg,distance)
+
+head(regInformation)
+
+save(regInformation,file="data/general/defIntergenic.rda")
+
+
+## this is to calculate the differences
+
+
+#counts how many b are overlapping in two genomics regions
+overlappingBP <- function(GR1,GR2)
+{
+  tmp <- intersect(GR1,GR2,ignore.strand=TRUE)
+  if(length(tmp)>0){
+    res <- abs((width(tmp) - width(GR1)))
+    rm(tmp) 
+  }else{
+    
+    res <- width(GR1)
+    rm(tmp)
+  }
+  
+  return(res)
+
+}
+
+# overlappingBP(GRanges(seqnames = Rle(gsub("chr","",regInformation$chr[i])),
+#                       ranges = IRanges(start=regInformation$start[i],
+#                                        end = regInformation$end[i])),
+#               GR[as.character(regInformation$gene[i]),])
+
+
+
+## we calculate the unique portion of our regions with the closest gene
+cl <- makeCluster(6)
+clusterExport(cl, c("intersect","width","GRanges","IRanges","Rle","length","abs"))
+registerDoParallel(cl)
+getDoParWorkers()
+start <- Sys.time()
+uniquePortion <- foreach(i=1:nrow(regInformation),.combine=c,.verbose=F)%dopar%overlappingBP(GRanges(seqnames = Rle(gsub("chr","",regInformation$chr[i])),
+                                                                                                    ranges = IRanges(start=regInformation$start[i],
+                                                                                                                     end = regInformation$end[i])),
+                                                                                            GR[as.character(regInformation$gene[i]),])
+end <- Sys.time()
+end-start
+stopCluster(cl)
+
+
+head(regInformation)
+
+regInformation <- cbind(regInformation,uniquePortion)
+
+
+save(regInformation,file="data/general/defIntergenic.rda")
+
+
+
+load(file="data/general/defIntergenic.rda")
+
+
 
 
 
