@@ -319,10 +319,42 @@ summary((intronsBrain$V3 - intronsBrain$V2))
 
 
 
+library(R.utils)
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+setwd(dirname(path$networkPathname))
+rm(path)
+
+
+load("data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda")
+genes<- colnames(resids)
+rm(resids)
+load("data/expr/normalisedCounts/genic/geneExons/resids.SNIG.rda")
+genes <- union(colnames(resids),genes)
+
+
+intronsBrain <- read.delim("data/general/intronicRegions.BED",header=F)
+
+
+intronsBrain <- intronsBrain[which(as.character(intronsBrain$V4) %in% as.character(genes)),]
+
+intronsBrain <- intronsBrain[-which(is.na(intronsBrain$V3 - intronsBrain$V2)),]
+
+hist((intronsBrain$V3 - intronsBrain$V2),main="Frequency of the introns length in brain-expressed gene",breaks=40,xlab="length")
+
+
+tail(sort(intronsBrain$V3 - intronsBrain$V2),20)
+
+hist((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<200)],
+     main=paste("Frequency of the introns length in brain-expressed gene <200bp, total inttrons:",
+                length((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<200)])),breaks=40,xlab="length")
+
+hist((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<5000)],
+     main=paste("Frequency of the introns length in brain-expressed gene <5000bp, total inttrons:",
+                length((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<5000)])),breaks=40,xlab="length")
 
 
 
-
+summary((intronsBrain$V3 - intronsBrain$V2))
 
 
 
