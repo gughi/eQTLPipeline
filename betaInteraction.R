@@ -1595,10 +1595,126 @@ for(i in 1:(ncol(counts)-1)){
           legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,0.6))
   
   
+  variantAnnoNega <- read.delim("data/results/VEP/negative.delta.output.txt")
+  variantAnnoPos <- read.delim("data/results/VEP/positive.delta.output.txt")
+  variantAnnoNonSig <- read.delim("data/results/VEP/nonSig.delta.output.txt")
+  
+  
+  rm(variantAnnoNega,variantAnnoNonSig,variantAnnoPos)
+  nam <- names(sort(table(consNonSig),decreasing=T)/length(consNonSig))
+  
+  nonsig <- sort(table(consNonSig),decreasing=T)
+  positive <- sort(table(consPos),decreasing=T)
+  negative <- table(consNeg)
+  
+  
+  counts <- rbind(nonsig=nonsig[nam],
+                  positive=positive[nam],
+                  negative=negative[nam])
+  
+  
+  counts[is.na(counts)]=0
+  counts <- rbind(counts,total=apply(counts,2,sum))
+  counts <- cbind(counts,total=apply(counts,1,sum))
+  ftable(t(counts))
+  ##counts <- t(counts) 
+  
+  
+  ## we test the groups we have defined as non-sig,positive and negative
+  pval <- NULL
+  for(i in 1:(nrow(counts)-1)){
+    
+    pval[i] <- chisq.test(counts[c(4,i),1:ncol(counts)-1])$p.value
+    
+  }
+    
+  print(pval)
+  rm(pval,i)
+  
+  ## we test the groups we have defined as non-sig,positive and negative but,
+  ## instead of using the total number of sn for each categorie we use the sum of the two categories that were not tested
+  pval <- NULL
+  for(i in 1:(nrow(counts)-1)){
+    
+    pval[i] <- chisq.test(cbind(counts[4,1:ncol(counts)-1],
+      counts[4,1:ncol(counts)-1]-counts[i,1:ncol(counts)-1]))$p.value
+    
+  }
+  
+  print(pval)
+  rm(pval,i)
   
   
   
+  ## with intronic as reference
+  pval <- NULL
+  for(i in 2:(ncol(counts)-1)){
+    
+    pval[i] <- chisq.test(counts[1:(nrow(counts)-1),c(1,i)])$p.value
+    
+  }
   
+  print(pval)
+  rm(pval,i)
+  
+  pval <- NULL
+  for(i in 1:(ncol(counts)-1)){
+    
+    pval[i] <-chisq.test(counts[1:(nrow(counts)-1),c(15,i)])$p.value
+
+  }
+  
+  print(pval)
+  rm(pval,i)
+  
+  ## test for the non significant
+  pval <- NULL
+  for(i in 1:(ncol(counts)-1)){
+    
+    print(rbind(cbind(counts["nonsig",i],(counts[4,i]-counts["nonsig",i])),
+                cbind(counts["nonsig",ncol(counts)],(counts[4,ncol(counts)]-counts["nonsig",ncol(counts)]))))
+    pval[i] <-  chisq.test(rbind(cbind(counts["nonsig",i],(counts[4,i]-counts["nonsig",i])),
+                                  cbind(counts["nonsig",ncol(counts)],(counts[4,ncol(counts)]-counts["nonsig",ncol(counts)]))))$p.value
+    
+    
+  }
+  
+  print(pval)
+  rm(pval,i)
+  
+
+  ## test for the positive
+  pval <- NULL
+  for(i in 1:(ncol(counts)-1)){
+    
+    print(rbind(cbind(counts["positive",i],(counts[4,i]-counts["positive",i])),
+                cbind(counts["positive",ncol(counts)],(counts[4,ncol(counts)]-counts["positive",ncol(counts)]))))
+    pval[i] <-  chisq.test(rbind(cbind(counts["positive",i],(counts[4,i]-counts["positive",i])),
+                                 cbind(counts["positive",ncol(counts)],(counts[4,ncol(counts)]-counts["positive",ncol(counts)]))))$p.value
+    
+    
+  }
+  
+  print(pval)
+  rm(pval,i)
+  
+  
+  
+  ## test for the negative
+  pval <- NULL
+  for(i in 1:(ncol(counts)-1)){
+    
+    print(rbind(cbind(counts["negative",i],(counts[4,i]-counts["negative",i])),
+                cbind(counts["negative",ncol(counts)],(counts[4,ncol(counts)]-counts["negative",ncol(counts)]))))
+    pval[i] <-  chisq.test(rbind(cbind(counts["negative",i],(counts[4,i]-counts["negative",i])),
+                                 cbind(counts["negative",ncol(counts)],(counts[4,ncol(counts)]-counts["negative",ncol(counts)]))))$p.value
+    
+    
+  }
+  
+  print(pval)
+  rm(pval,i)
+
 }
 
 
