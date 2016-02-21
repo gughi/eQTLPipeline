@@ -2,6 +2,7 @@
 betaInteraction <- function(expr0, snp0){
   
   
+  library(lme4)
   ## Check whether the expr and the snps have the same order of samples
   stopifnot(identical( rownames(expr0), colnames(snp0)))
   ## stop if number of snp is different to 1
@@ -94,7 +95,7 @@ betaInteractionExons <- function(expr0, snp0){
 }
 
 
-
+## Mike suggested to not use this test but concentrate in the other
 betaInteractionExonicIntronic <- function(expr0, snp0){
   
   

@@ -58,14 +58,11 @@ hist(eQTLPUTM[which(eQTLPUTM$exonJunc>0),"exonJunc"],breaks=40,main="Novel exon 
 ## example
 regInformation["DER591",]
 
-
+save(eQTLPUTM, file="data/results/finaleQTLs/intergenic.annNovelExon.PUTM.rda")
 
 ###########################
 #### Beta interaction #####
 ###########################
-
-
-
 
 load("data/general/defIntergenic.rda")
 
@@ -81,35 +78,40 @@ load("data/expr/normalisedCounts/intergenic/resids.PUTM.rda")
 exprIntergenic <- resids
 rm(resids,eQTLPUTM)
 
-head(regInformation)
 eQTLs <-  cbind(eQTLs,regInformation[as.character(eQTLs$gene),])
 colnames(eQTLs)[2] <- "region"
-head(eQTLs)
+
 
 ## we now collect the information for each gene
-
-
 eQTLExonic <- NULL
 for(i in 1:nrow(eQTLs))
 {
   if(is.element(as.character(eQTLs$gene[i]),colnames(exprExonic)))
   {
     tmp <- read.delim(paste0("data/results/genic/geneExons/fullResults/PUTM/",as.character(eQTLs$gene[i])),row.names = 1)
-    eQTLExonic <- rbind(eQTLExonic,tmp[as.character(eQTLs$snps[i]),c("ge.beta","ge.t.stat","ge.p.value","ge.FDR")])
-
+    eQTLExonic <- rbind(eQTLExonic,tmp[as.character(eQTLs$snps[i]),c("beta","t.stat","p.value","FDR")])
+    rm(tmp)
+    
   }else{
     eQTLExonic <- rbind(eQTLExonic,as.data.frame(t(as.matrix(c(beta=NA,t.stat=NA,p.value=NA,FDR=NA))),row.names=as.character(eQTLs$snps[i])))
   }
-  rm(tmp)
 }
 rm(i)
 
 
-res <- NULL
+colnames(eQTLExonic) <- c("ge.beta","ge.t.stat","ge.p.value","ge.FDR")
+
+eQTLs <- cbind(eQTLs,eQTLExonic)
+rm(eQTLExonic)
+
+library(devtools)
+load_all()
+
+f<- NULL
 for (j in 1:nrow(eQTLs))
 {
   ## load the expression for each individual gene for exonic and intronic
-  is.element(as.character(eQTLs$gene[i]),colnames(exprExonic))
+  if(is.element(as.character(eQTLs$gene[j]),colnames(exprExonic)))
   {
     exprE <- exprExonic[,as.character(eQTLs$gene[j])]
     exprInt <- exprIntergenic[,as.character(eQTLs$region[j])]
@@ -125,7 +127,6 @@ for (j in 1:nrow(eQTLs))
     
     ## load the samples information
     load("data/general/sampleInfo.rda")
-    
     
     ## change the samples names and remove outlier
     sampleInfo$U.SD_No <- gsub("/","_",sampleInfo$U.SD_No)
@@ -146,40 +147,47 @@ for (j in 1:nrow(eQTLs))
     ## rownames(sampleInfo) <- sampleInfo$A.CEL_file
     
     colnames(snp0) <- rownames(expr)
-  
-    f <- betaInteraction(expr,snp0)
+    f[j] <- betaInteraction(expr,snp0)
   }else
   {
-    f <- NA
+    f[j] <- NA
   }
   
-  ## collect summary statisctics from gene exonic
-  cmd <- paste0("grep -w '",as.character(eQTLs$snps[j]),"' data/results/genic/geneExons/fullResults/PUTM/",as.character(eQTLs$gene[j]))
-  statExonic <- read.delim(pipe(cmd),header=F)
-  rm(cmd)
-  colnames(statExonic) <- c("ge.SNP","ge.gene","ge.beta","ge.t-stat","ge.p-value","ge.FDR") 
-  ## collect summary statisctics from gene intronic
-  cmd <- paste0("grep -w '",as.character(eQTLs$snps[j]),"' data/results/genic/geneIntronic/fullResults/PUTM/",as.character(eQTLs$gene[j]))
-  statIntronic <- read.delim(pipe(cmd),header=F)
-  rm(cmd)
-  colnames(statIntronic) <- c("gi.SNP","gi.gene","gi.beta","gi.t-stat","gi.p-value","gi.FDR") 
-  
-  restmp <- cbind(f,statExonic,statIntronic)
-  colnames(restmp)[1] <- "p.interaction"
-  
-  if (is.null(res))
-  {
-    res <- restmp
-  } else {
-    res <- rbind(res,restmp)
-  }
-  rm(statExonic,statIntronic,expr,markers,markers.info,snp0,selSamples,restmp,f)
+  rm(expr,markers,markers.info,snp0,selSamples,sampleInfo)
 }
 
-
+rm(j)
   
+eQTLs <- cbind(eQTLs,p.val.bet.int=f)
+rm(f)
+
+save(eQTLs,file="data/results/finaleQTLs/betaInterIntergenicNearestGene.rda")
 
 
+
+load("data/results/finaleQTLs/betaInterIntergenicNearestGene.rda")
+load(file="data/results/finaleQTLs/intergenic.annNovelExon.PUTM.rda")
+
+eQTLs <- cbind(eQTLs,exonJunc=eQTLPUTM$exonJunc,exonJuncCounts=eQTLPUTM$exonJuncCounts)
+
+head(eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),])
+
+
+qq.plot(eQTLs[which(as.numeric(as.character(eQTLs$distance))<1),"p.val.bet.int"])
+head(eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>0),])
+
+
+eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))==0 & as.numeric(as.character(eQTLs$distance)) >0),c("pvalue","ge.p.value","p.val.bet.int")]
+
+eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>0),"p.val.bet.int"]
+
+table(is.na(eQTLs$p.val.bet.int))
+
+
+qq.plot(eQTLs[which(as.numeric(as.character(eQTLs$ge.p.value))<1e-5),"p.val.bet.int"])
+
+
+eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>50),]
 
 
     
