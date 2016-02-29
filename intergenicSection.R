@@ -339,7 +339,11 @@ intronsBrain <- intronsBrain[which(as.character(intronsBrain$V4) %in% as.charact
 
 intronsBrain <- intronsBrain[-which(is.na(intronsBrain$V3 - intronsBrain$V2)),]
 
-hist((intronsBrain$V3 - intronsBrain$V2),main="Frequency of the introns length in brain-expressed gene",breaks=40,xlab="length")
+hist((intronsBrain$V3 - intronsBrain$V2),
+     main=paste("Frequency of the introns length in brain-expressed genes, total introns:",nrow(intronsBrain))
+     ,breaks=40,xlab="length")
+
+
 
 
 tail(sort(intronsBrain$V3 - intronsBrain$V2),20)
@@ -353,6 +357,10 @@ hist((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V
                 length((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<5000)])),breaks=40,xlab="length")
 
 
+hist((intronsBrain$V3 - intronsBrain$V2)[which((intronsBrain$V3 - intronsBrain$V2)<200000)],
+     main=paste("Frequency of the introns length in brain-expressed genes <200Kb, total introns:",nrow(intronsBrain)
+                ),breaks=40,xlab="length")
+abline(v = 5000,col="red")
 
 summary((intronsBrain$V3 - intronsBrain$V2))
 

@@ -57,6 +57,8 @@ RPKM.std <- RPKM(as.matrix(expr), NULL,
                  lib.size=librarySize, 
                  feature.size=length)
 
+save(RPKM.std,file="data/expr/rawCounts/genic/exons.RPKM.PUTM.rda")
+
 RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
 genesList <- rownames(RPKM.std)
 
@@ -296,6 +298,8 @@ stopifnot(identical(rownames(expr),names(length)))
 RPKM.std <- RPKM(as.matrix(expr), NULL, 
                  lib.size=librarySize, 
                  feature.size=length)
+
+save(RPKM.std,file="data/expr/rawCounts/genic/exons.RPKM.SNIG.rda")
 
 RPKM.std=RPKM.std[rowSums(RPKM.std>=0.1)>(ncol(RPKM.std)-((ncol(RPKM.std)*20)/100)),]
 genesList <- rownames(RPKM.std)

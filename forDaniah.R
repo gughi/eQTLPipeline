@@ -4,6 +4,8 @@
 library(R.utils)
 path <- readWindowsShortcut("data.lnk", verbose=FALSE)$pathname
 setwd(dirname(path))
+# path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+# setwd(dirname(path$networkPathname))
 rm(path)
 
 load("data/expr/rawCounts/genic/fullExExJun.rda")
@@ -40,6 +42,32 @@ for(i in 2:length(paste(exprForDaniah$Exon1ID,exprForDaniah$Exon2ID,sep = "_")))
 }
 
 write.csv(annForDaniah,"tmp/exExForDaniahMap.csv")
+
+
+load("data/general/sampleInfo.rda")
+SNIG <- sampleInfo[which(sampleInfo$U.Region_simplified == "SNIG"),]
+
+load("data/expr/rawCounts/genic/exons.rda")
+
+countsExpr <- countsTable[grep("ENSG00000188906",rownames(countsTable)),as.character(SNIG$A.CEL_file)]
+
+exonDef <- read.csv("data/general/transcriptomeInfo.csv")
+exonDef <- exonDef[grep("ENSG00000188906",exonDef$names),]
+
+
+write.csv(exonDef,file="tmp/exonDefinition.csv")
+write.csv(countsExpr,file="tmp/countsExonLRRK2.csv")
+
+load("data/expr/rawCounts/genic/exons.RPKM.SNIG.rda")
+
+head(RPKM.std)
+RPKM.std <- RPKM.std[as.character(exonDef$names),]
+write.csv(RPKM.std,file="tmp/RPKMExonLRRK2.csv")
+
+
+
+
+
 
 
 
