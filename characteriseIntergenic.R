@@ -498,20 +498,20 @@ rowAnno = as.matrix(t(c(    # grouping row-variables into different
   rep("blue", nrow(exprExons[unique(as.character(novelExons$exon)),])),
   rep("black", nrow(exprExons[unique(as.character(tmp$exon)),])))))
 
-breaks=seq(-4, 4, by=0.1) #41 values
+breaks=seq(-7, 7, by=0.1) #41 values
 #now add outliers
 breaks=append(breaks, 10)
 breaks=append(breaks, -10, 0)
 #create colour panel with length(breaks)-1 colours
 mycol <- colorpanel(n=length(breaks)-1,low="green",mid="black",high="red")
 
-heatmap.2(as.matrix(toPlot),col=redgreen(75), key=T, keysize=1.5,scale = "row",
-          labRow=NA,ylab = "exons",symkey=F,trace="none",
+heatmap.2(as.matrix(toPlot),col=greenred(75), key=T, keysize=1.5,scale = "row",
+          labRow=NA,ylab = "exons",trace="none",
             RowSideColors = rowAnno)
 
-heatmap.2(as.matrix(toPlot),col=mycol, key=T, keysize=1.5,scale = "row",
-          labRow=NA,ylab = "exons",symkey=F,trace="none",
-          RowSideColors = rowAnno,breaks = breaks)
+  heatmap.2(as.matrix(toPlot),col=mycol, key=T, keysize=1.5,scale = "row",
+            labRow=NA,ylab = "exons",symkey=F,trace="none",
+            RowSideColors = rowAnno,breaks = breaks)
 
 par(mar=c(0, 0, 0, 0))
 legend("topright",legend=c("misannotation", "ind. int. reg.", "novel Exon", "not defined"),
