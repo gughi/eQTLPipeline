@@ -65,6 +65,32 @@ RPKM.std <- RPKM.std[as.character(exonDef$names),]
 write.csv(RPKM.std,file="tmp/RPKMExonLRRK2.csv")
 
 
+load("data/general/sampleInfo.rda")
+PUTM <- sampleInfo[which(sampleInfo$U.Region_simplified == "PUTM"),]
+
+load("data/expr/rawCounts/genic/exons.rda")
+
+countsExpr <- countsTable[grep("ENSG00000188906",rownames(countsTable)),as.character(PUTM$A.CEL_file)]
+
+exonDef <- read.csv("data/general/transcriptomeInfo.csv")
+exonDef <- exonDef[grep("ENSG00000188906",exonDef$names),]
+
+
+write.csv(exonDef,file="tmp/exonDefinition.csv")
+write.csv(countsExpr,file="tmp/countsExonLRRK2.csv")
+
+load("data/expr/rawCounts/genic/exons.RPKM.PUTM.rda")
+
+head(RPKM.std)
+RPKM.std <- RPKM.std[as.character(exonDef$names),]
+write.csv(RPKM.std,file="tmp/RPKMExonLRRK2.csv")
+
+
+
+
+
+
+
 
 
 

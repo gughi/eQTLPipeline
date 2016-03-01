@@ -1751,3 +1751,257 @@ for(i in 1:(ncol(counts)-1)){
 }
 
 
+
+
+
+## Examples of extremes for Mina
+{ 
+
+library(R.utils)
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+setwd(dirname(path$networkPathname))
+rm(path)
+
+load("data/results/betaInteraction/betaInteractionExIn.PUTM.rda")
+tmp <-res 
+load("data/results/betaInteraction/betaInteractionExIn.SNIG.rda")
+res <- rbind(res,tmp)
+rm(tmp)
+
+res$FDRInter <- p.adjust(res$p.interaction,method="fdr",n=nrow(res))
+
+## adding the one condition more for when the betas have oppositive signs
+
+for(j in 1:nrow(res)){
+  
+  if(sign(res[j,"ge.beta"])!=sign(res[j,"gi.beta"])){
+    res[j,"delta"] <- abs(res[j,"ge.beta"]) - abs(res[j,"gi.beta"])
+  }else if(res[j,"ge.beta"] >= 0){
+    res[j,"delta"] <- res[j,"ge.beta"] - res[j,"gi.beta"]
+  }else
+  {
+    res[j,"delta"] <- res[j,"gi.beta"] - res[j,"ge.beta"]  
+  }
+}
+
+par(mar=c(4, 4, 4, 4))
+plot(res$delta,-log10(res$FDRInter),t="p",
+     #     main=plot.title,
+     xlab="delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",pch=21,cex=1)
+
+##
+fdr.threshold <- 0.05
+
+for(j in 1:nrow(res)){
+  
+  if(res[j,"delta"] >= 0 & res[j,"FDRInter"] < fdr.threshold){
+    res[j,"colors"] <- "red"
+  }
+  else if(res[j,"delta"] < 0 & res[j,"FDRInter"] < fdr.threshold){
+    res[j,"colors"] <- "blue"  
+  }else
+    res[j,"colors"] <- "black"  
+  res$p.interaction
+}
+
+plot(res$delta,-log10(res$FDRInter),t="p",col=res$colors,
+     #     main=plot.title,
+     xlab="Delta",ylab="-log10(FDR)",main="Volcano plot FDR (PUTM+SNIG)",bg=colors,pch=21,cex=1)
+legend("topright",c("'positive'","'negative'","non significant"),col=c('red','blue','black'),pch=15)
+rm(ensembl,j)
+
+library(biomaRt)
+## annotation of biotype
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","start_position","end_position","strand","gene_biotype"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=c(as.character(res$ge.gene)), mart=ensembl)
+
+
+
+rm(ensembl)
+
+rownames(geneNames) <- geneNames$ensembl_gene_id
+
+res <- cbind(res,geneNames[as.character(res$ge.gene),c("external_gene_id","gene_biotype")])
+rm(geneNames)
+
+library(devtools)
+library(R.utils)
+setwd("C:/Users/mguelfi/projectsR/eQTLPipeline/")
+load_all()
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+setwd(dirname(path$networkPathname))
+rm(path)
+
+## POSTITIVE DELTAS
+tmp <- res[which(res$delta > 0.6),] 
+
+## NEGATIVE DELTAS
+tmp <- res[which(res$delta< (-0.4)),] 
+
+##
+text(tmp$delta[5],-log10(tmp$FDRInter)[5],labels = tmp$external_gene_id[5],pos = 4)
+
+
+gene <- "ENSG00000099290"
+snp <- "chr10:51801386"
+
+load("data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda")
+#exprFile <- "data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda"
+
+load("data/general/sampleInfo.rda")
+IDs <- sampleInfo[which(sampleInfo$A.CEL_file %in% as.character(rownames(resids))),"U.SD_No"]
+IDs <- gsub("/","_",IDs)
+rownames(resids) <- IDs
+expr  <- resids[,as.character(gene)]
+rm(IDs,resids)
+rm(sampleInfo)
+
+
+
+snp <- gsub("chr", "", snp)
+load("data/general/imputed.dosage.rda")
+load("data/general/imputed.info.rda")
+
+dosage <- imputed.dosage[as.character(snp),names(expr)]
+info <- imputed.info[which(as.character(imputed.info$marker) == as.character(snp)),]
+table(round(as.numeric(dosage)))
+
+identical(names(expr),names(dosage))
+my.covTMP <- read.delim("data/general/eigenvec",sep=" ",header=F,row.names = 1)
+head(my.covTMP)
+my.cov0 <- as.matrix(my.covTMP[names(dosage),2:4])
+eigenVectors <- t(my.cov0)
+rm(my.cov0,my.covTMP)
+
+title <- paste0("Gene Intronic ",tmp$external_gene_id[7]," (",snp,")")
+
+par(mfrow=c(1,1))
+plotEQTL(dosage =dosage,info = info,expr = expr,eigenVectors =eigenVectors,main = paste0("Gene exonic ",tmp$external_gene_id[7]," (",snp,")")  )
+
+
+load("data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda")
+#exprFile <- "data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda"
+
+load("data/general/sampleInfo.rda")
+IDs <- sampleInfo[which(sampleInfo$A.CEL_file %in% as.character(rownames(resids))),"U.SD_No"]
+IDs <- gsub("/","_",IDs)
+rownames(resids) <- IDs
+expr  <- resids[,as.character(gene)]
+rm(IDs,resids)
+rm(sampleInfo)
+
+plotEQTL(dosage =dosage,info = info,expr = expr,eigenVectors =eigenVectors,main = paste0("Gene intronic ",tmp$external_gene_id[7]," (",snp,")")  )
+
+
+gene <- "ENSG00000224312"
+snp <- "chr6:29833128"
+
+
+
+load("data/expr/normalisedCounts/genic/geneExons/resids.PUTM.rda")
+#exprFile <- "data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda"
+
+load("data/general/sampleInfo.rda")
+IDs <- sampleInfo[which(sampleInfo$A.CEL_file %in% as.character(rownames(resids))),"U.SD_No"]
+IDs <- gsub("/","_",IDs)
+rownames(resids) <- IDs
+expr  <- resids[,as.character(gene)]
+rm(IDs,resids)
+rm(sampleInfo)
+snp <- gsub("chr", "", snp)
+
+dosage <- imputed.dosage[as.character(snp),names(expr)]
+info <- imputed.info[which(as.character(imputed.info$marker) == as.character(snp)),]
+table(round(as.numeric(dosage)))
+
+identical(names(expr),names(dosage))
+my.covTMP <- read.delim("data/general/eigenvec",sep=" ",header=F,row.names = 1)
+head(my.covTMP)
+my.cov0 <- as.matrix(my.covTMP[names(dosage),2:4])
+eigenVectors <- t(my.cov0)
+rm(my.cov0,my.covTMP)
+
+
+par(mfrow=c(1,2))
+plotEQTL(dosage =dosage,info = info,expr = expr,eigenVectors =eigenVectors,main = paste0("Gene exonic ",tmp$external_gene_id[5]," (",snp,")")  )
+
+load("data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda")
+#exprFile <- "data/expr/normalisedCounts/genic/geneIntronic/resids.PUTM.rda"
+
+load("data/general/sampleInfo.rda")
+IDs <- sampleInfo[which(sampleInfo$A.CEL_file %in% as.character(rownames(resids))),"U.SD_No"]
+IDs <- gsub("/","_",IDs)
+rownames(resids) <- IDs
+expr  <- resids[,as.character(gene)]
+rm(IDs,resids)
+rm(sampleInfo)
+
+plotEQTL(dosage =dosage,info = info,expr = expr,eigenVectors =eigenVectors,main = paste0("Gene intronic ",tmp$external_gene_id[5]," (",snp,")")  )
+
+
+
+
+}
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=res$ge.gene, mart=ensembl)
+
+res$TSS <- sapply(res$ge.gene, function(x){getTSS(x,geneNames)})
+
+
+posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
+DisGeneStart <- res$TSS - as.integer(posSNP)
+res$DisGeneStart <- DisGeneStart
+rm(DisGeneStart,posSNP)
+
+
+
+## select significant and positive fold change greater than 2
+idx <- which(res$FDRInter < 0.01 & res$delta >=0)             
+positive <- res[idx,]  
+#res <- res[-idx,]
+
+## select significant and positive fold change lesser than -2
+idx <- which(res$FDRInter < 0.01 & res$delta <0)             
+negative <- res[idx,]  
+
+
+
+par(mfrow=c(1,1))
+hist(negative$DisGeneStart,col='skyblue',border=F,main= "TSS Intronic vs Exonic",
+     sub=paste("Intronic:",length(negative$DisGeneStart),"Exonic:",length(positive$DisGeneStart)),
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,positive$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+hist(positive$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
+lines(density(positive$DisGeneStart, adjust = 2), col = "red")
+legend("topright",c("Exonic","Intronic"),col=c('skyblue','red'),pch=15)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

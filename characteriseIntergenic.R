@@ -509,23 +509,29 @@ heatmap.2(as.matrix(toPlot),col=greenred(75), key=T, keysize=1.5,scale = "row",
           labRow=NA,ylab = "exons",trace="none",
             RowSideColors = rowAnno)
 
-  heatmap.2(as.matrix(toPlot),col=mycol, key=T, keysize=1.5,scale = "row",
+par(mar=c(0, 0, 0, 0))
+heatmap.2(as.matrix(toPlot),col=mycol, key=T, keysize=1.5,scale = "",
             labRow=NA,ylab = "exons",symkey=F,trace="none",
             RowSideColors = rowAnno,breaks = breaks)
 
-par(mar=c(0, 0, 0, 0))
+
 legend("topright",legend=c("misannotation", "ind. int. reg.", "novel Exon", "not defined"),
        fill=c("red", "green","blue", "black"), border=FALSE, bty="n", y.intersp = .7, cex=0.7)
 
-legend("center",      # location of the legend on the heatmap plot
-       legend = c("misannotation", "ind. int. reg.", "novel Exon", "not defined"), # category labels
-       col = c("red", "green","blue", "black"),  # color key
-       lty= 1,             # line style
-       lwd = 10,            # line width
-       inset=c(-0.2,0)
-)
+
+breaks=seq(, 10, by=1) #41 values
+breaks=append(breaks, 10000)
+breaks=append(breaks, -10, 0)
+#create colour panel with length(breaks)-1 colours
+mycol <- colorpanel(n=length(breaks)-1,low="green",mid="black",high="red")
 
 
+heatmap.2(as.matrix(toPlot),col=mycol, key=T, keysize=1.5,
+          labRow=NA,ylab = "exons",symkey=F,trace="none", breaks=breaks,
+          RowSideColors = rowAnno)
+
+legend("topright",legend=c("misannotation", "ind. int. reg.", "novel Exon", "not defined"),
+       fill=c("red", "green","blue", "black"), border=FALSE, bty="n", y.intersp = .7, cex=0.7)
 
 
 load("data/expr/rawCounts/genic/exons.RPKM.PUTM.rda")
@@ -542,6 +548,35 @@ heatmap.2(as.matrix(toPlot),
           rep("green", nrow(RPKM.std[unique(as.character(inIR$exon)),])),    # Measurement 4-6: blue
           rep("blue", nrow(RPKM.std[unique(as.character(novelExons$exon)),])),
           rep("black", nrow(RPKM.std[unique(as.character(tmp$exon)),]))))
+
+
+
+## show the different distributions
+
+head(exprExons)
+
+hist(exprExons[unique(as.character(misann$exon)),])
+
+exprExons[unique(as.character(inIR$exon)),]
+exprExons[unique(as.character(novelExons$exon)),]
+exprExons[unique(as.character(tmp$exon)),]
+
+
+
+boxcox(c(0,0))
+
+
+par(mar=c(3, 5, 5, 3))
+boxplot(cbind(misAnnotation=log1p(as.numeric(unlist(exprExons[unique(as.character(misann$exon)),]))),
+              indIntergenic=log1p(as.numeric(unlist(exprExons[unique(as.character(inIR$exon)),]))),
+              novelExon=log1p(as.numeric(unlist(exprExons[unique(as.character(novelExons$exon)),]))),
+              unknown=log1p(as.numeric(unlist(exprExons[unique(as.character(tmp$exon)),])))),col=c("red","green","blue","grey"),main="Raw counts",ylab="log(counts+1)")
+
+
+
+
+
+
 
 
 
