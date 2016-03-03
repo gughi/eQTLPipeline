@@ -1562,6 +1562,66 @@ for(i in 1:(ncol(counts)-1)){
   
   ## we select now the different categories exonic intronic
   
+  load(file="data/results/betaInteraction/betaInteractionExIn.rda")
+  
+  ## get the information the VEP information
+  
+  ## first we need to get the input file for VEP
+  head(res)
+  
+  load("data/general/imputed.info.rda")
+  
+  tabVariants <- imputed.info[which(imputed.info$marker %in% as.character(gsub("chr","",res$ge.SNP))),]
+  
+  ## select the indels
+  tabVariants$type <- unlist(lapply(strsplit(as.character(tabVariants$marker),":"),function(x){length(x)})) 
+  
+  tabVariants$type[which(tabVariants$type==2)] = "SNP"
+  tabVariants$type[which(tabVariants$type==3)] = "indel"
+
+    
+  tabVariants <- cbind(unlist(lapply(strsplit(gsub("chr","",tabVariants$marker),":"),function(x){x[1]})),
+                       unlist(lapply(strsplit(gsub("chr","",tabVariants$marker),":"),function(x){x[2]})),
+                       tabVariants)
+    
+  tabVariants <- tabVariants[,1:5]
+  
+  colnames(tabVariants) <- c("#CHROM","POS","ID","REF","ALT")
+
+  write("##fileformat=VCFv4.0",file="data/results/VEP/toAnnotate.vcf")
+  write.table(tabVariants,file="data/results/VEP/toAnnotate.vcf",row.names=F,append = T,quote = F)
+  ##rm(tabVariants)
+  
+
+  tabVariants <- tabVariants[which(tabVariants$type == "indel"),]
+  tabVariants$Al1 <- as.character(tabVariants$Al1)
+  tabVariants$Al1[which(as.character(tabVariants$Al1)=="R")]="."
+  tabVariants$Al2 <- as.character(tabVariants$Al2)
+  tabVariants$Al2[which(as.character(tabVariants$Al2)=="R")]="."
+  
+  apply(tabVariants,1,function(x){
+    
+    tabVariants$Al1[]
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  ## we annotated teh variants using caprica. in windows it wasn't possible
+  ## teh command used is the following 
+  
+  ## perl /home/seb/softwares/VEP/ensembl-tools-release-78/scripts/variant_effect_predictor/variant_effect_predictor.pl -i tab.vcf -o testRs.txt.out --offline --dir_cache "/home/seb/.vep/" --assembly "GrCh37" --cache_version "72" --species "homo_sapiens" --symbol --sift b --poly b --hgvs --regulatory --biotype --gmaf --maf_1kg --maf_esp --pick --pick_order rank,canonical,tsl,biotype,length --fork 4
+  
+  
+  
+  
+  
+  
+  
   write.table(unlist(lapply(strsplit(as.character(res[which(as.character(res$colors) %in% "red"),"rsID"]),";"),function(x){x})),
               file="data/results/VEP/positive.delta.txt",col.names=F,row.names=F)
   write.table(unlist(lapply(strsplit(as.character(res[which(as.character(res$colors) %in% "blue"),"rsID"]),";"),function(x){x})),
@@ -1577,14 +1637,14 @@ for(i in 1:(ncol(counts)-1)){
   
   rsID <- lapply(strsplit(as.character(res$rsID),";"),function(x){x})
   
-  rsIDENSG <- NULL
-  for (i in 1:nrow(eQTLPUTM))
-  {
-      
-    rsIDENSG <-  
-    
-    
-  }
+#   rsIDENSG <- NULL
+#   for (i in 1:nrow(eQTLPUTM))
+#   {
+#       
+#     rsIDENSG <-  
+#     
+#     
+#   }
   
   
   
@@ -1984,6 +2044,10 @@ hist(positive$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE
 lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
 lines(density(positive$DisGeneStart, adjust = 2), col = "red")
 legend("topright",c("Exonic","Intronic"),col=c('skyblue','red'),pch=15)
+
+
+
+
 
 
 
