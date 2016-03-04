@@ -122,7 +122,6 @@ plotsplicEQTL <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
   ## we load the data for the example
   
   ### Select of the bp for the gene considered
-  
   if(!is.na(IDs))
   {
     fullCovtmp <- fullCov[[1]][(startStop$start_position-10000):(startStop$end_position+10000),as.character(IDs)]
@@ -137,7 +136,7 @@ plotsplicEQTL <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
   grtrack <- GeneRegionTrack(defGen, genome = gen,
                              chromosome = chr, name = gene)
   gtrack <- GenomeAxisTrack()
-  itrack <- IdeogramTrack(genome = "hg19", chromosome = chr)
+  #itrack <- IdeogramTrack(genome = "hg19", chromosome = chr)
   
   ##load(file="/home/seb/")
   
@@ -325,10 +324,10 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   rm(dat)
   
   
-  colnames(meanAll) <- c(paste0(genotype$info$Al1,genotype$info$Al1),
+  colnames(meanAll) <- c(paste0(genotype$info$Al2,genotype$info$Al2),
                          paste0(genotype$info$Al1,genotype$info$Al2),
-                         paste0(genotype$info$Al2,genotype$info$Al2))
-  
+                         paste0(genotype$info$Al1,genotype$info$Al1))
+  print(head(meanAll))
   
   library(MatrixEQTL)
   my.expr <- SlicedData$new()
@@ -349,13 +348,15 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   
   dtrackPval <- DataTrack(range=datPval,chromosome=paste0("chr",chr),genome="hg19",name="-log10(pvalues)",type="gradient")                          
   
+  ## converted to get the right oreder when displaying the layers 
+  meanAll <- t(meanAll)[c(paste0(genotype$info$Al1,genotype$info$Al1),
+                          paste0(genotype$info$Al1,genotype$info$Al2),
+                          paste0(genotype$info$Al2,genotype$info$Al2)),]
   
   ## The code below needs to improve
-  colnames(meanAll) <- c(paste0(genotype$info$Al1,genotype$info$Al1),paste0(genotype$info$Al1,genotype$info$Al2),paste0(genotype$info$Al2,genotype$info$Al2))
-  allInSameTrack <- DataTrack(data=t(meanAll),start=as.numeric(rownames(meanAll)),end=as.numeric(rownames(meanAll)), chromosome = chr, genome = gen,
-                              name = "Stratified raw counts",type=c("l"),groups=c(paste0(genotype$info$Al1,genotype$info$Al1),
-                                                                                  paste0(genotype$info$Al1,genotype$info$Al2),
-                                                                                  paste0(genotype$info$Al2,genotype$info$Al2)),legend = TRUE
+  ##colnames(meanAll) <- c(paste0(genotype$info$Al2,genotype$info$Al2),paste0(genotype$info$Al1,genotype$info$Al2),paste0(genotype$info$Al1,genotype$info$Al1))
+  allInSameTrack <- DataTrack(data=meanAll,start=as.numeric(colnames(meanAll)),end=as.numeric(colnames(meanAll)), chromosome = chr, genome = gen,
+                              name = "Stratified raw counts",type=c("l"),groups=rownames(meanAll),legend = TRUE
                               ,col=c("black","red","blue"))
   #
   if(!is.null(highLight)){
