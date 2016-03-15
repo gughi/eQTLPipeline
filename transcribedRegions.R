@@ -1,8 +1,18 @@
 ## in this script we will get the 
 ## load("data/expr/rawCounts/genic/fullExExJun.rda")
 
-gene <- read.delim("data/general/NP4.6c.raw.n.bed")
+## load libraries and data
+library(devtools)
+setwd("C:/Users/mguelfi/projectsR/eQTLPipeline/")
+load_all()
+library(R.utils)
+path <- readWindowsShortcut("data.lnk", verbose=FALSE)
+setwd(dirname(path$networkPathname))
+rm(path)
 
+## load neuro genes passed by Jana
+gene <- read.delim("data/general/NP4.6c.raw.n.bed")
+  
 gene <- unique(gene$LOCUS)
 
 library(biomaRt)
@@ -22,6 +32,7 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","chromosome
 geneNames <- geneNames[-which(geneNames$gene_biotype %in% "LRG_gene"),]
 
 geneNames <- geneNames[order(geneNames$chromosome_name),]
+## load the genes that have at least one overlapping gene
 load("data/general/overlappingGenes.rda")
 
 neuroNonOveGen <- geneNames
@@ -34,8 +45,6 @@ neuroNonOveGen <- neuroNonOveGen[-c(147:158),]
 novelTransRegion(neuroNonOveGen[3,],ensembl,10,"PUTM")
 
 
-library("devtools")
-load_all()
 
 library(doParallel)
 library(foreach)
@@ -181,4 +190,49 @@ IDs=SNIG$A.CEL_file
 plotReadDepth(gene="ENSG00000186868",ensembl=ensembl,IDs=IDs)
 
 head(novelRegions,20)
+
+
+
+
+
+
+### we now try to identify the actual regions:
+load(file="data/results/novelIntragenicRegions.SNIG.rda")
+
+head(neuroGenes)
+
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+tissue <- "SNIG"
+
+
+##select only the genes that have potentially novel intragenic transcribed regions
+neuroGenesTmp <- neuroGenes[which(neuroGenes$coveredNoAnn.NA>0),]
+
+library(doParallel)
+library(foreach)
+library(GenomicRanges)
+
+detectCores()
+## [1] 24
+# create the cluster with the functions needed to run
+cl <- makeCluster(1)
+clusterExport(cl, c("getUnAnnotatedRegions","getBM","subsetByOverlaps","GRanges","countOverlaps"))
+registerDoParallel(cl)
+getDoParWorkers()
+
+start <- Sys.time()
+novelIntraRegion <- foreach(i=1:nrow(neuroGenesTmp),.verbose=F)%dopar%getUnAnnotatedRegions(rownames(neuroGenesTmp)[i],ensembl,"SNIG")
+##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
+end <- Sys.time()
+end-start
+stopCluster(cl)
+rm(cl)
+
+
+novelIntraRegion <- GRangesList(novelIntraRegion)
+names(novelIntraRegion) <- rownames(novelIntraRegion)
+
+save(novelIntraRegion,file="data/results/novelIntragenicRegionsLoc.SNIG.rda")
+getwd()
 

@@ -1562,52 +1562,6 @@ for(i in 1:(ncol(counts)-1)){
   
   ## we select now the different categories exonic intronic
   
-  load(file="data/results/betaInteraction/betaInteractionExIn.rda")
-  
-  ## get the information the VEP information
-  
-  ## first we need to get the input file for VEP
-  head(res)
-  
-  load("data/general/imputed.info.rda")
-  
-  tabVariants <- imputed.info[which(imputed.info$marker %in% as.character(gsub("chr","",res$ge.SNP))),]
-  
-  ## select the indels
-  tabVariants$type <- unlist(lapply(strsplit(as.character(tabVariants$marker),":"),function(x){length(x)})) 
-  
-  tabVariants$type[which(tabVariants$type==2)] = "SNP"
-  tabVariants$type[which(tabVariants$type==3)] = "indel"
-
-    
-  tabVariants <- cbind(unlist(lapply(strsplit(gsub("chr","",tabVariants$marker),":"),function(x){x[1]})),
-                       unlist(lapply(strsplit(gsub("chr","",tabVariants$marker),":"),function(x){x[2]})),
-                       tabVariants)
-    
-  tabVariants <- tabVariants[,1:5]
-  
-  colnames(tabVariants) <- c("#CHROM","POS","ID","REF","ALT")
-
-  write("##fileformat=VCFv4.0",file="data/results/VEP/toAnnotate.vcf")
-  write.table(tabVariants,file="data/results/VEP/toAnnotate.vcf",row.names=F,append = T,quote = F)
-  ##rm(tabVariants)
-  
-
-  tabVariants <- tabVariants[which(tabVariants$type == "indel"),]
-  tabVariants$Al1 <- as.character(tabVariants$Al1)
-  tabVariants$Al1[which(as.character(tabVariants$Al1)=="R")]="."
-  tabVariants$Al2 <- as.character(tabVariants$Al2)
-  tabVariants$Al2[which(as.character(tabVariants$Al2)=="R")]="."
-  
-  apply(tabVariants,1,function(x){
-    
-    tabVariants$Al1[]
-    
-  })
-  
-  
-  
-  
   
   
   
@@ -2050,20 +2004,289 @@ legend("topright",c("Exonic","Intronic"),col=c('skyblue','red'),pch=15)
 
 
 
+load(file="data/results/betaInteraction/betaInteractionExIn.rda")
+
+## get the information the VEP information
+
+## first we need to get the input file for VEP
+head(res)
+
+load("data/general/imputed.info.rda")
+
+tabVariants <- imputed.info[which(imputed.info$marker %in% as.character(gsub("chr","",res$ge.SNP))),]
+
+## select the indels
+tabVariants$type <- unlist(lapply(strsplit(as.character(tabVariants$marker),":"),function(x){length(x)})) 
+
+tabVariants$type[which(tabVariants$type==2)] = "SNP"
+tabVariants$type[which(tabVariants$type==3)] = "indel"
+
+
+tabVariants <- cbind(unlist(lapply(strsplit(gsub("chr","",tabVariants$marker),":"),function(x){x[1]})),
+                     unlist(lapply(strsplit(gsub("chr","",tabVariants$marker),":"),function(x){x[2]})),
+                     tabVariants)
+
+tabVariantsSNPs  <- tabVariants[which(tabVariants$type != "indel"),1:5]
+
+
+##rm(tabVariants)
+tabVariants <- tabVariants[which(tabVariants$type == "indel"),]
+tabVariants$Al1 <- as.character(tabVariants$Al1)
+tabVariants$Al1[which(as.character(tabVariants$Al1)=="R")]="."
+tabVariants$Al2 <- as.character(tabVariants$Al2)
+tabVariants$Al2[which(as.character(tabVariants$Al2)=="R")]="."
+
+
+
+colnames(tabVariantsSNPs) <- c("#CHROM","POS","ID","REF","ALT")
+
+tabVariantsIndels <- apply(tabVariants,1,function(x){
+  
+  tmp <- c(x[1],x[2],x[3])
+  if(x[4]=="D")
+  {
+    tmp <- c(tmp,"<DEL>",".",".",".",paste0("SVTYPE=DEL;END=",
+                                            as.numeric(x[2])+max(nchar(unlist(strsplit(unlist(strsplit(as.character(x[3]),":",fixed=T))[3],"_",fixed=T))))),".")
+  }else if(x[5]=="D"){
+    tmp <- c(tmp,".","<DEL>",".",".",paste0("SVTYPE=DEL;END=",
+                                            as.numeric(x[2])+max(nchar(unlist(strsplit(unlist(strsplit(as.character(x[3]),":",fixed=T))[3],"_",fixed=T))))),".") 
+  }else if(x[4]=="I"){
+    tmp <- c(tmp,"<INS>",".",".",".",paste0("SVTYPE=INS;END=",
+                                            as.numeric(x[2])+max(nchar(unlist(strsplit(unlist(strsplit(as.character(x[3]),":",fixed=T))[3],"_",fixed=T))))),".") 
+  }else if(x[5]=="I"){
+    tmp <- c(tmp,".","<INS>",".",".",paste0("SVTYPE=INS;END=",
+                                            as.numeric(x[2])+max(nchar(unlist(strsplit(unlist(strsplit(as.character(x[3]),":",fixed=T))[3],"_",fixed=T))))),".")
+  }
+  
+  return(tmp)
+  
+})
+
+tabVariantsIndels <- t(tabVariantsIndels)  
+
+colnames(tabVariantsIndels) <- c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT")
+
+write("##fileformat=VCFv4.0",file="data/results/VEP/toAnnotate.vcf")
+write.table(tabVariantsIndels,file="data/results/VEP/toAnnotate.vcf",row.names=F,append = T,quote = F) 
+write.table(tabVariantsSNPs,file="data/results/VEP/toAnnotate.vcf",row.names=F,append = T,quote = F,col.names = F)
+rm(tabVariants,tabVariantsIndels,tabVariantsSNPs)
+
+## used this code to run the VEP annotation in caprica
+# perl /home/seb/softwares/VEP/ensembl-tools-release-78/scripts/variant_effect_predictor/variant_effect_predictor.pl -i /home/seb/projectsR/eQTLPipeline/data/results/VEP/toAnnotate.vcf -o testRs.txt.out --offline --dir_cache "/home/seb/.vep/" --assembly "GrCh37" --cache_version "72" --species "homo_sapiens" --symbol --sift b --poly b --hgvs --regulatory --biotype --gmaf --maf_1kg --maf_esp --pick --pick_order rank,canonical,tsl,biotype,length --fork 4
+
+library(biomaRt)
+ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                   dataset="hsapiens_gene_ensembl")
+
+geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position","strand"),
+                   verbose = T,
+                   filters="ensembl_gene_id",
+                   values=res$ge.gene, mart=ensembl)
+
+res$TSS <- sapply(res$ge.gene, function(x){getTSS(x,geneNames)})
+
+
+head(res)
+posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
+DisGeneStart <- res$TSS - as.integer(posSNP)
+res$DisGeneStart <- DisGeneStart
+
+
+annotation <- read.delim("data/results/VEP/toAnnotate.out",skip=31)  
+ncol(res)
+
+finalAnn <- NULL
+for(i in 1:nrow(res)){
+  
+  tmp <- annotation[which(as.character(annotation$X.Uploaded_variation) %in% gsub("chr","",as.character(res[i,2]))),] 
+  if(nrow(tmp)>0)
+  {
+    if(is.element(as.character(res[i,3]),as.character(tmp$Gene)))
+    {
+      tmp <- tmp[which(as.character(tmp$Gene) %in% as.character(res[i,3])),c("X.Uploaded_variation","Gene","Feature_type","Consequence")][1,]
+      if (res[i,23]>0 && res[i,20]>0)
+      {
+        tmp$pos <- "upstream gene"
+      }else if(res[i,23]<0 && res[i,20]<0){
+        tmp$pos <- "downstream gene"
+      }else{
+        tmp$pos <- "inside gene"
+      }
+    }
+    else{
+      
+      tmp <- tmp[which(as.character(tmp$X.Uploaded_variation) %in% gsub("chr","",as.character(res[i,2]))),c("X.Uploaded_variation","Gene","Feature_type","Consequence")][1,]
+      tmp$X.Uploaded_variation <- gsub("chr","",as.character(res[i,2]))
+      tmp$Gene <- as.character(res[i,3])   
+      if (res[i,23]>0 && res[i,20]>0)
+      {
+        tmp$pos <- "upstream gene"
+      }else if(res[i,23]<0 && res[i,20]<0){
+        tmp$pos <- "downstream gene"
+      }else{
+        tmp$pos <- "inside gene"
+      }
+    }
+  }else{
+    tmp <- c(X.Uploaded_variation=gsub("chr","",as.character(res[i,2])),Gene=res[i,3],Feature_type=NA,Consequence=NA)
+    if (res[i,23]>0 && res[i,20]>0)
+    {
+      tmp$pos <- "upstream gene"
+    }else if(res[i,23]<0 && res[i,20]<0){
+      tmp$pos <- "downstream gene"
+    }else{
+      tmp$pos <- "inside gene"
+    }
+    
+  }
+  
+  finalAnn <- rbind(finalAnn,tmp)
+  rm(tmp)
+}
+
+head(finalAnn)
+res <- cbind(res,finalAnn[,3:5])
+save(res,file="data/results/betaInteraction/betaInteractionExIn.rda")
+
+load(file="data/results/betaInteraction/betaInteractionExIn.rda")
+
+res$Consequence <- as.character(res$Consequence)
+
+res[res == "downstream_gene_variant"] = NA
+res[res == "upstream_gene_variant"] = NA
+
+
+for(i in 1:nrow(res))
+{
+  if(res[i,"pos"] == "downstream gene" || res[i,"pos"] == "upstream gene")
+  {
+    if(!is.na(as.character(res[i,"Consequence"])))
+    {
+      if(as.character(res[i,"Consequence"])!="regulatory_region_variant")
+      {
+        res[i,"Consequence"] <- as.character(res[i,"pos"])      
+      }
+      
+    }else{
+      res[i,"Consequence"] <- as.character(res[i,"pos"])    
+    }
+  }
+}
+
+
+## we select the negative deltas meaning the intronic are more extreme
+neg <- res[which(as.character(res$colors) %in% "blue"),]
+pos <- res[which(as.character(res$colors) %in% "red"),]
+nonsig <- res[which(as.character(res$colors) %in% "black"),]
+
+
+consNeg <- unlist(lapply(strsplit(as.character(neg$Consequence),","),function(x){x[1]}))
+consPos <- unlist(lapply(strsplit(as.character(pos$Consequence),","),function(x){x[1]}))
+consNonSig <- unlist(lapply(strsplit(as.character(nonsig$Consequence),","),function(x){x[1]}))
+
+nam <- names(sort(table(consNonSig),decreasing=T)/length(consNonSig))
+
+## counts
+
+nonsig <- sort(table(consNonSig),decreasing=T)
+positive <- sort(table(consPos),decreasing=T)
+negative <- table(consNeg)
+
+
+counts <- rbind(nonsig=nonsig[nam],
+                positive=positive[nam],
+                negative=negative[nam])
+
+
+counts[is.na(counts)]=0
+counts <- rbind(counts,total=apply(counts,2,sum))
+counts <- cbind(counts,total=apply(counts,1,sum))
+ftable(t(counts))
 
 
 
 
 
+## Percentage
+
+nonsig <- sort(table(consNonSig),decreasing=T)/length(consNonSig[!is.na(consNonSig)])
+positive <- sort(table(consPos),decreasing=T)/length(consPos[!is.na(consPos)])
+negative <- table(consNeg)/length(consNeg[!is.na(consNeg)])
+
+
+counts <- rbind(nonsig=nonsig[nam],
+                positive=positive[nam],
+                negative=negative[nam])
+
+
+par(mar=c(15,5,3,2))
+barplot(counts, main="Variant Consequences",
+        col=c("black","red","blue"),
+        legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,0.6))
+
+
+counts[is.na(counts)]=0
+counts <- rbind(counts,total=apply(counts,2,sum))
+counts <- cbind(counts,total=apply(counts,1,sum))
+ftable(t(counts))
 
 
 
 
 
+pval <- NULL
+for(i in 1:(nrow(counts)-1)){
+  
+  pval[i] <- chisq.test(counts[c(4,i),1:ncol(counts)-1])$p.value
+  
+}
+
+print(pval)
+rm(pval,i)
 
 
 
+## we test the groups we have defined as non-sig,positive and negative but,
+## instead of using the total number of sn for each categorie we use the sum of the two categories that were not tested
+pval <- NULL
+for(i in 1:(nrow(counts)-1)){
+  
+  pval[i] <- chisq.test(cbind(counts[4,1:ncol(counts)-1],
+                              counts[4,1:ncol(counts)-1]-counts[i,1:ncol(counts)-1]))$p.value
+  
+}
 
+print(pval)
+rm(pval,i)
+
+
+
+## with intronic as reference
+countsTmp <- as.data.frame(counts)
+countsTmp$intron_variant <- NULL
+pval <- NULL
+
+for(i in 1:(ncol(counts)-1)){
+  
+  pval[i] <- chisq.test(cbind(countsTmp[1:(nrow(countsTmp)-1),i],counts[1:3,3]))$p.value
+  
+}
+print(pval)
+rm(pval,i,countsTmp)
+
+
+
+countsTmp <- as.data.frame(counts)
+countsTmp$total <- NULL
+pval <- NULL
+for(i in 1:(ncol(counts)-1)){
+  
+  pval[i] <-chisq.test(cbind(countsTmp[1:(nrow(countsTmp)-1),i],counts[1:3,11]))$p.value
+  
+}
+
+print(pval)
+rm(pval,i)
 
 
 
