@@ -67,7 +67,7 @@ getDoParWorkers()
 
 
 start <- Sys.time()
-novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,"PUTM")
+novelRegions <- foreach(i=1:nrow(neuroNonOveGen),.combine=rbind,.verbose=F)%dopar%novelTransRegion(neuroNonOveGen[i,],ensembl,10,"PUTM")
 ##exonicRegions <- foreach(i=1:20,.combine=rbind,.verbose=F)%dopar%getRegionsBED(geneIDs[i],exonsdef)
 end <- Sys.time()
 end-start
@@ -142,8 +142,6 @@ end <- Sys.time()
 end-start
 
 sum(unlist(novelRegionsv75[,3]),na.rm=T)
-
-
 stopCluster(cl)
 rm(cl)
 

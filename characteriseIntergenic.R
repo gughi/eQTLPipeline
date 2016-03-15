@@ -372,12 +372,12 @@ for (j in 1:nrow(eQTLs))
     
   eQTLs[j,"correlation"] <- max(apply(exprE,1,function(x){cor(as.numeric(x),as.numeric(exprInt[1,]))^2} ))
   rm(exprInt,exprE,RPKM.i,RPKM.e)
-  print(paste((j/nrow(eQTLs))*,"completed"))
+  print(paste((j/nrow(eQTLs))*100 ,"% completed"))
   
 }
 
-head(eQTLs)
-
+## we filtered more the samples although this is not saved
+eQTLs <- eQTLs[which(as.numeric(as.character(eQTLs$uniquePortion))>0),]
 
 
 ## this corresponds to scenario 1 intergenic linked to the neares gene with a junction
@@ -398,7 +398,7 @@ rm(tmp)
 tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance))>0),]
 tmp <- tmp[!is.na(tmp$correlation),]
 ##tmp <- tmp[which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),]
-tmp <- tmp[which(as.numeric(as.character(tmp$distance))>5000),]
+tmp <- tmp[which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),]
 points(as.numeric(as.character(tmp$distance)),as.numeric(as.character(tmp$correlation)),col="green")
 rm(tmp)
 ## scenario 1
@@ -519,7 +519,7 @@ legend("topright",legend=c("misannotation", "ind. int. reg.", "novel Exon", "not
        fill=c("red", "green","blue", "black"), border=FALSE, bty="n", y.intersp = .7, cex=0.7)
 
 
-breaks=seq(, 10, by=1) #41 values
+breaks=seq(0, 10, by=1) #41 values
 breaks=append(breaks, 10000)
 breaks=append(breaks, -10, 0)
 #create colour panel with length(breaks)-1 colours
@@ -533,7 +533,7 @@ heatmap.2(as.matrix(toPlot),col=mycol, key=T, keysize=1.5,
 legend("topright",legend=c("misannotation", "ind. int. reg.", "novel Exon", "not defined"),
        fill=c("red", "green","blue", "black"), border=FALSE, bty="n", y.intersp = .7, cex=0.7)
 
-
+## USING THE RPKM
 load("data/expr/rawCounts/genic/exons.RPKM.PUTM.rda")
 
 toPlot <- rbind(RPKM.std[unique(as.character(misann$exon)),],RPKM.std[unique(as.character(inIR$exon)),]
@@ -575,7 +575,97 @@ boxplot(cbind(misAnnotation=log1p(as.numeric(unlist(exprExons[unique(as.characte
 
 
 
+## below we get the position of the region in respect of the nearest exon, in other words is it upstream or downstream
 
+
+
+{
+
+      
+      library(biomaRt)
+      ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
+                         dataset="hsapiens_gene_ensembl")
+      
+      geneNames <- getBM(attributes=c("ensembl_gene_id","external_gene_id","chromosome_name","start_position","end_position","strand"),
+                         verbose = T,
+                         filters="ensembl_gene_id",
+                         values=eQTLs$gene, mart=ensembl)
+
+      
+      rownames(geneNames) <- geneNames$ensembl_gene_id  
+      
+      
+      locReg <- NULL
+      ## locReg contains the location of the intergenic in respect to the nearest gene
+      
+      for(i in 1:nrow(eQTLs))
+      {
+        gene <-geneNames[as.character(eQTLs$gene[i]),]
+        if(gene$strand==1)
+        {
+          if(gene$end_position < eQTLs$end[i])
+          {
+            locReg[i] <- "down_stream"
+          }else {
+            locReg[i] <- "up_stream"
+          }  
+        }else{
+          if(gene$start_position > eQTLs$start[i])
+          {
+            locReg[i] <- "down_stream"
+          }else {
+            locReg[i] <- "up_stream"
+          }
+        }
+        
+        rm(gene)
+      }
+  
+}
+
+eQTLs <- cbind(eQTLs,locReg)
+
+
+save(eQTLs,file="data/results/novelIntergenicRegionsFinal/finalNovelIntergeniceQTL.PUTM.rda")
+
+
+
+
+## we now plot upstream and down stream genes
+
+plot(as.numeric(as.character(eQTLs$distance)),as.numeric(as.character(eQTLs$correlation)), ylab = "Correlation",xlab="distance",main="Distance vs Correlation by location from the nearest gene ")
+abline(h = 0.2,col="red")
+abline(v=5000,col="red")
+
+## scenario 2 misannotation
+points(as.numeric(as.character(eQTLs[which(as.character(eQTLs$locReg)=="down_stream"),"distance"])),as.numeric(as.character(eQTLs[which(as.character(eQTLs$locReg)=="down_stream"),"correlation"])),col="blue")
+points(as.numeric(as.character(eQTLs[which(as.character(eQTLs$locReg)=="up_stream"),"distance"])),as.numeric(as.character(eQTLs[which(as.character(eQTLs$locReg)=="up_stream"),"correlation"])),col="green")
+
+legend("topright",legend = c("up_stream","down_stream"),col=c("green","blue"),pch = 1)
+
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[!is.na(tmp$correlation),]
+misann <- tmp[which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),"locReg"]
+inIR <- tmp[which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),"locReg"]
+tmp <- eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+novelExons <- tmp[!is.na(tmp$correlation),"locReg"]
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),]
+tmp <- tmp[!is.na(tmp$correlation),"locReg"]
+
+
+rbind(misann=table(misann),inIR=table(inIR),novelExons=table(novelExons),unkwon=table(tmp),
+      NoCor=table(eQTLs[is.na(eQTLs$correlation),"locReg"]),
+      total=table(eQTLs[which(as.numeric(as.character(eQTLs$uniquePortion))>0),"locReg"]))
+
+rm(tmp)
+
+
+
+table(eQTLs[which(as.numeric(as.character(eQTLs$uniquePortion))>0),"locReg"])
 
 
 
