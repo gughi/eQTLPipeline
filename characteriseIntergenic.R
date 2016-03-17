@@ -630,7 +630,6 @@ save(eQTLs,file="data/results/novelIntergenicRegionsFinal/finalNovelIntergeniceQ
 
 
 
-
 ## we now plot upstream and down stream genes
 
 plot(as.numeric(as.character(eQTLs$distance)),as.numeric(as.character(eQTLs$correlation)), ylab = "Correlation",xlab="distance",main="Distance vs Correlation by location from the nearest gene ")
@@ -666,6 +665,153 @@ rm(tmp)
 
 
 table(eQTLs[which(as.numeric(as.character(eQTLs$uniquePortion))>0),"locReg"])
+
+
+
+#### we now look at the expression of the intergenic regions at the three different categories
+
+load("data/results/novelIntergenicRegionsFinal/finalNovelIntergeniceQTL.PUTM.rda")
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[!is.na(tmp$correlation),]
+misann <- tmp[which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),"region"]
+inIR <- tmp[which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),"region"]
+tmp <- eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+novelExons <- tmp[!is.na(tmp$correlation),"region"]
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),]
+tmp <- tmp[!is.na(tmp$correlation),"region"]
+
+load("data/expr/rawCounts/intergenic/exprIntergenic.PUTM.rda")
+exprIntergenic <- exprIntergenic[,5:ncol(exprIntergenic)]
+
+par(mar=c(3, 5, 5, 3))
+boxplot(cbind(misAnnotation=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(misann)),]))),
+              indIntergenic=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(inIR)),]))),
+              novelExon=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(novelExons)),]))),
+              unknown=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(tmp)),])))),col=c("red","green","blue","grey"),main="Raw counts intergenic regions",ylab="log(counts+1)")
+
+
+boxplot(cbind(misAnnotation=log1p(apply(as.matrix(exprIntergenic[unique(as.character(misann)),]),1,mean)),
+              indIntergenic=log1p(apply(as.matrix(exprIntergenic[unique(as.character(inIR)),]),1,mean)),
+              novelExon=log1p(apply(as.matrix(exprIntergenic[unique(as.character(novelExons)),]),1,mean)),
+              unknown=log1p(apply(as.matrix(exprIntergenic[unique(as.character(tmp)),]),1,mean))),col=c("red","green","blue","grey"),main="Mean by region of raw counts",ylab="log(counts+1)")
+
+
+
+
+load("data/results/novelIntergenicRegionsFinal/finalNovelIntergeniceQTL.PUTM.rda")
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[!is.na(tmp$correlation),]
+misann <- tmp[which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),"exon"]
+inIR <- tmp[which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),"exon"]
+tmp <- eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+novelExons <- tmp[!is.na(tmp$correlation),"exon"]
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),]
+tmp <- tmp[!is.na(tmp$correlation),"exon"]
+
+load("data/expr/rawCounts/genic/exons.rda")
+exprExons <- countsTable 
+rm(countsTable)
+
+par(mar=c(3, 5, 5, 3))
+boxplot(cbind(misAnnotation=log1p(as.numeric(unlist(exprExons[unique(as.character(misann)),]))),
+              indIntergenic=log1p(as.numeric(unlist(exprExons[unique(as.character(inIR)),]))),
+              novelExon=log1p(as.numeric(unlist(exprExons[unique(as.character(novelExons)),]))),
+              unknown=log1p(as.numeric(unlist(exprExons[unique(as.character(tmp)),])))),col=c("red","green","blue","grey"),main="Raw counts exons",ylab="log(counts+1)")
+
+
+boxplot(cbind(misAnnotation=log1p(apply(as.matrix(exprExons[unique(as.character(misann)),]),1,mean)),
+              indIntergenic=log1p(apply(as.matrix(exprExons[unique(as.character(inIR)),]),1,mean)),
+              novelExon=log1p(apply(as.matrix(exprExons[unique(as.character(novelExons)),]),1,mean)),
+              unknown=log1p(apply(as.matrix(exprExons[unique(as.character(tmp)),]),1,mean))),col=c("red","green","blue","grey"),main="Mean by exons of raw counts",ylab="log(counts+1)")
+
+
+
+##combined both in one plot
+
+
+load("data/results/novelIntergenicRegionsFinal/finalNovelIntergeniceQTL.PUTM.rda")
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[!is.na(tmp$correlation),]
+misann <- tmp[which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),]
+inIR <- tmp[which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),]
+tmp <- eQTLs[which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+novelExons <- tmp[!is.na(tmp$correlation),]
+
+tmp <- eQTLs[-which(as.numeric(as.character(eQTLs$exonJunc))>0 & as.numeric(as.character(eQTLs$distance)) >0),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))<5000 & as.numeric(as.character(tmp$correlation))>0.2),]
+tmp <- tmp[-which(as.numeric(as.character(tmp$distance))>5000 & as.numeric(as.character(tmp$correlation))<0.2),]
+tmp <- tmp[!is.na(tmp$correlation),]
+
+load("data/expr/rawCounts/intergenic/exprIntergenic.PUTM.rda")
+exprIntergenic <- exprIntergenic[,5:ncol(exprIntergenic)]
+
+
+load("data/expr/rawCounts/genic/exons.rda")
+exprExons <- countsTable 
+rm(countsTable)
+
+exprAll <- as.data.frame(rbind(cbind(expr=log1p(as.numeric(unlist(exprExons[unique(as.character(misann$exon)),]))),cat="misAnn",typ="exons"),
+      cbind(expr=log1p(as.numeric(unlist(exprExons[unique(as.character(inIR$exon)),]))),cat="inIR",typ="exons"),
+      cbind(novelExon=log1p(as.numeric(unlist(exprExons[unique(as.character(novelExons$exon)),]))),cat="novelExon",typ="exons"),
+      cbind(novelExon=log1p(as.numeric(unlist(exprExons[unique(as.character(tmp$exon)),]))),cat="unknown",typ="exons"),
+      cbind(expr=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(misann$region)),]))),cat="misAnn",typ="regions"),
+      cbind(expr=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(inIR$region)),]))),cat="inIR",typ="regions"),
+      cbind(novelExon=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(novelExons$region)),]))),cat="novelExon",typ="regions"),
+      cbind(novelExon=log1p(as.numeric(unlist(exprIntergenic[unique(as.character(tmp$region)),]))),cat="unknown",typ="regions")))
+
+exprAll$expr <- as.numeric(as.character(exprAll$expr))
+
+
+
+
+par(mar=c(8, 5, 5, 3))
+boxplot(expr~typ+cat,data=exprAll, exprcol=c("red","green","blue","grey"),main="Raw counts",ylab="log(counts+1)",las=2,
+        col=c("green","green","red","red","blue","blue","grey","grey"))
+
+
+
+exprAll <- as.data.frame(rbind(cbind(expr=log1p(apply(as.matrix(exprExons[unique(as.character(misann$exon)),]),1,mean)),cat="misAnn",typ="exons"),
+                               cbind(expr=log1p(apply(as.matrix(exprExons[unique(as.character(inIR$exon)),]),1,mean)),cat="inIR",typ="exons"),
+                               cbind(novelExon=log1p(apply(as.matrix(exprExons[unique(as.character(novelExons$exon)),]),1,mean)),cat="novelExon",typ="exons"),
+                               cbind(novelExon=log1p(apply(as.matrix(exprExons[unique(as.character(tmp$exon)),]),1,mean)),cat="unknown",typ="exons"),
+                               cbind(expr=log1p(apply(as.matrix(exprIntergenic[unique(as.character(misann$region)),]),1,mean)),cat="misAnn",typ="regions"),
+                               cbind(expr=log1p(apply(as.matrix(exprIntergenic[unique(as.character(inIR$region)),]),1,mean)),cat="inIR",typ="regions"),
+                               cbind(novelExon=log1p(apply(as.matrix(exprIntergenic[unique(as.character(novelExons$region)),]),1,mean)),cat="novelExon",typ="regions"),
+                               cbind(novelExon=log1p(apply(as.matrix(exprIntergenic[unique(as.character(tmp$region)),]),1,mean)),cat="unknown",typ="regions")))
+
+
+exprAll$expr <- as.numeric(as.character(exprAll$expr))
+
+par(mar=c(8, 5, 5, 3))
+boxplot(expr~typ+cat,data=exprAll, exprcol=c("red","green","blue","grey"),main="Mean raw counts",ylab="log(counts+1)",las=2,
+        col=c("green","green","red","red","blue","blue","grey","grey"))
+
+
+
+
+
+par(mar=c(3, 5, 5, 3))
+boxplot(cbind(misAnnotation=log1p(as.numeric(unlist(exprExons[unique(as.character(misann)),]))),
+              indIntergenic=log1p(as.numeric(unlist(exprExons[unique(as.character(inIR)),]))),
+              novelExon=log1p(as.numeric(unlist(exprExons[unique(as.character(novelExons)),]))),
+              unknown=log1p(as.numeric(unlist(exprExons[unique(as.character(tmp)),])))),col=c("red","green","blue","grey"),main="Raw counts exons",ylab="log(counts+1)")
+
+
+boxplot(cbind(misAnnotation=log1p(apply(as.matrix(exprExons[unique(as.character(misann)),]),1,mean)),
+              indIntergenic=log1p(apply(as.matrix(exprExons[unique(as.character(inIR)),]),1,mean)),
+              novelExon=log1p(apply(as.matrix(exprExons[unique(as.character(novelExons)),]),1,mean)),
+              unknown=log1p(apply(as.matrix(exprExons[unique(as.character(tmp)),]),1,mean))),col=c("red","green","blue","grey"),main="Mean by exons of raw counts",ylab="log(counts+1)")
+
+
 
 
 

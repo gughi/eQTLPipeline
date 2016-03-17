@@ -21,3 +21,23 @@ getTES <- function(gene, annotation){
   }    
   
 }
+
+getDistTSS <- function(marker,gene,annotation)
+{
+  tmp <- annotation[which(annotation$ensembl_gene_id %in% gene),]
+  if(tmp$strand <0){
+    return(tmp$end_position-as.integer(marker))
+  }else{
+    return(as.integer(marker)-tmp$start_position)
+  }
+}
+
+getDistTES <- function(marker,gene,annotation)
+{
+  tmp <- annotation[which(annotation$ensembl_gene_id %in% gene),]
+  if(tmp$strand <0){
+    return(tmp$start_position-as.integer(marker))
+  }else{
+    return(as.integer(marker)-tmp$end_position)
+  }
+}

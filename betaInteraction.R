@@ -1961,6 +1961,13 @@ plotEQTL(dosage =dosage,info = info,expr = expr,eigenVectors =eigenVectors,main 
 
 
 }
+
+load(file="data/results/betaInteraction/betaInteractionExIn.rda")
+
+
+
+library(biomaRt)
+
 ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Jun2013.archive.ensembl.org",
                    dataset="hsapiens_gene_ensembl")
 
@@ -1970,41 +1977,57 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position
                    values=res$ge.gene, mart=ensembl)
 
 res$TSS <- sapply(res$ge.gene, function(x){getTSS(x,geneNames)})
+res$TES <- sapply(res$ge.gene, function(x){getTES(x,geneNames)})
 
+for(i in 1:nrow(res))
+{
+  res$DisGeneStart[i] <- getDistTSS(unlist(strsplit(as.character(res$ge.SNP[i]),":"))[2],res$ge.gene[i],geneNames)
+}
 
-posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
-DisGeneStart <- res$TSS - as.integer(posSNP)
-res$DisGeneStart <- DisGeneStart
-rm(DisGeneStart,posSNP)
+for(i in 1:nrow(res))
+{
+  res$DisGeneEnd[i] <- getDistTES(unlist(strsplit(as.character(res$ge.SNP[i]),":"))[2],res$ge.gene[i],geneNames)
+}
 
+negative <- res[which(as.character(res$colors) %in% "blue"),]
+positive <- res[which(as.character(res$colors) %in% "red"),]
+nonsig <- res[which(as.character(res$colors) %in% "black"),]
 
 
 ## select significant and positive fold change greater than 2
-idx <- which(res$FDRInter < 0.01 & res$delta >=0)             
-positive <- res[idx,]  
-#res <- res[-idx,]
-
-## select significant and positive fold change lesser than -2
-idx <- which(res$FDRInter < 0.01 & res$delta <0)             
-negative <- res[idx,]  
 
 
 
 par(mfrow=c(1,1))
 hist(negative$DisGeneStart,col='skyblue',border=F,main= "TSS Intronic vs Exonic",
      sub=paste("Intronic:",length(negative$DisGeneStart),"Exonic:",length(positive$DisGeneStart)),
-     xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,positive$DisGeneStart)$p.value),freq=FALSE,breaks = 40)
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneStart,positive$DisGeneStart)$p.value),freq=FALSE,breaks = 40,
+     ylim=c(0,8e-06))
 hist(positive$DisGeneStart,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
 lines(density(negative$DisGeneStart, adjust = 2), col = "skyblue")
 lines(density(positive$DisGeneStart, adjust = 2), col = "red")
 legend("topright",c("Exonic","Intronic"),col=c('skyblue','red'),pch=15)
 
 
+par(mfrow=c(1,1))
+par(mar=c(5, 4, 4, 4))
+hist(negative$DisGeneEnd,col='skyblue',border=F,main= "TES Intronic vs Exonic",
+     sub=paste("Intronic:",length(negative$DisGeneEnd),"Exonic:",length(positive$DisGeneEnd)),
+     xlab=paste("KS pvalue:",ks.test(negative$DisGeneEnd,positive$DisGeneEnd)$p.value),freq=FALSE,breaks = 40,
+     ylim=c(0,7e-06))
+hist(positive$DisGeneEnd,add=T,col=scales::alpha('red',.5),border=F,freq=FALSE,breaks=40)
+lines(density(negative$DisGeneEnd,adjust = 2), col = "skyblue")
+lines(density(positive$DisGeneEnd,adjust = 2), col = "red")
+legend("topright",c("Exonic","Intronic"),col=c('skyblue','red'),pch=15)
 
 
 
 
-load(file="data/results/betaInteraction/betaInteractionExIn.rda")
+
+#save(res,file="data/results/betaInteraction/betaInteractionExIn.rda")
+
+
+#load(file="data/results/betaInteraction/betaInteractionExIn.rda")
 
 ## get the information the VEP information
 
@@ -2083,19 +2106,12 @@ geneNames <- getBM(attributes=c("ensembl_gene_id","start_position","end_position
                    filters="ensembl_gene_id",
                    values=res$ge.gene, mart=ensembl)
 
-res$TSS <- sapply(res$ge.gene, function(x){getTSS(x,geneNames)})
-
-
-head(res)
-posSNP <- unlist(lapply(strsplit(as.character(res$ge.SNP),":"),function(x){x[2]}))
-DisGeneStart <- res$TSS - as.integer(posSNP)
-res$DisGeneStart <- DisGeneStart
-
 
 annotation <- read.delim("data/results/VEP/toAnnotate.out",skip=31)  
 ncol(res)
 
 finalAnn <- NULL
+
 for(i in 1:nrow(res)){
   
   tmp <- annotation[which(as.character(annotation$X.Uploaded_variation) %in% gsub("chr","",as.character(res[i,2]))),] 
@@ -2104,11 +2120,11 @@ for(i in 1:nrow(res)){
     if(is.element(as.character(res[i,3]),as.character(tmp$Gene)))
     {
       tmp <- tmp[which(as.character(tmp$Gene) %in% as.character(res[i,3])),c("X.Uploaded_variation","Gene","Feature_type","Consequence")][1,]
-      if (res[i,23]>0 && res[i,20]>0)
+      if (res[i,"DisGeneEnd"]>0)
       {
-        tmp$pos <- "upstream gene"
-      }else if(res[i,23]<0 && res[i,20]<0){
-        tmp$pos <- "downstream gene"
+        tmp$pos <- "downstream_gene_variant"
+      }else if(res[i,"DisGeneStart"]<0){
+        tmp$pos <- "upstream_gene_variant"
       }else{
         tmp$pos <- "inside gene"
       }
@@ -2118,22 +2134,23 @@ for(i in 1:nrow(res)){
       tmp <- tmp[which(as.character(tmp$X.Uploaded_variation) %in% gsub("chr","",as.character(res[i,2]))),c("X.Uploaded_variation","Gene","Feature_type","Consequence")][1,]
       tmp$X.Uploaded_variation <- gsub("chr","",as.character(res[i,2]))
       tmp$Gene <- as.character(res[i,3])   
-      if (res[i,23]>0 && res[i,20]>0)
+      ## it means the snp is after start
+      if (res[i,"DisGeneEnd"]>0)
       {
-        tmp$pos <- "upstream gene"
-      }else if(res[i,23]<0 && res[i,20]<0){
-        tmp$pos <- "downstream gene"
+        tmp$pos <- "downstream_gene_variant"
+      }else if(res[i,"DisGeneStart"]<0){
+        tmp$pos <- "upstream_gene_variant"
       }else{
         tmp$pos <- "inside gene"
       }
     }
   }else{
     tmp <- c(X.Uploaded_variation=gsub("chr","",as.character(res[i,2])),Gene=res[i,3],Feature_type=NA,Consequence=NA)
-    if (res[i,23]>0 && res[i,20]>0)
+    if (res[i,"DisGeneEnd"]>0)
     {
-      tmp$pos <- "upstream gene"
-    }else if(res[i,23]<0 && res[i,20]<0){
-      tmp$pos <- "downstream gene"
+      tmp$pos <- "downstream_gene_variant"
+    }else if(res[i,"DisGeneStart"]<0){
+      tmp$pos <- "upstream_gene_variant"
     }else{
       tmp$pos <- "inside gene"
     }
@@ -2145,20 +2162,22 @@ for(i in 1:nrow(res)){
 }
 
 head(finalAnn)
+
 res <- cbind(res,finalAnn[,3:5])
+head(res)
 save(res,file="data/results/betaInteraction/betaInteractionExIn.rda")
 
 load(file="data/results/betaInteraction/betaInteractionExIn.rda")
 
 res$Consequence <- as.character(res$Consequence)
 
-res[res == "downstream_gene_variant"] = NA
-res[res == "upstream_gene_variant"] = NA
+# res[res == "downstream_gene_variant"] = NA
+# res[res == "upstream_gene_variant"] = NA
 
 
 for(i in 1:nrow(res))
 {
-  if(res[i,"pos"] == "downstream gene" || res[i,"pos"] == "upstream gene")
+  if(res[i,"pos"] == "downstream_gene_variant" || res[i,"pos"] == "upstream_gene_variant")
   {
     if(!is.na(as.character(res[i,"Consequence"])))
     {
@@ -2186,26 +2205,6 @@ consNonSig <- unlist(lapply(strsplit(as.character(nonsig$Consequence),","),funct
 
 nam <- names(sort(table(consNonSig),decreasing=T)/length(consNonSig))
 
-## counts
-
-nonsig <- sort(table(consNonSig),decreasing=T)
-positive <- sort(table(consPos),decreasing=T)
-negative <- table(consNeg)
-
-
-counts <- rbind(nonsig=nonsig[nam],
-                positive=positive[nam],
-                negative=negative[nam])
-
-
-counts[is.na(counts)]=0
-counts <- rbind(counts,total=apply(counts,2,sum))
-counts <- cbind(counts,total=apply(counts,1,sum))
-ftable(t(counts))
-
-
-
-
 
 ## Percentage
 
@@ -2223,6 +2222,23 @@ par(mar=c(15,5,3,2))
 barplot(counts, main="Variant Consequences",
         col=c("black","red","blue"),
         legend = rownames(counts), beside=TRUE,las=2,ylim=c(0,0.6))
+
+
+counts[is.na(counts)]=0
+counts <- rbind(counts,total=apply(counts,2,sum))
+counts <- cbind(counts,total=apply(counts,1,sum))
+ftable(t(counts))
+
+## counts
+
+nonsig <- sort(table(consNonSig),decreasing=T)
+positive <- sort(table(consPos),decreasing=T)
+negative <- table(consNeg)
+
+
+counts <- rbind(nonsig=nonsig[nam],
+                positive=positive[nam],
+                negative=negative[nam])
 
 
 counts[is.na(counts)]=0
@@ -2287,6 +2303,8 @@ for(i in 1:(ncol(counts)-1)){
 
 print(pval)
 rm(pval,i)
+
+
 
 
 
