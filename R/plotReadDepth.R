@@ -222,7 +222,7 @@ plotsplicEQTL <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype)
 
 
 
-plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=NULL)
+plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=NULL,from=NULL,to=NULL)
 {
   ## load the library
   library(biomaRt)
@@ -388,7 +388,7 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
     plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack,exExJuntrack),transcriptAnnotation = "transcript")
     
   }else{
-    plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol")
+    plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol",from = from, to=to)
   }
   
   

@@ -43,8 +43,6 @@ getSummaryNovExon <- function(eQTL,intNovelExonPath)
 }
 
 
-
-
 for(i in 1:length(samples))
 {
   eQTLPUTM <- getSummaryNovExon(eQTLPUTM,intNovelExonPath=paste0("data/junctions/PUTM/",samples[i],"_intergenicNovelExon.rda"))
