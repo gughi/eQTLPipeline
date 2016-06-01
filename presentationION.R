@@ -1170,9 +1170,6 @@ plotTracks(list(gtrack, dtrack,grtrack),transcriptAnnotation = "symbol",from=275
 
 
 
-
-
-
 ensembl <- useMart(biomart="ENSEMBL_MART_ENSEMBL",host="Feb2014.archive.ensembl.org",
                       dataset="hsapiens_gene_ensembl")
 filters <- c("chromosomal_region")

@@ -32,7 +32,7 @@ GR <- GRanges(seqnames = Rle(genesMap$Chromosome.Name),
 bedPath <- list.files("data/junctions/PUTM/")
 
 print(paste("Start Time",Sys.time()))
-for (i in 6:length(bedPath))
+for (i in 1:length(bedPath))
 {
   intNovelExon <- identifyNewExon(interTable = tmp,juncPath = paste0("data/junctions/PUTM/",bedPath[i]),GR = GR)
   save(intNovelExon,file=paste0(as.character("data/junctions/PUTM/"),unlist(strsplit(as.character(bedPath[i]),"junctions"))[1],"intergenicNovelExon.rda"))

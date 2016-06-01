@@ -1,18 +1,32 @@
 
-plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA)
+plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA,chr=NA,from=NULL,to=NULL)
 {
   ## load the library
   library(biomaRt)
   library(Gviz)
+  library(GenomicRanges)
   
   ##geneType <- "lincRNA"
   
   ##gene <- "ENSG00000006555"
   
   filters <- c("chromosomal_region")
-  startStop <- getBM(attributes=c("chromosome_name","start_position","end_position","external_gene_id"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
-  chr <- unique(startStop$chromosome) 
-  gene <- startStop$external_gene_id
+  if (!is.na(gene))
+  {
+    
+    startStop <- getBM(attributes=c("chromosome_name","start_position","end_position","external_gene_id"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
+    chr <- unique(startStop$chromosome) 
+    gene <- startStop$external_gene_id
+    
+    
+  }else{
+    startStop <- as.data.frame(t(as.matrix(c(chr,from,to,""))))
+    colnames(startStop) <- c("chromosome_name","start_position","end_position","external_gene_id")
+    startStop$start_position <- as.numeric(as.character(startStop$start_position))
+    startStop$end_position <- as.numeric(as.character(startStop$end_position))
+    print(startStop)
+  }
+  
   chromoReg <- paste0(chr,":",startStop$start_position,":",startStop$end_position,":-1,",
                       chr,":",startStop$start_position,":",startStop$end_position,":1")
   
@@ -53,10 +67,10 @@ plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA)
   }  
   rownames(fullCovtmp) <- (startStop$start_position-10000):(startStop$end_position+10000)
   
-  tail(data.frame(fullCovtmp))
-  
+
+
   grtrack <- GeneRegionTrack(defGen, genome = gen,
-                             chromosome = chr, name = gene)
+                             chromosome = paste0("chr",chr), name = as.character(startStop$external_gene_id))
   gtrack <- GenomeAxisTrack()
   ##itrack <- IdeogramTrack(genome = "hg19", chromosome = chr)
   
@@ -64,16 +78,35 @@ plotReadDepth <- function(gene,gen = "hg19",ensembl,IDs=NA)
   
   ## we load the dat
   meanCov <- apply(data.frame(fullCovtmp),1,mean)
-  dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
+  meanCov[which(meanCov < 10)]=0 
+  dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))  
   rm(meanCov)
+  print(head(dat))
   colnames(dat) <- c("chr","start","end","coverage")
+  
   data_g <- with(dat, GRanges(chr, IRanges(start, end), cov=coverage))
-  dtrack <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",name=gene,type="histogram")
-  dtrack_heat <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",name=gene,type="heatmap")
+  #print(head(data_g))
+  dtrack <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",name="coverage",type="histogram")
+  #dtrack <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",name="SSS",type="histogram")
+  #print(dtrack)
+  dtrack_heat <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",name=as.character(startStop$external_gene_id),type="heatmap")
   
   ## itrack <- IdeogramTrack(genome = gen, chromosome = chr)
+  ##print(head(dtrack))
   
-  plotTracks(list(gtrack, dtrack,grtrack,dtrack_heat),transcriptAnnotation = "symbol")                     
+  #plotTracks(list(gtrack,dtrack),transcriptAnnotation = "symbol")
+  plotTracks(list(gtrack, dtrack,grtrack,dtrack_heat),transcriptAnnotation = "symbol")      
+  
+  
+  
+#   dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
+#   rm(meanCov)
+#   colnames(dat) <- c("chr","start","end","coverage")
+#   data_g <- with(dat, GRanges(chr, IRanges(start, end), cov=coverage))
+#   dtrack <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",type="histogram",name="coverage")
+#   dtrack_heat <- DataTrack(range=data_g,chromosome=paste0("chr",chr),genome="hg19",type="heatmap")
+  
+  
   
 }
 
@@ -233,11 +266,26 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   ##gene <- "ENSG00000006555"
   
   filters <- c("chromosomal_region")
-  startStop <- getBM(attributes=c("chromosome_name","start_position","end_position","external_gene_id"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
-  chr <- unique(startStop$chromosome) 
-  gene <- startStop$external_gene_id
+  if (!is.na(gene))
+  {
+    
+    startStop <- getBM(attributes=c("chromosome_name","start_position","end_position","external_gene_id"), filters="ensembl_gene_id", values=list(gene), mart=ensembl)
+    chr <- unique(startStop$chromosome) 
+    gene <- startStop$external_gene_id
+    
+  
+  }else{
+    chr <- gsub("chr","",unlist(strsplit(rownames(genotype$info),":"))[1])
+    startStop <- as.data.frame(t(as.matrix(c(chr,from,to,""))))
+    colnames(startStop) <- c("chromosome_name","start_position","end_position","external_gene_id")
+    startStop$start_position <- as.numeric(as.character(startStop$start_position))
+    startStop$end_position <- as.numeric(as.character(startStop$end_position))
+    print(startStop)
+  }
+  
   chromoReg <- paste0(chr,":",startStop$start_position,":",startStop$end_position,":-1,",
                       chr,":",startStop$start_position,":",startStop$end_position,":1")
+  
   
   defGen <- getBM(attributes=c("chromosome_name","exon_chrom_start",
                                "exon_chrom_end","strand","gene_biotype",
@@ -280,7 +328,7 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   
   
   grtrack <- GeneRegionTrack(defGen, genome = gen,
-                             chromosome = chr, name = gene)
+                             chromosome = chr, name = as.character(startStop$external_gene_id))
   gtrack <- GenomeAxisTrack()
   ##itrack <- IdeogramTrack(genome = "hg19", chromosome = chr)
   
@@ -317,6 +365,9 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
   rm(tmp)
   meanCov <- apply(data.frame(fullCovtmp[,IDsGen]),1,mean)
   dat <- data.frame(paste0("chr",chr),as.numeric(rownames(fullCovtmp)),as.numeric(rownames(fullCovtmp)),as.vector(meanCov))                     
+  ## filter
+  #meanCov[which(meanCov < 10)]=0 
+  
   meanAll <- cbind(meanAll,meanCov)
   rm(meanCov)
   colnames(dat) <- c("chr","start","end","coverage")
@@ -388,7 +439,9 @@ plotLoceQTLs <- function(gene,gen = "hg19",ensembl,IDs=NA, genotype, highLight=N
     plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack,exExJuntrack),transcriptAnnotation = "transcript")
     
   }else{
-    plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol",from = from, to=to)
+    
+    plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol",from = 23322001 , to=23322800)
+    #plotTracks(list(gtrack,dtrackPval,dtrackBetas,allInSameTrack,grtrack),transcriptAnnotation = "symbol",from = from, to=to)
   }
   
   

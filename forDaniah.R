@@ -32,6 +32,17 @@ exprForDaniah <- expr[idxTmp,]
 
 which(rownames(exExJunAnn) %in% paste(exprForDaniah$Exon1ID,exprForDaniah$Exon2ID,sep = "_"))
 
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.PUTM")
+
+RPKM.cqn.PUTM <- RPKM.cqn[which(rownames(RPKM.cqn) %in% paste(exprForDaniah$Exon1ID,exprForDaniah$Exon2ID,sep = "_")),]
+write.csv(RPKM.cqn.PUTM,file = "tmp/exonExonJunc.PUTM.csv")
+
+
+load("data/expr/normalisedCounts/genic/exonExonJunc/RPKM.cqn.SNIG")
+RPKM.cqn.SNIG <- RPKM.cqn[which(rownames(RPKM.cqn) %in% paste(exprForDaniah$Exon1ID,exprForDaniah$Exon2ID,sep = "_")),]
+write.csv(RPKM.cqn.SNIG,file = "tmp/exonExonJunc.SNIG.csv")
+
+
 library(devtools) 
 load_all()
 
@@ -84,6 +95,46 @@ load("data/expr/rawCounts/genic/exons.RPKM.PUTM.rda")
 head(RPKM.std)
 RPKM.std <- RPKM.std[as.character(exonDef$names),]
 write.csv(RPKM.std,file="tmp/RPKMExonLRRK2.csv")
+
+
+
+#### get the eQTLs in chromosome 12
+
+suppressMessages(library(R.utils))
+suppressWarnings(path <- readWindowsShortcut("data.lnk", verbose=FALSE))
+setwd(dirname(path$networkPathname))
+
+load("data/results/finaleQTLs/geneExonic.Ann.PUTM.rda")
+
+eQTLPUTM$rs <- NULL
+eQTLPUTM$TSS <- NULL
+eQTLPUTM$degree <- NULL
+eQTLPUTM$Allele <- NULL
+
+chr <- unlist(lapply(strsplit(as.character(eQTLPUTM$snps),":"),function(x){x[1]}))
+head(chr)
+
+eQTLPUTM <- eQTLPUTM[which(chr %in% "chr12"),]
+
+eQTLPUTM$tissue <- "PUTM"
+
+load("data/results/finaleQTLs/geneExonic.Ann.SNIG.rda")
+
+eQTLSNIG$rs <- NULL
+eQTLSNIG$TSS <- NULL
+eQTLSNIG$degree <- NULL
+eQTLSNIG$Allele <- NULL
+
+chr <- unlist(lapply(strsplit(as.character(eQTLSNIG$snps),":"),function(x){x[1]}))
+head(chr)
+
+eQTLSNIG <- eQTLSNIG[which(chr %in% "chr12"),]
+
+eQTLSNIG$tissue <- "SNIG"
+
+eQTL <- rbind(eQTLPUTM,eQTLSNIG)
+
+write.csv(eQTL,file="tmp/eQTLchr12.csv")
 
 
 

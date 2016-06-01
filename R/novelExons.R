@@ -125,3 +125,18 @@ identifyNewExon <- function(interTable,juncPath,GR)
   
   return(interTable)
 }
+
+overlappingBP <- function(GR1,GR2)
+{
+  tmp <- intersect(GR1,GR2,ignore.strand=TRUE)
+  if(length(tmp)>0){
+    res <- abs((width(tmp) - width(GR1)))
+    rm(tmp) 
+  }else{
+    
+    res <- width(GR1)
+    rm(tmp)
+  }
+  return(res)
+}
+

@@ -7,6 +7,7 @@
 #' 
 #' For this example we will get use the **ABLIM2** and the deletion at position **4:7983633:TG_T** and we will show it for only a brain region, in our case putamen
 
+#+ echo=FALSE
 ## First we load libraries and we set the location of the data
 suppressMessages(library(devtools))
 setwd("C:/Users/mguelfi/projectsR/eQTLPipeline/")
